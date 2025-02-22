@@ -1,1 +1,1 @@
-# General purpose Non-cartesian Gradient waveform Generator based on G-space (G4N)
+# General purpose Gradient waveform Generator based on G-space for Non-cartesian sampling (G4N)
