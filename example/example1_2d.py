@@ -5,7 +5,7 @@ import sympy as sp
 import g4n
 from time import time
 
-fov = 0.5
+fov = 0.25
 nPix = 256
 dt = 10e-6
 os = 10
@@ -45,10 +45,10 @@ fExactSlew = True
 
 # Rosette
 symP = sp.Symbol("t") 
-om1 = 0.147*2*pi*2
-om2 = 0.087*2*pi/2
+om1 = 9*pi
+om2 = 19*pi
 p0 = 0
-p1 = 15
+p1 = 1
 expT = symP
 
 expRho = 0.5*sp.sin(om1*expT)
@@ -59,6 +59,19 @@ expK = sp.Array([expX,expY,1e-30*symP])
 getK = sp.lambdify(symP, expK, "numpy")
 getK_D1p = sp.lambdify(symP, expK.diff(symP,1).simplify(), "numpy")
 getK_D2p = sp.lambdify(symP, expK.diff(symP,2).simplify(), "numpy")
+
+# # VDS
+# nSp0 = 32
+# nSp1 = 8
+# A0 = (0.5/(2*pi))/(nPix/2/nSp0)
+# A1 = (0.5/(2*pi))/(nPix/2/nSp1)
+# print("A0", A0)
+# print("A1", A1)
+# def getK(tht:float64):
+#     rho = A0*(exp(2*(A1 - A0)*tht) - 1) / (2*(A1 - A0))
+#     return array([rho*cos(tht), rho*sin(tht), 1e-30*tht])
+# p0 = 0
+# p1 = (log(A1)-log(A0)) / (2*(A1-A0))
 
 # derive slew-rate constrained trajectory
 t = time()
@@ -82,14 +95,14 @@ arrK_Ref = getK(arrTht).T
 print(arrK_Ref.shape)
 
 # plot
-figure(figsize=(12,6), dpi=120)
+figure(figsize=(20,10), dpi=120)
 
 subplot(221)
 plot(arrK[:,0], arrK[:,1], ".-", label="K_Imp")
 plot(arrK_Ref[:,0], arrK_Ref[:,1], "--", label="K_Ref")
+xlim(-0.5,0.5)
+ylim(-0.5,0.5)
 axis("equal")
-xlim(-0.001,0.001)
-ylim(-0.001,0.001)
 grid("on")
 legend()
 title("k-Space")

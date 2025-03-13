@@ -6,7 +6,7 @@ import sympy as sp
 import g4n
 from time import time
 
-fov = 0.5
+fov = 0.25
 nPix = 256
 dt = 10e-6
 os = 10
@@ -14,49 +14,49 @@ sLim = 100*42.58e6*(fov/nPix)
 gLim = 120e-3*42.58e6*(fov/nPix)
 fExactSlew = True
 
-# Sp3d
-uPhi = 80
-uTht = 80
-symP = sp.Symbol("phi")
-expPhi = symP
+# # Sp3d
+# uPhi = nPix*5/16
+# uTht = nPix*5/16
+# symP = sp.Symbol("phi")
+# expPhi = symP
 
-expTht = sp.sqrt(2*uPhi/uTht)*sp.sqrt(expPhi)
-expRho = sp.sqrt((uTht*uPhi)/(2*sp.pi**2*nPix**2))*sp.sqrt(expPhi)
-expX = expRho*sp.sin(expTht)*sp.cos(expPhi)
-expY = expRho*sp.sin(expTht)*sp.sin(expPhi)
-expZ = expRho*sp.cos(expTht)
-expK = sp.Array([expX,expY,expZ]).simplify()
-getK = sp.lambdify(symP, expK, "numpy")
-
-p0 = 1e-3
-g0 = zeros((3,))
-p1 = (0.5**2)*2*(pi**2)*(nPix**2)/(uTht*uPhi)
-
-# # Yarnball
-# uPhi = 128
-# uTht = 128
-# symP = sp.Symbol("tht")
-# expTht = symP
-
-# expPhi = sp.sqrt(2*uTht/uPhi)*sp.sqrt(expTht)
-# expRho = uPhi/(2*sp.pi*nPix)*expPhi
+# expTht = sp.sqrt(2*uPhi/uTht)*sp.sqrt(expPhi)
+# expRho = sp.sqrt((uTht*uPhi)/(2*sp.pi**2*nPix**2))*sp.sqrt(expPhi)
 # expX = expRho*sp.sin(expTht)*sp.cos(expPhi)
 # expY = expRho*sp.sin(expTht)*sp.sin(expPhi)
 # expZ = expRho*sp.cos(expTht)
-
 # expK = sp.Array([expX,expY,expZ]).simplify()
 # getK = sp.lambdify(symP, expK, "numpy")
 
-# p0 = 1e-3 # we recommand not to start from 0 because the trajectory equation is undifferentrative at p=0.
 # g0 = zeros((3,))
-# p1 = (pi*nPix)**2/(2*uPhi*uTht)
+# p1 = (0.5**2)*2*(pi**2)*(nPix**2)/(uTht*uPhi)
+# p0 = p1/nPix**2
+
+# Yarnball
+uPhi = nPix*5/16
+uTht = nPix*5/16
+symP = sp.Symbol("tht")
+expTht = symP
+
+expPhi = sp.sqrt(2*uTht/uPhi)*sp.sqrt(expTht)
+expRho = uPhi/(2*sp.pi*nPix)*sp.sqrt(2*uTht/uPhi)*sp.sqrt(expTht)
+expX = expRho*sp.sin(expTht)*sp.cos(expPhi)
+expY = expRho*sp.sin(expTht)*sp.sin(expPhi)
+expZ = expRho*sp.cos(expTht)
+
+expK = sp.Array([expX,expY,expZ]).simplify()
+getK = sp.lambdify(symP, expK, "numpy")
+
+p1 = (pi*nPix)**2/(2*uPhi*uTht)
+p0 = 10e-4 # we recommand not to start from 0 because the trajectory equation is undifferentrative at p=0.
 
 # # Seiffert Spiral
 # k = 0.07
 # p1 = 20
 # p0 = 0
 # def getK(p:float64):
-#     sn, cn, _, _ = ellipj(p, k)
+#     # sn, cn, _, _ = ellipj(p, k)
+#     sn, cn = g4n.calJacElip(p, k)
     
 #     x = sn*cos(p*sqrt(k))
 #     y = sn*sin(p*sqrt(k))
@@ -65,12 +65,17 @@ p1 = (0.5**2)*2*(pi**2)*(nPix**2)/(uTht*uPhi)
 #     return 0.5*p/(p1-p0)*array([x,y,z])
 
 # # 3D Cones
-# p0 = 0
-# p1 = 10*2*pi
+# tht = pi/2 * 0.5
+# dsamp = 64 # * tht/(pi/2)
+# RhoOvPhi = 0.5/(2*pi) * dsamp/nPix
+# p0 = 0 # phi
+# p1 = 2*pi / (dsamp/nPix)
 # def getK(p:float64):
-#     x = 0.1/p1*p * np.cos(p)
-#     y = 0.1/p1*p * np.sin(p)
-#     z = 0.5/p1*p
+#     phi = p
+#     rho = RhoOvPhi * phi
+#     x = rho * sin(tht) * cos(phi)
+#     y = rho * sin(tht) * sin(phi)
+#     z = rho * cos(tht)
 #     return array([x,y,z])
 
 # _ = p0
@@ -83,7 +88,8 @@ t = time()
 g4n.init(sLim, gLim, dt, os, 0, 0, False)
 arrG = g4n.compute(getK, p0, p1)
 t = time() - t
-print(f"Exe Time: {t}")
+print(f"Exe Time: {t:.3f} s")
+print(f"Wave Time: {arrG.shape[0]*dt*1e3:.3f} ms")
 nRO, nAx = arrG.shape
 
 arrS = diff(arrG, axis=0)/dt
@@ -100,7 +106,7 @@ print("p1", p1)
 arrP = arange(p0, p1, (p1-p0)*1e-4)
 arrK_Ref = getK(arrP).T
 
-figure(figsize=(12,6), dpi=120)
+figure(figsize=(18,9), dpi=120)
 
 subplot(221, projection="3d")
 plot(arrK[:,0], arrK[:,1], arrK[:,2], ".-")
@@ -127,7 +133,7 @@ ylim(sLim/(42.58e6)*(nPix/fov)*0.9, sLim/(42.58e6)*(nPix/fov)*1.1)
 grid("on")
 title(f"Slewrate, max:{max(norm(arrS,axis=-1))/(42.58e6)*(nPix/fov):.3f}")
 
-figure(figsize=(6,6), dpi=120)
+figure(figsize=(9,9), dpi=120)
 plot(norm(arrS, axis=-1)/(42.58e6)*(nPix/fov), ".-")
 xlim(0,10)
 ylim(sLim/(42.58e6)*(nPix/fov)*0.98, sLim/(42.58e6)*(nPix/fov)*1.02)

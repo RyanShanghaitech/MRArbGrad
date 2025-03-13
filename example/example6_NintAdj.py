@@ -5,7 +5,7 @@ from numpy.linalg import norm
 from numpy.random import uniform
 
 # adjust number of interleaves, may depends on Nyquist interval
-nInt = 10000
+nInt = 100
 
 fov = 0.22
 nPix = 258
@@ -58,6 +58,7 @@ ax.grid("on")
 
 fig = figure(figsize=(6,6), dpi=120)
 ax = fig.add_subplot(111, projection="3d")
+# lstArrK = [lstArrK[0], lstArrK[-1]]
 for arrK in lstArrK:
     # ax.clear()
     # ax.plot(arrK[:,0], arrK[:,1], arrK[:,2], ".-", markersize=2, linewidth=1)
