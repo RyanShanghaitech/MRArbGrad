@@ -11,21 +11,19 @@ sLim = 100 * 42.5756e6 * fov/nPix
 gLim = 120e-3 * 42.5756e6 * fov/nPix
 
 t = time()
-# lstArrG = [*g4n.Function.getG_Spiral(sLim, gLim)]
+lstArrG = [*g4n.Function.getG_Spiral(sLim, gLim)]
 # lstArrG = [*g4n.Function.getG_VarDenSpiral(sLim, gLim)]
 # lstArrG = [*g4n.Function.getG_Rosette(sLim/4, gLim)]; sLim /= 4
 # lstArrG = [*g4n.Function.getG_CloseSpiral(sLim, gLim)]
 # lstArrG = [*g4n.Function.getG_Spiral3d(sLim, gLim)]
 # lstArrG = [*g4n.Function.getG_Yarnball(sLim, gLim)]
 # lstArrG = [*g4n.Function.getG_Seiffert(sLim, gLim)]
-lstArrG = [*g4n.Function.getG_Cones(sLim, gLim, tht0=100*(1/256)/0.5)]
+# lstArrG = [*g4n.Function.getG_Cones(sLim, gLim, tht0=100*(1/256)/0.5)]
 t = time() - t
 print(f"Exe Time: {t}")
 
 arrG = lstArrG[0]
-print(f"len(lstArrG): {len(lstArrG)}")
 nRO, nAx = arrG.shape
-print(f"arrG.shape: {arrG.shape}")
 
 arrS = diff(arrG, axis=0)/dt
 print(f"sMax: {max(norm(arrS,axis=-1))/(42.58e6)*(nPix/fov)}")
