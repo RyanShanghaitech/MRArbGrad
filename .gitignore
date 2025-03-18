@@ -1,5 +1,5 @@
-test.*
-temp.*
+test*.*
+temp*.*
 
 dist/
 .vscode/
