@@ -16,32 +16,21 @@ gLim = 120e-3 * 42.5756e6 * fov/nPix
 # calculate gradient
 t = time()
 
-lstArrGrad = [*g4n.Function.getG_Spiral(sLim, gLim)] # 0.380s
+lstArrGrad = g4n.Function.getG_Spiral(sLim, gLim) # 0.380s
 
-# lstArrGrad = [*g4n.Function.getG_VarDenSpiral(sLim, gLim)] # 0.499s
+# lstArrGrad = g4n.Function.getG_VarDenSpiral(sLim, gLim) # 0.499s
 
-# lstArrGrad = [*g4n.Function.getG_Rosette(sLim/4, gLim)]; sLim /= 4 # 16.39s (9 frames)
+# lstArrGrad = g4n.Function.getG_Rosette(sLim/4, gLim); sLim /= 4 # 16.39s (9 frames)
 
-# lstArrGrad = [*g4n.Function.getG_CloseSpiral(sLim, gLim)] # 0.462s
+# lstArrGrad = g4n.Function.getG_CloseSpiral(sLim, gLim) # 0.462s
 
-# lstArrGrad = []
-# for i in range(128):
-#     tht0 = (2*pi)*(i/128)
-#     print("tht0", tht0)
-#     lstArrGrad += [*g4n.Function.getG_Shell3d(sLim, gLim, dTht0=tht0)] # 183.7
+# lstArrGrad = g4n.Function.getG_Shell3d(sLim, gLim) # 183.7
 
-# lstArrGrad = []
-# for i in range(128):
-#     tht0 = (2*pi)*(i/128)
-#     print("tht0", tht0)
-#     lstArrGrad += [*g4n.Function.getG_Yarnball(sLim, gLim, dTht0=tht0)] # 196.1
+# lstArrGrad = g4n.Function.getG_Yarnball(sLim, gLim) # 196.1
     
-# lstArrGrad = [*g4n.Function.getG_Seiffert(sLim, gLim)] # 232.9s
+# lstArrGrad = g4n.Function.getG_Seiffert(sLim, gLim) # 232.9s
 
-# lstArrGrad = []
-# for tht0 in linspace(0, pi, int(nPix*pi/2)+1, True):
-#     print("tht0", tht0)
-#     lstArrGrad += [*g4n.Function.getG_Cone(sLim, gLim, dTht0=tht0)] # 149.9s
+# lstArrGrad = g4n.Function.getG_Cones(sLim, gLim) # 149.9s
 
 t = time() - t
 print(f"Exe Time: {t}")
@@ -64,6 +53,7 @@ print(f"sMax: {max(norm(arrSlew,axis=-1))/(42.58e6)*(nPix/fov)}")
 lstArrK = []
 for arrGrad in lstArrGrad:
     arrK = g4n.cvtGrad2Traj(arrGrad, dtGrad, dtADC)
+    arrRho = norm(arrK, axis=-1)
     lstArrK.append(arrK)
 
 # simulate phantom
