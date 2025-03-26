@@ -1,6 +1,12 @@
 test*.*
 temp*.*
+*.gif
+*.npy
+*.npz
 
 dist/
 .vscode/
 g4n.egg-info/
+
+fars/
+resource/

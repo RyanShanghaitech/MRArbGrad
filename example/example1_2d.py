@@ -9,23 +9,23 @@ fov = 0.25
 nPix = 256
 dt = 10e-6
 os = 10
-sMax = 100*42.58e6*(fov/nPix)
+sLim = 100*42.58e6*(fov/nPix)
 fExactSlew = True
 
-# # SpO
-# nSp = 64
-# p0 = 0
-# p1 = (2*pi)*(nPix/2/nSp)
-# symP = sp.Symbol("tht")
-# A = (0.5/(2*pi))/(nPix/2/nSp)
-# expRho = A*symP
-# expX = expRho*sp.cos(symP)
-# expY = expRho*sp.sin(symP)
-# expK = sp.Array([expX,expY,1e-30*symP])
+# SpO
+nSp = 64
+p0 = 0
+p1 = (2*pi)*(nPix/2/nSp)
+symP = sp.Symbol("tht")
+A = (0.5/(2*pi))/(nPix/2/nSp)
+expRho = A*symP
+expX = expRho*sp.cos(symP)
+expY = expRho*sp.sin(symP)
+expK = sp.Array([expX,expY,1e-30*symP])
 
-# getK = sp.lambdify(symP, expK, "numpy")
-# getK_D1p = sp.lambdify(symP, expK.diff(symP,1).simplify(), "numpy")
-# getK_D2p = sp.lambdify(symP, expK.diff(symP,2).simplify(), "numpy")
+getK = sp.lambdify(symP, expK, "numpy")
+getK_D1p = sp.lambdify(symP, expK.diff(symP,1).simplify(), "numpy")
+getK_D2p = sp.lambdify(symP, expK.diff(symP,2).simplify(), "numpy")
 
 # # SpI
 # nSp = 64
@@ -43,22 +43,22 @@ fExactSlew = True
 # getK_D1p = sp.lambdify(symP, expK.diff(symP,1).simplify(), "numpy")
 # getK_D2p = sp.lambdify(symP, expK.diff(symP,2).simplify(), "numpy")
 
-# Rosette
-symP = sp.Symbol("t") 
-om1 = 9*pi
-om2 = 19*pi
-p0 = 0
-p1 = 1
-expT = symP
+# # Rosette
+# symP = sp.Symbol("t") 
+# om1 = 9*pi
+# om2 = 19*pi
+# p0 = 0
+# p1 = 1
+# expT = symP
 
-expRho = 0.5*sp.sin(om1*expT)
-expX = expRho*sp.cos(om2*expT)
-expY = expRho*sp.sin(om2*expT)
-expK = sp.Array([expX,expY,1e-30*symP])
+# expRho = 0.5*sp.sin(om1*expT)
+# expX = expRho*sp.cos(om2*expT)
+# expY = expRho*sp.sin(om2*expT)
+# expK = sp.Array([expX,expY,1e-30*symP])
 
-getK = sp.lambdify(symP, expK, "numpy")
-getK_D1p = sp.lambdify(symP, expK.diff(symP,1).simplify(), "numpy")
-getK_D2p = sp.lambdify(symP, expK.diff(symP,2).simplify(), "numpy")
+# getK = sp.lambdify(symP, expK, "numpy")
+# getK_D1p = sp.lambdify(symP, expK.diff(symP,1).simplify(), "numpy")
+# getK_D2p = sp.lambdify(symP, expK.diff(symP,2).simplify(), "numpy")
 
 # # VDS
 # nSp0 = 32
@@ -75,8 +75,8 @@ getK_D2p = sp.lambdify(symP, expK.diff(symP,2).simplify(), "numpy")
 
 # derive slew-rate constrained trajectory
 t = time()
-g4n.init(sMax, 1e8, dt, os, 0, 0, False)
-arrG = g4n.compute(getK, p0, p1)
+g4n.init(p0, p1, getK)
+arrG = g4n.calGrad(sLim, 1e8, dt, os, 0, 0)
 t = time() - t
 print(f"Exe Time: {t}")
 nRO, nAx = arrG.shape
@@ -121,7 +121,7 @@ title("g-Space")
 
 subplot(224)
 plot(norm(arrS,axis=-1)/(42.58e6)*(nPix/fov), ".-")
-ylim(sMax/(42.58e6)*(nPix/fov)*0.9, sMax/(42.58e6)*(nPix/fov)*1.1)
+ylim(sLim/(42.58e6)*(nPix/fov)*0.9, sLim/(42.58e6)*(nPix/fov)*1.1)
 grid("on")
 title(f"Slewrate, max:{max(norm(arrS,axis=-1))/(42.58e6)*(nPix/fov):.3f}")
 

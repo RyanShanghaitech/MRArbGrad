@@ -3,91 +3,169 @@ from numpy import *
 from matplotlib.pyplot import *
 from numpy.linalg import norm
 from time import time
+import finufft as fn
+import fars
 
 fov = 0.20
 nPix = 256
-dt = 10e-6
+dtGrad = 10e-6
+dtADC = 5e-6
 sLim = 100 * 42.5756e6 * fov/nPix
 gLim = 120e-3 * 42.5756e6 * fov/nPix
 
+# calculate gradient
 t = time()
-lstArrG = [*g4n.Function.getG_Spiral(sLim, gLim, kRhoPhi=0.5/(4*pi))] # 100.011
-# lstArrG = [*g4n.Function.getG_VarDenSpiral(sLim, gLim)] # 100.010
-# lstArrG = [*g4n.Function.getG_Rosette(sLim/4, gLim)]; sLim /= 4 # 25.003
-# lstArrG = [*g4n.Function.getG_CloseSpiral(sLim, gLim)] # 99.998
-# lstArrG = [*g4n.Function.getG_Spiral3d(sLim, gLim, kRhoTht=0.5/(2*pi))] # 99.990
-# lstArrG = [*g4n.Function.getG_Yarnball(sLim, gLim, kRhoPhi=0.5/(2*pi))] # 100.012
-# lstArrG = [*g4n.Function.getG_Seiffert(sLim, gLim)] # 100.012
-# lstArrG = [*g4n.Function.getG_Cones(sLim, gLim, tht0=100*(1/256)/0.5)] # 100.006
+
+lstArrGrad = [*g4n.Function.getG_Spiral(sLim, gLim)] # 0.380s
+
+# lstArrGrad = [*g4n.Function.getG_VarDenSpiral(sLim, gLim)] # 0.499s
+
+# lstArrGrad = [*g4n.Function.getG_Rosette(sLim/4, gLim)]; sLim /= 4 # 16.39s (9 frames)
+
+# lstArrGrad = [*g4n.Function.getG_CloseSpiral(sLim, gLim)] # 0.462s
+
+# lstArrGrad = []
+# for i in range(128):
+#     tht0 = (2*pi)*(i/128)
+#     print("tht0", tht0)
+#     lstArrGrad += [*g4n.Function.getG_Shell3d(sLim, gLim, dTht0=tht0)] # 183.7
+
+# lstArrGrad = []
+# for i in range(128):
+#     tht0 = (2*pi)*(i/128)
+#     print("tht0", tht0)
+#     lstArrGrad += [*g4n.Function.getG_Yarnball(sLim, gLim, dTht0=tht0)] # 196.1
+    
+# lstArrGrad = [*g4n.Function.getG_Seiffert(sLim, gLim)] # 232.9s
+
+# lstArrGrad = []
+# for tht0 in linspace(0, pi, int(nPix*pi/2)+1, True):
+#     print("tht0", tht0)
+#     lstArrGrad += [*g4n.Function.getG_Cone(sLim, gLim, dTht0=tht0)] # 149.9s
+
 t = time() - t
 print(f"Exe Time: {t}")
-print(f"IntLea Num.: {len(lstArrG)}")
+print(f"Intlea Num.: {len(lstArrGrad)}")
 
-arrG = lstArrG[0]
-nRO, nAx = arrG.shape
+nRO_Max = max(arrG.shape[0] for arrG in lstArrGrad)
+tTR = (nRO_Max*dtGrad + 5e-3)
+tScan = tTR*len(lstArrGrad)
+print(f"Tscan {tScan:.3e} s")
 
-arrS = diff(arrG, axis=0)/dt
-print(f"sMax: {max(norm(arrS,axis=-1))/(42.58e6)*(nPix/fov)}")
+# derive shape parameter
+if all(lstArrGrad[0][:,2]==0): lstArrGrad = [arrG[:,:2] for arrG in lstArrGrad]
+nRO, nAx = lstArrGrad[0].shape
 
+# derive slewrate
+arrSlew = diff(lstArrGrad[0], axis=0)/dtGrad
+print(f"sMax: {max(norm(arrSlew,axis=-1))/(42.58e6)*(nPix/fov)}")
+
+# derive trajectory
 lstArrK = []
-for arrG in lstArrG:
-    arrDk = zeros((nRO+1,nAx))
-    arrDk[1:,:] = arrG*dt
-    arrK = zeros_like(arrDk)
-    arrK += cumsum(arrDk, axis=0)
-    lstArrK.append(arrK[:])
-lstArrK = lstArrK[:1]
+for arrGrad in lstArrGrad:
+    arrK = g4n.cvtGrad2Traj(arrGrad, dtGrad, dtADC)
+    lstArrK.append(arrK)
+
+# simulate phantom
+arrI = asarray(load("./resource/arrM0.npz")["arrM0"])
+if nAx == 2: arrI = arrI[nPix//2,:,:]
+arrX = array(meshgrid\
+    (
+        arange(-nPix//2, nPix//2, 1),
+        arange(-nPix//2, nPix//2, 1),
+        indexing="ij"
+    )).T.reshape(-1,2)
+arrK = concatenate(lstArrK, axis=0)
+arrDcf = fars.calDcf(nPix, arrK).astype(complex64)
+arrOm = 2*pi*arrK; arrOm = arrOm.astype(float32)
+
+plan = fn.Plan(2, tuple(nPix for _ in range(nAx)), isign=-1, dtype="complex64")
+plan.setpts(*arrOm.T)
+arrS = plan.execute(arrI.astype(complex64))
+
+plan = fn.Plan(1, tuple(nPix for _ in range(nAx)), isign=1, dtype="complex64")
+plan.setpts(*arrOm.T)
+arrI_Reco = plan.execute(arrS*arrDcf)
+
+if nAx==2:
+    figure()
+    
+    subplot(121)
+    imshow(abs(arrI), cmap="gray")
+    
+    subplot(122)
+    imshow(abs(arrI_Reco), cmap="gray")
+    
+if nAx==3:
+    figure()
+    
+    subplot(321)
+    imshow(abs(arrI[nPix//2,:,:]), cmap="gray")
+    subplot(322)
+    imshow(abs(arrI_Reco[nPix//2,:,:]), cmap="gray")
+    
+    subplot(323)
+    imshow(abs(arrI[:,nPix//2,:]), cmap="gray")
+    subplot(324)
+    imshow(abs(arrI_Reco[:,nPix//2,:]), cmap="gray")
+    
+    subplot(325)
+    imshow(abs(arrI[:,:,nPix//2]), cmap="gray")
+    subplot(326)
+    imshow(abs(arrI_Reco[:,:,nPix//2]), cmap="gray")
 
 # plot
 figure(figsize=(18,9), dpi=120)
 
 subplot(261)
-for arrK in lstArrK: plot(*arrK.T[(0,1),:], ".-")
+plot(*lstArrK[0].T[(0,1),:], ".-")
 axis("equal")
 grid("on")
-title(f"kx-ky {1}/{len(lstArrG)}")
+title(f"kx-ky {1}/{len(lstArrGrad)}")
 
-subplot(262)
-for arrK in lstArrK: plot(*arrK.T[(0,2),:], ".-")
-axis("equal")
-grid("on")
-title("kx-kz")
+if nAx==3:
+    subplot(262)
+    plot(*lstArrK[0].T[(0,2),:], ".-")
+    axis("equal")
+    grid("on")
+    title("kx-kz")
 
-subplot(263)
-for arrK in lstArrK: plot(*arrK.T[(1,2),:], ".-")
-axis("equal")
-grid("on")
-title("ky-kz")
+    subplot(263)
+    plot(*lstArrK[0].T[(1,2),:], ".-")
+    axis("equal")
+    grid("on")
+    title("ky-kz")
 
 subplot(222)
 for iAx in range(nAx):
-    plot(arrG[:,iAx]/(42.58e6)*(nPix/fov), ".-")
+    plot(lstArrGrad[0][:,iAx]/(42.58e6)*(nPix/fov), ".-")
 grid("on")
 title("Gradient")
 
 subplot(267)
-plot(*arrG.T[(0,1),:], ".-")
+plot(*lstArrGrad[0].T[(0,1),:], ".-")
 axis("equal")
 grid("on")
 title("gx-gy")
 
-subplot(268)
-plot(*arrG.T[(0,2),:], ".-")
-axis("equal")
-grid("on")
-title("gx-gz")
+if nAx==3:
+    subplot(268)
+    plot(*lstArrGrad[0].T[(0,2),:], ".-")
+    axis("equal")
+    grid("on")
+    title("gx-gz")
 
-subplot(269)
-plot(*arrG.T[(1,2),:], ".-")
-axis("equal")
-grid("on")
-title("gy-gz")
+    subplot(269)
+    plot(*lstArrGrad[0].T[(1,2),:], ".-")
+    axis("equal")
+    grid("on")
+    title("gy-gz")
 
 subplot(224)
-plot(norm(arrS,axis=-1)/(42.58e6)*(nPix/fov), ".-")
+plot(norm(arrSlew,axis=-1)/(42.58e6)*(nPix/fov), ".-")
 ylim(sLim/(42.58e6)*(nPix/fov)*0.9, sLim/(42.58e6)*(nPix/fov)*1.1)
 grid("on")
-title(f"Slewrate, max:{max(norm(arrS,axis=-1))/(42.58e6)*(nPix/fov):.3f}")
+title(f"Slewrate, max:{max(norm(arrSlew,axis=-1))/(42.58e6)*(nPix/fov):.3f}")
 
 subplots_adjust(0.05,0.1,0.95,0.9, 0.2, 0.2)
 

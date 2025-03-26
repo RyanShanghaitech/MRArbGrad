@@ -85,8 +85,8 @@ print("getK(p0)", getK(p0))
 
 # derive slew-rate constrained trajectory
 t = time()
-g4n.init(sLim, gLim, dt, os, 0, 0, False)
-arrG = g4n.compute(getK, p0, p1)
+g4n.init(p0, p1, getK)
+arrG = g4n.calGrad(sLim, 1e8, dt, os, 0, 0)
 t = time() - t
 print(f"Exe Time: {t:.3f} s")
 print(f"Wave Time: {arrG.shape[0]*dt*1e3:.3f} ms")
