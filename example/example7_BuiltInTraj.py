@@ -13,10 +13,12 @@ dtADC = 5e-6
 sLim = 100 * 42.5756e6 * fov/nPix
 gLim = 120e-3 * 42.5756e6 * fov/nPix
 
+reverse = False
+
 # calculate gradient
 t = time()
 
-lstArrGrad = g4n.Function.getG_Spiral(sLim, gLim) # 0.380s
+# lstArrGrad = g4n.Function.getG_Spiral(sLim, gLim) # 0.380s
 
 # lstArrGrad = g4n.Function.getG_VarDenSpiral(sLim, gLim) # 0.499s
 
@@ -24,7 +26,7 @@ lstArrGrad = g4n.Function.getG_Spiral(sLim, gLim) # 0.380s
 
 # lstArrGrad = g4n.Function.getG_CloseSpiral(sLim, gLim) # 0.462s
 
-# lstArrGrad = g4n.Function.getG_Shell3d(sLim, gLim) # 183.7
+lstArrGrad = g4n.Function.getG_Shell3d(sLim, gLim) # 183.7
 
 # lstArrGrad = g4n.Function.getG_Yarnball(sLim, gLim) # 196.1
     
@@ -38,8 +40,9 @@ print(f"Intlea Num.: {len(lstArrGrad)}")
 
 nRO_Max = max(arrG.shape[0] for arrG in lstArrGrad)
 tTR = (nRO_Max*dtGrad + 5e-3)
+print(f"TR: {tTR*1e3:.3f} ms")
 tScan = tTR*len(lstArrGrad)
-print(f"Tscan {tScan:.3e} s")
+print(f"Tscan: {tScan:.3e} s")
 
 # derive shape parameter
 if all(lstArrGrad[0][:,2]==0): lstArrGrad = [arrG[:,:2] for arrG in lstArrGrad]
@@ -53,6 +56,7 @@ print(f"sMax: {max(norm(arrSlew,axis=-1))/(42.58e6)*(nPix/fov)}")
 lstArrK = []
 for arrGrad in lstArrGrad:
     arrK = g4n.cvtGrad2Traj(arrGrad, dtGrad, dtADC)
+    if reverse: arrK -= arrK[-1,:]
     arrRho = norm(arrK, axis=-1)
     lstArrK.append(arrK)
 
