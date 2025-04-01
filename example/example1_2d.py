@@ -75,8 +75,7 @@ getK_D2p = sp.lambdify(symP, expK.diff(symP,2).simplify(), "numpy")
 
 # derive slew-rate constrained trajectory
 t = time()
-g4n.init(p0, p1, getK)
-arrG = g4n.calGrad(sLim, 1e8, dt, os, 0, 0)
+arrG = g4n.calGrad(p0, p1, getK, None, None, sLim, 1e8, dt)
 t = time() - t
 print(f"Exe Time: {t}")
 nRO, nAx = arrG.shape
