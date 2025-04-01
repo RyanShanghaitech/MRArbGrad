@@ -5,11 +5,13 @@ from numpy.linalg import norm
 from time import time
 import finufft as fn
 import fars
+import torch as tor
+import torchkbnufft as tkbn
 
-fov = 0.20
+fov = 0.25
 nPix = 256
 dtGrad = 10e-6
-dtADC = 5e-6
+dtADC = 2.5e-6
 sLim = 100 * 42.5756e6 * fov/nPix
 gLim = 120e-3 * 42.5756e6 * fov/nPix
 
@@ -18,21 +20,21 @@ reverse = False
 # calculate gradient
 t = time()
 
-# lstArrGrad = g4n.Function.getG_Spiral(sLim, gLim) # 0.380s
+# lstArrK0, lstArrGrad = g4n.Function.getG_Spiral(lNStack=256) # 0.380s
 
-# lstArrGrad = g4n.Function.getG_VarDenSpiral(sLim, gLim) # 0.499s
+# lstArrK0, lstArrGrad = g4n.Function.getG_VarDenSpiral(lNStack=256) # 0.499s
 
-# lstArrGrad = g4n.Function.getG_Rosette(sLim/4, gLim); sLim /= 4 # 16.39s (9 frames)
+# lstArrK0, lstArrGrad = g4n.Function.getG_Rosette(lNStack=256); # 16.39s (9 frames)
 
-# lstArrGrad = g4n.Function.getG_CloseSpiral(sLim, gLim) # 0.462s
+# lstArrK0, lstArrGrad = g4n.Function.getG_CloseSpiral(lNStack=256) # 0.462s
 
-lstArrGrad = g4n.Function.getG_Shell3d(sLim, gLim) # 183.7
+# lstArrK0, lstArrGrad = g4n.Function.getG_Shell3d() # 183.7
 
-# lstArrGrad = g4n.Function.getG_Yarnball(sLim, gLim) # 196.1
+# lstArrK0, lstArrGrad = g4n.Function.getG_Yarnball() # 196.1
     
-# lstArrGrad = g4n.Function.getG_Seiffert(sLim, gLim) # 232.9s
+# lstArrK0, lstArrGrad = g4n.Function.getG_Seiffert() # 232.9s
 
-# lstArrGrad = g4n.Function.getG_Cones(sLim, gLim) # 149.9s
+lstArrK0, lstArrGrad = g4n.Function.getG_Cones() # 149.9s
 
 t = time() - t
 print(f"Exe Time: {t}")
@@ -45,7 +47,6 @@ tScan = tTR*len(lstArrGrad)
 print(f"Tscan: {tScan:.3e} s")
 
 # derive shape parameter
-if all(lstArrGrad[0][:,2]==0): lstArrGrad = [arrG[:,:2] for arrG in lstArrGrad]
 nRO, nAx = lstArrGrad[0].shape
 
 # derive slewrate
@@ -54,9 +55,9 @@ print(f"sMax: {max(norm(arrSlew,axis=-1))/(42.58e6)*(nPix/fov)}")
 
 # derive trajectory
 lstArrK = []
-for arrGrad in lstArrGrad:
+for arrK0, arrGrad in zip(lstArrK0, lstArrGrad):
     arrK = g4n.cvtGrad2Traj(arrGrad, dtGrad, dtADC)
-    if reverse: arrK -= arrK[-1,:]
+    arrK += arrK0
     arrRho = norm(arrK, axis=-1)
     lstArrK.append(arrK)
 
@@ -70,7 +71,13 @@ arrX = array(meshgrid\
         indexing="ij"
     )).T.reshape(-1,2)
 arrK = concatenate(lstArrK, axis=0)
+
 arrDcf = fars.calDcf(nPix, arrK).astype(complex64)
+
+# tenK = tor.from_numpy(arrK)
+# tenDcf = tkbn.calc_density_compensation_function((2*pi)*tenK.T, (nPix,nPix), numpoints=8, kbwidth=4, num_iterations=1, table_oversamp=2**10)
+# arrDcf = tenDcf.detach().cpu().numpy().squeeze().astype(complex64)
+
 arrOm = 2*pi*arrK; arrOm = arrOm.astype(float32)
 
 plan = fn.Plan(2, tuple(nPix for _ in range(nAx)), isign=-1, dtype="complex64")
@@ -82,7 +89,7 @@ plan.setpts(*arrOm.T)
 arrI_Reco = plan.execute(arrS*arrDcf)
 
 if nAx==2:
-    figure()
+    figure(figsize=(9,9), dpi=120)
     
     subplot(121)
     imshow(abs(arrI), cmap="gray")
@@ -91,7 +98,7 @@ if nAx==2:
     imshow(abs(arrI_Reco), cmap="gray")
     
 if nAx==3:
-    figure()
+    figure(figsize=(9,9), dpi=120)
     
     subplot(321)
     imshow(abs(arrI[nPix//2,:,:]), cmap="gray")
