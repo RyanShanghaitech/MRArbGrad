@@ -10,31 +10,31 @@ import torchkbnufft as tkbn
 
 fov = 0.25
 nPix = 256
-dtGrad = 10e-6
-dtADC = 2.5e-6
 sLim = 100 * 42.5756e6 * fov/nPix
 gLim = 120e-3 * 42.5756e6 * fov/nPix
-
-reverse = False
+dtGrad = 10e-6
+dtADC = 2.5e-6
+nAx = 3
+argCom = dict(lNPix=nPix, dSLim=sLim, dGLim=gLim, dDt=dtGrad)
 
 # calculate gradient
 t = time()
 
-# lstArrK0, lstArrGrad = g4n.Function.getG_Spiral(lNStack=256) # 0.380s
+# lstArrK0, lstArrGrad = g4n.Function.getG_Spiral(lNStack=256, **argCom) # 0.380s
 
-# lstArrK0, lstArrGrad = g4n.Function.getG_VarDenSpiral(lNStack=256) # 0.499s
+# lstArrK0, lstArrGrad = g4n.Function.getG_VarDenSpiral(lNStack=256, **argCom) # 0.499s
 
-# lstArrK0, lstArrGrad = g4n.Function.getG_Rosette(lNStack=256); # 16.39s (9 frames)
+# lstArrK0, lstArrGrad = g4n.Function.getG_Rosette(lNStack=1, **argCom); nAx = 2 # 16.39s (9 frames)
 
-# lstArrK0, lstArrGrad = g4n.Function.getG_CloseSpiral(lNStack=256) # 0.462s
+# lstArrK0, lstArrGrad = g4n.Function.getG_CloseSpiral(lNStack=256, **argCom) # 0.462s
 
-lstArrK0, lstArrGrad = g4n.Function.getG_Shell3d() # 183.7
+lstArrK0, lstArrGrad = g4n.Function.getG_Shell3d(**argCom) # 183.7
 
-# lstArrK0, lstArrGrad = g4n.Function.getG_Yarnball() # 196.1
+# lstArrK0, lstArrGrad = g4n.Function.getG_Yarnball(**argCom) # 196.1
     
-# lstArrK0, lstArrGrad = g4n.Function.getG_Seiffert() # 232.9s
+# lstArrK0, lstArrGrad = g4n.Function.getG_Seiffert(**argCom) # 232.9s
 
-# lstArrK0, lstArrGrad = g4n.Function.getG_Cones() # 149.9s
+# lstArrK0, lstArrGrad = g4n.Function.getG_Cones(**argCom) # 149.9s
 
 t = time() - t
 print(f"Exe Time: {t}")
@@ -47,6 +47,9 @@ tScan = tTR*len(lstArrGrad)
 print(f"Tscan: {tScan:.3e} s")
 
 # derive shape parameter
+if nAx==2:
+    lstArrGrad = [arrG[:,:2] for arrG in lstArrGrad]
+    lstArrK0 = [arrK0[:2] for arrK0 in lstArrK0]
 nRO, nAx = lstArrGrad[0].shape
 
 # derive slewrate
@@ -55,17 +58,15 @@ print(f"sMax: {max(norm(arrSlew,axis=-1))/(42.58e6)*(nPix/fov)}")
 
 # derive trajectory
 lstArrK = []
-i = 0
 for arrK0, arrGrad in zip(lstArrK0, lstArrGrad):
     arrK = g4n.cvtGrad2Traj(arrGrad, dtGrad, dtADC)
     arrK += arrK0
     lstArrK.append(arrK)
-    i += 1
     
 _lst = []
 for arrK in lstArrK:
     arrRho = norm(arrK, axis=-1)
-    _lst.append(arrRho[-1])
+    _lst.append(min(arrRho))
 _arr = array(_lst)
 print("mean", mean(_arr))
 print("min", min(_arr))
@@ -138,12 +139,6 @@ subplots_adjust(0.05,0.1,0.95,0.9, 0.2, 0.2)
 # simulate phantom
 arrI = asarray(load("./resource/arrM0.npz")["arrM0"])
 if nAx == 2: arrI = arrI[nPix//2,:,:]
-arrX = array(meshgrid\
-    (
-        arange(-nPix//2, nPix//2, 1),
-        arange(-nPix//2, nPix//2, 1),
-        indexing="ij"
-    )).T.reshape(-1,2)
 arrK = concatenate(lstArrK, axis=0)
 
 arrDcf = fars.calDcf(nPix, arrK).astype(complex64)
