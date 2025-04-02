@@ -28,13 +28,13 @@ t = time()
 
 # lstArrK0, lstArrGrad = g4n.Function.getG_CloseSpiral(lNStack=256) # 0.462s
 
-# lstArrK0, lstArrGrad = g4n.Function.getG_Shell3d() # 183.7
+lstArrK0, lstArrGrad = g4n.Function.getG_Shell3d() # 183.7
 
 # lstArrK0, lstArrGrad = g4n.Function.getG_Yarnball() # 196.1
     
 # lstArrK0, lstArrGrad = g4n.Function.getG_Seiffert() # 232.9s
 
-lstArrK0, lstArrGrad = g4n.Function.getG_Cones() # 149.9s
+# lstArrK0, lstArrGrad = g4n.Function.getG_Cones() # 149.9s
 
 t = time() - t
 print(f"Exe Time: {t}")
@@ -55,11 +55,85 @@ print(f"sMax: {max(norm(arrSlew,axis=-1))/(42.58e6)*(nPix/fov)}")
 
 # derive trajectory
 lstArrK = []
+i = 0
 for arrK0, arrGrad in zip(lstArrK0, lstArrGrad):
     arrK = g4n.cvtGrad2Traj(arrGrad, dtGrad, dtADC)
     arrK += arrK0
-    arrRho = norm(arrK, axis=-1)
     lstArrK.append(arrK)
+    i += 1
+    
+_lst = []
+for arrK in lstArrK:
+    arrRho = norm(arrK, axis=-1)
+    _lst.append(arrRho[-1])
+_arr = array(_lst)
+print("mean", mean(_arr))
+print("min", min(_arr))
+print("max", max(_arr))
+
+# plot
+figure(figsize=(18,9), dpi=120)
+
+iArrK = 64
+
+subplot(261)
+plot(*lstArrK[iArrK].T[(0,1),:], ".-")
+axis("equal")
+grid("on")
+title(f"kx-ky {1}/{len(lstArrGrad)}")
+
+if nAx==3:
+    subplot(262)
+    plot(*lstArrK[iArrK].T[(0,2),:], ".-")
+    axis("equal")
+    grid("on")
+    title("kx-kz")
+
+    subplot(263)
+    plot(*lstArrK[iArrK].T[(1,2),:], ".-")
+    axis("equal")
+    grid("on")
+    title("ky-kz")
+
+subplot(222)
+for iAx in range(nAx):
+    plot(lstArrGrad[0][:,iAx]/(42.58e6)*(nPix/fov), ".-")
+grid("on")
+title("Gradient")
+
+subplot(267)
+plot(*lstArrGrad[0].T[(0,1),:], ".-")
+axis("equal")
+grid("on")
+title("gx-gy")
+
+if nAx==3:
+    subplot(268)
+    plot(*lstArrGrad[0].T[(0,2),:], ".-")
+    axis("equal")
+    grid("on")
+    title("gx-gz")
+
+    subplot(269)
+    plot(*lstArrGrad[0].T[(1,2),:], ".-")
+    axis("equal")
+    grid("on")
+    title("gy-gz")
+
+subplot(224)
+plot(norm(arrSlew,axis=-1)/(42.58e6)*(nPix/fov), ".-")
+ylim(sLim/(42.58e6)*(nPix/fov)*0.9, sLim/(42.58e6)*(nPix/fov)*1.1)
+grid("on")
+title(f"Slewrate, max:{max(norm(arrSlew,axis=-1))/(42.58e6)*(nPix/fov):.3f}")
+
+subplots_adjust(0.05,0.1,0.95,0.9, 0.2, 0.2)
+
+
+
+# show()
+# exit(0)
+
+
 
 # simulate phantom
 arrI = asarray(load("./resource/arrM0.npz")["arrM0"])
@@ -114,60 +188,5 @@ if nAx==3:
     imshow(abs(arrI[:,:,nPix//2]), cmap="gray")
     subplot(326)
     imshow(abs(arrI_Reco[:,:,nPix//2]), cmap="gray")
-
-# plot
-figure(figsize=(18,9), dpi=120)
-
-subplot(261)
-plot(*lstArrK[0].T[(0,1),:], ".-")
-axis("equal")
-grid("on")
-title(f"kx-ky {1}/{len(lstArrGrad)}")
-
-if nAx==3:
-    subplot(262)
-    plot(*lstArrK[0].T[(0,2),:], ".-")
-    axis("equal")
-    grid("on")
-    title("kx-kz")
-
-    subplot(263)
-    plot(*lstArrK[0].T[(1,2),:], ".-")
-    axis("equal")
-    grid("on")
-    title("ky-kz")
-
-subplot(222)
-for iAx in range(nAx):
-    plot(lstArrGrad[0][:,iAx]/(42.58e6)*(nPix/fov), ".-")
-grid("on")
-title("Gradient")
-
-subplot(267)
-plot(*lstArrGrad[0].T[(0,1),:], ".-")
-axis("equal")
-grid("on")
-title("gx-gy")
-
-if nAx==3:
-    subplot(268)
-    plot(*lstArrGrad[0].T[(0,2),:], ".-")
-    axis("equal")
-    grid("on")
-    title("gx-gz")
-
-    subplot(269)
-    plot(*lstArrGrad[0].T[(1,2),:], ".-")
-    axis("equal")
-    grid("on")
-    title("gy-gz")
-
-subplot(224)
-plot(norm(arrSlew,axis=-1)/(42.58e6)*(nPix/fov), ".-")
-ylim(sLim/(42.58e6)*(nPix/fov)*0.9, sLim/(42.58e6)*(nPix/fov)*1.1)
-grid("on")
-title(f"Slewrate, max:{max(norm(arrSlew,axis=-1))/(42.58e6)*(nPix/fov):.3f}")
-
-subplots_adjust(0.05,0.1,0.95,0.9, 0.2, 0.2)
-
+    
 show()
