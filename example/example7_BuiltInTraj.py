@@ -4,6 +4,7 @@ from matplotlib.pyplot import *
 from numpy.linalg import norm
 from time import time
 import finufft as fn
+import slime
 import fars
 import torch as tor
 import torchkbnufft as tkbn
@@ -13,9 +14,9 @@ gamma = 42.5756e6
 fov = 0.256
 nPix = 256
 sLim = 100 * gamma * fov/nPix
-gLim = 12000e-3 * gamma * fov/nPix
+gLim = 32e-3 * gamma * fov/nPix
 dtGrad = 10e-6
-dtADC = 5e-6
+dtADC = 2.5e-6
 argCom = dict(dFov=fov, lNPix=nPix, dSLim=sLim, dGLim=gLim, dDt=dtGrad)
 
 # calculate gradient
@@ -25,17 +26,17 @@ t = time()
 
 # lstArrK0, lstArrGrad = g4n.Function.getG_VarDenSpiral(**argCom); nAx = 2 # 0.499s
 
-# lstArrK0, lstArrGrad = g4n.Function.getG_Rosette(**argCom, dOm1=5*pi, dOm2=1*pi, dTmax=1); nAx = 2 # 16.39s (9 frames)
+# lstArrK0, lstArrGrad = g4n.Function.getG_Rosette(**argCom, dOm1=5*pi, dOm2=3*pi, dTmax=1); nAx = 2 # 16.39s (9 frames)
 
-# lstArrK0, lstArrGrad = g4n.Function.getG_Rosette_Trad(**argCom, dOm1=10*pi, dOm2=8*pi, dTmax=1); nAx = 2 # 16.39s (9 frames)
+# lstArrK0, lstArrGrad = g4n.Function.getG_Rosette_Trad(**argCom, dOm1=5*pi, dOm2=3*pi, dTmax=1); nAx = 2 # 16.39s (9 frames)
 
-# lstArrK0, lstArrGrad = g4n.Function.getG_Shell3d(dRhoTht=0.5/(2*pi), **argCom); nAx = 3 # 183.7
+lstArrK0, lstArrGrad = g4n.Function.getG_Shell3d(dRhoTht=0.5/(4*pi), **argCom); nAx = 3 # 183.7
 
-# lstArrK0, lstArrGrad = g4n.Function.getG_Yarnball(dRhoPhi=0.5/(2*pi), **argCom); nAx = 3 # 196.1
+# lstArrK0, lstArrGrad = g4n.Function.getG_Yarnball(dRhoPhi=0.5/(4*pi), **argCom); nAx = 3 # 196.1
     
 # lstArrK0, lstArrGrad = g4n.Function.getG_Seiffert(**argCom); nAx = 3 # 232.9s
 
-lstArrK0, lstArrGrad = g4n.Function.getG_Cones(**argCom); nAx = 3 # 149.9s
+# lstArrK0, lstArrGrad = g4n.Function.getG_Cones(**argCom); nAx = 3 # 149.9s
 
 t = time() - t
 print(f"Exe Time: {t}")
@@ -55,8 +56,11 @@ if nAx==2:
 nRO, nAx = lstArrGrad[0].shape
 
 # derive slewrate
-arrSlew = diff(lstArrGrad[0], axis=0)/dtGrad
-print(f"sMax: {max(norm(arrSlew/gamma*nPix/fov,axis=-1))}")
+lstArrSlew = [diff(arrG, axis=0)/dtGrad for arrG in lstArrGrad]
+sMax = max(norm(concatenate(lstArrSlew)/gamma*nPix/fov,axis=-1))
+gMax = max(norm(concatenate(lstArrGrad)/gamma*nPix/fov,axis=-1))
+print(f"sMax: {sMax}")
+print(f"gMax: {gMax}")
 
 # derive trajectory
 lstArrK = []
@@ -74,7 +78,7 @@ if nAx==3:
 
 figure(figsize=(18,9), dpi=120)
 
-iArrK = 0
+iArrK = len(lstArrK)//2
 
 subplot(261)
 plot(*lstArrK[iArrK].T[(0,1),:], ".-")
@@ -97,34 +101,34 @@ if nAx==3:
 
 subplot(222)
 for iAx in range(nAx):
-    plot(lstArrGrad[0][:,iAx]/gamma*nPix/fov, ".-")
+    plot(lstArrGrad[iArrK][:,iAx]/gamma*nPix/fov, ".-")
 grid("on")
-title(f"Gradient")
+title(f"Gradient, max:{gMax*1e3:.3f}")
 
 subplot(267)
-plot(*lstArrGrad[0].T[(0,1),:], ".-")
+plot(*lstArrGrad[iArrK].T[(0,1),:], ".-")
 axis("equal")
 grid("on")
 title("gx-gy")
 
 if nAx==3:
     subplot(268)
-    plot(*lstArrGrad[0].T[(0,2),:], ".-")
+    plot(*lstArrGrad[iArrK].T[(0,2),:], ".-")
     axis("equal")
     grid("on")
     title("gx-gz")
 
     subplot(269)
-    plot(*lstArrGrad[0].T[(1,2),:], ".-")
+    plot(*lstArrGrad[iArrK].T[(1,2),:], ".-")
     axis("equal")
     grid("on")
     title("gy-gz")
 
 subplot(224)
-plot(norm(arrSlew,axis=-1)/gamma*nPix/fov, ".-")
+plot(norm(lstArrSlew[iArrK],axis=-1)/gamma*nPix/fov, ".-")
 ylim(sLim/gamma*nPix/fov*0.9, sLim/gamma*nPix/fov*1.1)
 grid("on")
-title(f"Slewrate, max:{max(norm(arrSlew,axis=-1)/gamma*nPix/fov):.3f}")
+title(f"Slewrate, max:{sMax:.3f}")
 
 subplots_adjust(0.05,0.1,0.95,0.9, 0.2, 0.2)
 
@@ -136,8 +140,8 @@ subplots_adjust(0.05,0.1,0.95,0.9, 0.2, 0.2)
 
 
 # simulate phantom
-arrI = asarray(load("./resource/arrM0.npz")["arrM0"])
-if nAx == 2: arrI = arrI[nPix//2,:,:]
+arrI = slime.genPhan(nAx, nPix)["M0"].squeeze()
+# if nAx == 2: arrI = arrI[nPix//2,:,:]
 arrK = concatenate(lstArrK, axis=0)
 
 arrDcf = fars.calDcf(nPix, arrK[:,:nAx]).astype(complex64)
