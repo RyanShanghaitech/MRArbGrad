@@ -2,23 +2,22 @@ from numpy import *
 from numpy.linalg import norm
 from matplotlib.pyplot import *
 import sympy as sp
-import g4n
+import mrautograd as mag
 from time import time
 
-fov = 0.25
+fov = 0.256
 nPix = 256
 dt = 10e-6
 os = 10
-sLim = 100*42.58e6*(fov/nPix)
-fExactSlew = True
+sLim = 100 * 42.5756e6 * fov / nPix
+gLim = 120e-3 * 42.5756e6 * fov / nPix
 
 # SpO
-nSp = 64
+kRhoPhi = 0.5/(8*pi)
 p0 = 0
-p1 = (2*pi)*(nPix/2/nSp)
+p1 = 0.5/kRhoPhi
 symP = sp.Symbol("tht")
-A = (0.5/(2*pi))/(nPix/2/nSp)
-expRho = A*symP
+expRho = kRhoPhi*symP
 expX = expRho*sp.cos(symP)
 expY = expRho*sp.sin(symP)
 expK = sp.Array([expX,expY,1e-30*symP])
@@ -75,7 +74,7 @@ getK_D2p = sp.lambdify(symP, expK.diff(symP,2).simplify(), "numpy")
 
 # derive slew-rate constrained trajectory
 t = time()
-arrG = g4n.calGrad(p0, p1, getK, None, None, sLim, 1e8, dt)
+arrG = g4n.calGrad(False, fov, nPix, sLim, gLim, dt, getK, None, None, p0, p1)
 t = time() - t
 print(f"Exe Time: {t}")
 nRO, nAx = arrG.shape
@@ -87,11 +86,11 @@ arrDk = zeros((nRO+1,nAx))
 arrDk[1:,:] = arrG*dt
 arrK = getK(p0)*ones_like(arrDk)
 arrK += cumsum(arrDk, axis=0)
+# arrK = g4n.cvtGrad2Traj(arrG, dt, dt)
 
 # derive reference trajectory
 arrTht = linspace(p0, p1, int(1e6))
 arrK_Ref = getK(arrTht).T
-print(arrK_Ref.shape)
 
 # plot
 figure(figsize=(20,10), dpi=120)

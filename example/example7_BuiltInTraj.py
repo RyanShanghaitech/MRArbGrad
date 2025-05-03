@@ -1,4 +1,4 @@
-import g4n
+import mrautograd as mag
 from numpy import *
 from matplotlib.pyplot import *
 from numpy.linalg import norm
@@ -14,29 +14,29 @@ gamma = 42.5756e6
 fov = 0.256
 nPix = 256
 sLim = 100 * gamma * fov/nPix
-gLim = 32e-3 * gamma * fov/nPix
+gLim = 120e-3 * gamma * fov/nPix
 dtGrad = 10e-6
-dtADC = 2.5e-6
+dtADC = 5e-6
 argCom = dict(dFov=fov, lNPix=nPix, dSLim=sLim, dGLim=gLim, dDt=dtGrad)
 
 # calculate gradient
 t = time()
 
-# lstArrK0, lstArrGrad = g4n.Function.getG_Spiral(**argCom); nAx = 2 # 0.380s
+lstArrK0, lstArrGrad = mag.Function.getG_Spiral(bIs3D=True, **argCom); nAx = 3 # 0.380s
 
-# lstArrK0, lstArrGrad = g4n.Function.getG_VarDenSpiral(**argCom); nAx = 2 # 0.499s
+# lstArrK0, lstArrGrad = mag.Function.getG_VarDenSpiral(bIs3D=True, **argCom); nAx = 3 # 0.499s
 
-# lstArrK0, lstArrGrad = g4n.Function.getG_Rosette(**argCom, dOm1=5*pi, dOm2=3*pi, dTmax=1); nAx = 2 # 16.39s (9 frames)
+# lstArrK0, lstArrGrad = mag.Function.getG_Rosette(**argCom, dOm1=5*pi, dOm2=3*pi, dTmax=1); nAx = 2 # 16.39s (9 frames)
 
-# lstArrK0, lstArrGrad = g4n.Function.getG_Rosette_Trad(**argCom, dOm1=5*pi, dOm2=3*pi, dTmax=1); nAx = 2 # 16.39s (9 frames)
+# lstArrK0, lstArrGrad = mag.Function.getG_Rosette_Trad(**argCom, dOm1=5*pi, dOm2=3*pi, dTmax=1); nAx = 2 # 16.39s (9 frames)
 
-lstArrK0, lstArrGrad = g4n.Function.getG_Shell3d(dRhoTht=0.5/(4*pi), **argCom); nAx = 3 # 183.7
+# lstArrK0, lstArrGrad = mag.Function.getG_Shell3d(dRhoTht=0.5/(4*pi), **argCom); nAx = 3 # 183.7
 
-# lstArrK0, lstArrGrad = g4n.Function.getG_Yarnball(dRhoPhi=0.5/(4*pi), **argCom); nAx = 3 # 196.1
+# lstArrK0, lstArrGrad = mag.Function.getG_Yarnball(dRhoPhi=0.5/(4*pi), **argCom); nAx = 3 # 196.1
     
-# lstArrK0, lstArrGrad = g4n.Function.getG_Seiffert(**argCom); nAx = 3 # 232.9s
+# lstArrK0, lstArrGrad = mag.Function.getG_Seiffert(**argCom); nAx = 3 # 232.9s
 
-# lstArrK0, lstArrGrad = g4n.Function.getG_Cones(**argCom); nAx = 3 # 149.9s
+# lstArrK0, lstArrGrad = mag.Function.getG_Cones(**argCom); nAx = 3 # 149.9s
 
 t = time() - t
 print(f"Exe Time: {t}")
@@ -65,7 +65,7 @@ print(f"gMax: {gMax}")
 # derive trajectory
 lstArrK = []
 for arrK0, arrGrad in zip(lstArrK0, lstArrGrad):
-    arrK = g4n.cvtGrad2Traj(arrGrad, dtGrad, dtADC)
+    arrK = mag.cvtGrad2Traj(arrGrad, dtGrad, dtADC)
     arrK += arrK0
     lstArrK.append(arrK)
 
@@ -73,8 +73,8 @@ for arrK0, arrGrad in zip(lstArrK0, lstArrGrad):
 if nAx==3:
     figure(figsize=(9,9), dpi=120)
     subplot(111, projection="3d")
-    plot(*array([arrK[-1,:] for arrK in lstArrK]).T, ".", linestyle='')
-
+    plot(*array([arrK[-1,:] for arrK in lstArrK[-100:]]).T, ".", linestyle='')
+    title("last 100 intlea.")
 
 figure(figsize=(18,9), dpi=120)
 
@@ -134,8 +134,8 @@ subplots_adjust(0.05,0.1,0.95,0.9, 0.2, 0.2)
 
 
 
-# show()
-# exit(0)
+show()
+exit(0)
 
 
 

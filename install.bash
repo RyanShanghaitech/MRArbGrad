@@ -1,7 +1,7 @@
-rm -r "g4n.egg-info"
+rm -r "mrautograd.egg-info"
 rm -r "dist"
-pip uninstall g4n -y
+pip uninstall mrautograd -y
 
 python setup.py clean --all
 python -m build
-pip install './dist/g4n-0.0.0-cp312-cp312-linux_x86_64.whl' --force-reinstall
+pip install './dist/mrautograd-0.0.0-cp312-cp312-linux_x86_64.whl' --force-reinstall

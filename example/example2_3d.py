@@ -3,7 +3,7 @@ from matplotlib.pyplot import *
 from scipy.special import ellipj, ellipk
 from numpy.linalg import norm
 import sympy as sp
-import g4n
+import mrautograd as mag
 from time import time
 
 fov = 0.25

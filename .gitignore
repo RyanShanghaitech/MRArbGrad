@@ -6,7 +6,4 @@ temp*.*
 
 dist/
 .vscode/
-g4n.egg-info/
-
-fars/
-resource/
+*.egg-info/

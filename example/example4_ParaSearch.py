@@ -1,7 +1,7 @@
 from numpy import *
 from matplotlib.pyplot import *
 from numpy.linalg import norm
-import g4n
+import mrautograd as mag
 
 # brutely search parameter u of Seiffert Spiral, depends on desired diaphony
 

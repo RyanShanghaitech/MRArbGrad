@@ -1,6 +1,6 @@
 from numpy import *
 from matplotlib.pyplot import *
-import g4n
+import mrautograd as mag
 from numpy.linalg import norm
 from numpy.random import uniform
 
