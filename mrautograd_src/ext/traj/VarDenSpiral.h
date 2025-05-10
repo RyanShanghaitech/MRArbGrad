@@ -44,14 +44,17 @@ public:
         m_lNAcq = m_lNRot*m_lNStack;
 
         m_dRotAngInc = calRotAngInc(m_lNRot);
-        m_ptfBasicTraj = new VarDenSpiral_TrajFunc(dRhoPhi0, dRhoPhi1);
-        if(!m_ptfBasicTraj) throw std::runtime_error("out of memory");
+        m_ptfBaseTraj = new VarDenSpiral_TrajFunc(dRhoPhi0, dRhoPhi1);
+        if(!m_ptfBaseTraj) throw std::runtime_error("out of memory");
 
-        calGrad(&m_vv3BasicGrad, *m_ptfBasicTraj, m_sGradPara, 16);
+        calGrad(&m_v3BaseM0PE, &m_vv3BaseGRO, &m_v3BaseM0SP, &m_lNWaitAdc, &m_lNSampAdc, m_ptfBaseTraj, m_sGradPara, m_sGradPara.bMaxG0?2:8);
     }
     
     virtual ~VarDenSpiral()
     {
-        delete m_ptfBasicTraj;
+        delete m_ptfBaseTraj;
     }
+
+protected:
+    TrajFunc* m_ptfBaseTraj;
 };

@@ -108,36 +108,64 @@ public:
         const int64_t& lNPix = m_sGeoPara.lNPix;
         m_lNAcq = (int64_t)round(-2.53819233e-03*lNPix*lNPix + 8.53447761e+01*lNPix); // fitted
 
-        m_ptfBasicTraj = new Seiffert_Trajfunc(dM, dUMax);
-        if(!m_ptfBasicTraj) throw std::runtime_error("out of memory");
+        m_ptfBaseTraj = new Seiffert_Trajfunc(dM, dUMax);
+        if(!m_ptfBaseTraj) throw std::runtime_error("out of memory");
 
-        calGrad(&m_vv3BasicGrad, *m_ptfBasicTraj, m_sGradPara, 16);
+        calGrad(&m_v3BaseM0PE, &m_vv3BaseGRO, &m_v3BaseM0SP, &m_lNWaitAdc, &m_lNSampAdc, m_ptfBaseTraj, m_sGradPara, m_sGradPara.bMaxG0?2:8);
     }
     
     virtual ~Seiffert()
     {
-        delete m_ptfBasicTraj;
+        delete m_ptfBaseTraj;
     }
-    
-    bool getGrad(v3* pv3K0, vv3* pvv3Grad, int64_t lIAcq) const
+
+    bool getM0PE(v3* pv3M0PE, int64_t lIAcq) const
     {
         bool bRet = true;
-
-        m_ptfBasicTraj->getK0(pv3K0);
-        *pvv3Grad = m_vv3BasicGrad;
-        
         vl vlAx; vd vdAng;
         bRet &= getRotAng(&vlAx, &vdAng, lIAcq);
-
-        bRet &= appRotAng(pv3K0, *pv3K0, vlAx, vdAng);
-        bRet &= appRotAng(pvv3Grad, *pvv3Grad, vlAx, vdAng);
+        bRet &= appRotAng(pv3M0PE, m_v3BaseM0PE, vlAx, vdAng);
 
         return bRet;
     }
     
+    bool getGRO(vv3* pvv3GRO, int64_t lIAcq) const
+    {
+        bool bRet = true;
+        vl vlAx; vd vdAng;
+        bRet &= getRotAng(&vlAx, &vdAng, lIAcq);
+        bRet &= appRotAng(pvv3GRO, m_vv3BaseGRO, vlAx, vdAng);
+
+        return bRet;
+    }
+
+    bool getM0SP(v3* pv3M0SP, int64_t lIAcq) const
+    {
+        bool bRet = true;
+        vl vlAx; vd vdAng;
+        bRet &= getRotAng(&vlAx, &vdAng, lIAcq);
+        bRet &= appRotAng(pv3M0SP, m_v3BaseM0SP, vlAx, vdAng);
+
+        return bRet;
+    }
+
+    int64_t getNWaitAdc(int64_t lIAcq) const
+    {
+        return m_lNWaitAdc;
+    }
+
+    int64_t getNSampAdc(int64_t lIAcq) const
+    {
+        return m_lNSampAdc;
+    }
+    
 protected:
-    TrajFunc* m_ptfBasicTraj;
-    vv3 m_vv3BasicGrad;
+    TrajFunc* m_ptfBaseTraj;
+    v3 m_v3BaseM0PE;
+    vv3 m_vv3BaseGRO;
+    v3 m_v3BaseM0SP;
+    int64_t m_lNWaitAdc;
+    int64_t m_lNSampAdc;
 
     bool getRotAng(vl* pvlAx, vd* pvdAng, int64_t lIAcq) const
     {

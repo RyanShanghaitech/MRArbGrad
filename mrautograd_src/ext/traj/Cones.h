@@ -47,66 +47,117 @@ public:
 
         m_lNSet = getNLayer_Cones(lNPix);
         m_vlNRot.resize(m_lNSet);
-        m_vptfBasicTrajSet.resize(m_lNSet);
-        m_vvv3BasicGradSet.resize(m_lNSet);
+        m_vptfBaseTraj.resize(m_lNSet);
+        m_vv3BaseM0PE.resize(m_lNSet);
+        m_vvv3BaseGRO.resize(m_lNSet);
+        m_vv3BaseM0SP.resize(m_lNSet);
+        m_vlNWaitAdc.resize(m_lNSet);
+        m_vlNSampAdc.resize(m_lNSet);
         m_lNAcq = 0;
+        ll llSetIdx, llRotIdx;
         for (int i = 0; i < m_lNSet; ++i)
         {
-            printf("%d/%ld\n", i, m_lNSet); // debug
+            // printf("%d/%ld\n", i, m_lNSet); // test
             
             double dTht0 = getTht0_Cones(i, m_lNSet);
-            m_vptfBasicTrajSet[i] = new Cones_TrajFun(dRhoPhi, dTht0);
-            calGrad(&m_vvv3BasicGradSet[i], *m_vptfBasicTrajSet[i], m_sGradPara, 8);
-            int64_t lNRot = calNRot
+            m_vptfBaseTraj[i] = new Cones_TrajFun(dRhoPhi, dTht0);
+            if(!m_vptfBaseTraj[i]) throw std::runtime_error("out of memory");
+
+            calGrad(&m_vv3BaseM0PE[i], &m_vvv3BaseGRO[i], &m_vv3BaseM0SP[i], &m_vlNWaitAdc[i], &m_vlNSampAdc[i], m_vptfBaseTraj[i], m_sGradPara, m_sGradPara.bMaxG0?2:8);
+
+            m_vlNRot[i] = calNRot
             (
-                m_vptfBasicTrajSet[i], 
-                m_vptfBasicTrajSet[i]->getP0(), 
-                m_vptfBasicTrajSet[i]->getP1(),
+                m_vptfBaseTraj[i], 
+                m_vptfBaseTraj[i]->getP0(), 
+                m_vptfBaseTraj[i]->getP1(),
                 lNPix
             );
-            m_vlNRot[i] = lNRot;
-            m_lNAcq += lNRot;
+
+            for (int64_t j = 0; j < m_vlNRot[i]; ++j)
+            {
+                llSetIdx.push_back(i);
+                llRotIdx.push_back(j);
+            }
+
+            m_lNAcq += m_vlNRot[i];
         }
+        m_vlSetIdx = vl(llSetIdx.begin(), llSetIdx.end());
+        m_vlRotIdx = vl(llRotIdx.begin(), llRotIdx.end());
     }
 
     virtual ~Cones()
     {
-        for(int64_t i = 0; i < (int64_t)m_vptfBasicTrajSet.size(); ++i)
+        for(int64_t i = 0; i < (int64_t)m_vptfBaseTraj.size(); ++i)
         {
-            delete m_vptfBasicTrajSet[i];
+            delete m_vptfBaseTraj[i];
         }
     }
-    
-    bool getGrad(v3* pv3K0, vv3* pvv3Grad, int64_t lIAcq) const
+
+    bool getM0PE(v3* pv3M0PE, int64_t lIAcq) const
     {
-        lIAcq %= m_lNAcq;
-
         bool bRet = true;
-        int64_t lISet=0, lIRot=0;
-        int64_t _lIAcq = 0;
-        for(lISet = 0; lISet < m_lNSet; ++lISet)
-        {
-            if(_lIAcq + m_vlNRot[lISet] >= lIAcq) break;
-            else _lIAcq += m_vlNRot[lISet];
-        }
-        lIRot = _lIAcq - lIAcq;
-
-        m_vptfBasicTrajSet[lISet]->getK0(pv3K0);
-        *pvv3Grad = m_vvv3BasicGradSet[lISet];
-        
+        lIAcq %= m_lNAcq;
+        int64_t lISet = m_vlSetIdx[lIAcq];
+        int64_t lIRot = m_vlRotIdx[lIAcq];
         double dPhiInc = calRotAngInc(m_vlNRot[lISet]);
-        bRet &= v3::rotate(pv3K0, 2, dPhiInc*lIRot, *pv3K0);
-        bRet &= v3::rotate(pvv3Grad, 2, dPhiInc*lIRot, *pvv3Grad);
+
+        *pv3M0PE = m_vv3BaseM0PE[lISet];
+        bRet &= v3::rotate(pv3M0PE, 2, dPhiInc*lIRot, *pv3M0PE);
 
         return bRet;
+    }
+    
+    bool getGRO(vv3* pvv3GRO, int64_t lIAcq) const
+    {
+        bool bRet = true;
+        lIAcq %= m_lNAcq;
+        int64_t lISet = m_vlSetIdx[lIAcq];
+        int64_t lIRot = m_vlRotIdx[lIAcq];
+        double dPhiInc = calRotAngInc(m_vlNRot[lISet]);
+
+        *pvv3GRO = m_vvv3BaseGRO[lISet];
+        bRet &= v3::rotate(pvv3GRO, 2, dPhiInc*lIRot, *pvv3GRO);
+
+        return bRet;
+    }
+
+    bool getM0SP(v3* pv3M0SP, int64_t lIAcq) const
+    {
+        bool bRet = true;
+        lIAcq %= m_lNAcq;
+        int64_t lISet = m_vlSetIdx[lIAcq];
+        int64_t lIRot = m_vlRotIdx[lIAcq];
+        double dPhiInc = calRotAngInc(m_vlNRot[lISet]);
+
+        *pv3M0SP = m_vv3BaseM0SP[lISet];
+        bRet &= v3::rotate(pv3M0SP, 2, dPhiInc*lIRot, *pv3M0SP);
+
+        return bRet;
+    }
+
+    int64_t getNWaitAdc(int64_t lIAcq) const
+    {
+        return m_vlNWaitAdc[m_vlSetIdx[lIAcq]];
+    }
+
+    int64_t getNSampAdc(int64_t lIAcq) const
+    {
+        return m_vlNSampAdc[m_vlSetIdx[lIAcq]];
     }
 
 protected:
     double m_dRhoPhi;
     int64_t m_lNSet;
     vl m_vlNRot;
-    vptf m_vptfBasicTrajSet;
-    vvv3 m_vvv3BasicGradSet;
+    vl m_vlSetIdx;
+    vl m_vlRotIdx;
+
+    vptf m_vptfBaseTraj;
+    vv3 m_vv3BaseM0PE;
+    vvv3 m_vvv3BaseGRO;
+    vv3 m_vv3BaseM0SP;
+    vl m_vlNWaitAdc;
+    vl m_vlNSampAdc;
 
     static int64_t getNLayer_Cones(int64_t lNPix)
     {
@@ -115,8 +166,7 @@ protected:
 
     static double getTht0_Cones(int64_t lILayer, int64_t lNLayer)
     {
-        double dDTht = M_PI / (lNLayer-1);
-
-        return lILayer*dDTht;
+        double dThtInc = M_PI / (lNLayer-1);
+        return lILayer*dThtInc;
     }
 };

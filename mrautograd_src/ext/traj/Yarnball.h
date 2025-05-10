@@ -12,8 +12,8 @@ public:
         m_dRhoSqrtTht = std::sqrt(2e0)*dRhoPhi;
         m_dTht0 = dTht0;
 
-        m_dP0 = 2e-4;
-        m_dP1 = 1e0/(8e0*dRhoPhi*dRhoPhi);
+        m_dP0 = 0e0;
+        m_dP1 = 1e0/(std::sqrt(8e0)*dRhoPhi);
     }
 
     ~Yarnball_TrajFunc()
@@ -21,8 +21,8 @@ public:
 
     bool getK(v3* pv3K, double dP) const
     {
-        const double& dTht = dP;
-        double dSqrtTht = dTht/std::fabs(dTht) * std::sqrt(std::fabs(dTht)); // odd extension
+        const double& dSqrtTht = dP;
+        double dTht = dSqrtTht*dSqrtTht * (dSqrtTht>=0?1e0:-1e0);
         double dRho = m_dRhoSqrtTht * dSqrtTht;
         double dPhi = m_dPhiSqrtTht * dSqrtTht;
 
@@ -47,48 +47,92 @@ public:
         m_lNRot = calNRot(dRhoPhi, m_sGeoPara.lNPix);
         m_dRotInc = calRotAngInc(m_lNRot);
         m_lNAcq = m_lNRot*m_lNRot;
-
-        m_vptfBasicTrajSet.resize(m_lNRot);
-        m_vvv3BasicGradSet.resize(m_lNRot);
+        
+        m_vptfBaseTraj.resize(m_lNRot);
+        m_vv3BaseM0PE.resize(m_lNRot);
+        m_vvv3BaseGRO.resize(m_lNRot);
+        m_vv3BaseM0SP.resize(m_lNRot);
+        m_vlNWaitAdc.resize(m_lNRot);
+        m_vlNSampAdc.resize(m_lNRot);
         for(int64_t i = 0; i < m_lNRot; ++i)
         {
-            printf("%ld/%ld\n", i, m_lNRot); // debug
+            // printf("%ld/%ld\n", i, m_lNRot); // test
 
             double dTht0 = i*m_dRotInc;
-            m_vptfBasicTrajSet[i] = new Yarnball_TrajFunc(dRhoPhi, dTht0);
-            if(!m_vptfBasicTrajSet[i]) throw std::runtime_error("out of memory");
+            m_vptfBaseTraj[i] = new Yarnball_TrajFunc(dRhoPhi, dTht0);
+            if(!m_vptfBaseTraj[i]) throw std::runtime_error("out of memory");
 
-            calGrad(&m_vvv3BasicGradSet[i], *m_vptfBasicTrajSet[i], m_sGradPara, 8);
+            calGrad(&m_vv3BaseM0PE[i], &m_vvv3BaseGRO[i], &m_vv3BaseM0SP[i], &m_vlNWaitAdc[i], &m_vlNSampAdc[i], m_vptfBaseTraj[i], m_sGradPara, m_sGradPara.bMaxG0?2:8);
         }
     }
     
     virtual ~Yarnball()
     {
-        for(int64_t i = 0; i < (int64_t)m_vptfBasicTrajSet.size(); ++i)
+        for(int64_t i = 0; i < (int64_t)m_vptfBaseTraj.size(); ++i)
         {
-            delete m_vptfBasicTrajSet[i];
+            delete m_vptfBaseTraj[i];
         }
     }
 
-    bool getGrad(v3* pv3K0, vv3* pvv3Grad, int64_t lIAcq) const
+    bool getM0PE(v3* pv3M0PE, int64_t lIAcq) const
     {
         bool bRet = true;
         const double& dPhiInc = m_dRotInc;
         int64_t lISet = lIAcq%m_lNRot;
         int64_t lIRot = lIAcq/m_lNRot;
 
-        m_vptfBasicTrajSet[lISet]->getK0(pv3K0);
-        // *pv3K0 = v3(0,0,0);
-        *pvv3Grad = m_vvv3BasicGradSet[lISet];
-        bRet &= v3::rotate(pv3K0, 2, dPhiInc*lIRot, *pv3K0);
-        bRet &= v3::rotate(pvv3Grad, 2, dPhiInc*lIRot, *pvv3Grad);
+        *pv3M0PE = m_vv3BaseM0PE[lISet];
+        bRet &= v3::rotate(pv3M0PE, 2, dPhiInc*lIRot, *pv3M0PE);
+
+        return bRet;
+    }
+
+    bool getGRO(vv3* pvv3GRO, int64_t lIAcq) const
+    {
+        bool bRet = true;
+        const double& dPhiInc = m_dRotInc;
+        int64_t lISet = lIAcq%m_lNRot;
+        int64_t lIRot = lIAcq/m_lNRot;
+
+        *pvv3GRO = m_vvv3BaseGRO[lISet];
+        bRet &= v3::rotate(pvv3GRO, 2, dPhiInc*lIRot, *pvv3GRO);
         
         return bRet;
+    }
+
+    bool getM0SP(v3* pv3M0SP, int64_t lIAcq) const
+    {
+        bool bRet = true;
+        const double& dPhiInc = m_dRotInc;
+        int64_t lISet = lIAcq%m_lNRot;
+        int64_t lIRot = lIAcq/m_lNRot;
+
+        *pv3M0SP = m_vv3BaseM0SP[lISet];
+        bRet &= v3::rotate(pv3M0SP, 2, dPhiInc*lIRot, *pv3M0SP);
+
+        return bRet;
+    }
+
+    int64_t getNWaitAdc(int64_t lIAcq) const
+    {
+        int64_t lISet = lIAcq%m_lNRot;
+        return m_vlNWaitAdc[lISet];
+    }
+
+    int64_t getNSampAdc(int64_t lIAcq) const
+    {
+        int64_t lISet = lIAcq%m_lNRot;
+        return m_vlNSampAdc[lISet];
     }
 
 protected:
     int64_t m_lNRot;
     double m_dRotInc;
-    vptf m_vptfBasicTrajSet;
-    vvv3 m_vvv3BasicGradSet;
+
+    vptf m_vptfBaseTraj;
+    vv3 m_vv3BaseM0PE;
+    vvv3 m_vvv3BaseGRO;
+    vv3 m_vv3BaseM0SP;
+    vl m_vlNWaitAdc;
+    vl m_vlNSampAdc;
 };

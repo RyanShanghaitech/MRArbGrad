@@ -4,6 +4,7 @@
 #include <list>
 #include <tuple>
 #include <cmath>
+#include <stdexcept>
 #include "global.h"
 #include "v3.h"
 #include "../traj/TrajFunc.h"
@@ -19,14 +20,14 @@ public:
     typedef std::vector<v3> vv3;
     typedef std::vector<vv3> vvv3;
     typedef std::list<v3> lv3;
+    typedef std::list<vv3> lvv3;
 
     GradGen
     (
         const TrajFunc* ptTraj,
         double dSLim, double dGLim,
         double dDt=10e-6, int64_t lOs=10, 
-        double dG0Norm=0e0, double dG1Norm=0e0,
-        bool bWithEndPt=true
+        double dG0Norm=0e0, double dG1Norm=0e0
     );
     ~GradGen();
     bool compute(vv3* pvv3G);
@@ -40,15 +41,19 @@ public:
         bool bResize = false,
         bool bFillZero = true
     );
-    static bool ramp_front(vv3* pvv3G, const v3& v3G0, double dSLim, double dDt);
-    static bool ramp_back(vv3* pvv3G, const v3& v3G1, double dSLim, double dDt);
+    static bool ramp_front(vv3* pvv3GRamp, const v3& v3G0, const v3& v3G0Des, double dSLim, double dDt);
+    static bool ramp_front(vv3* pvv3GRamp, const v3& v3G0, const v3& v3G0Des, int64_t lNSamp, double dDt);
+    static bool ramp_back(vv3* pvv3GRamp, const v3& v3G1, const v3& v3G1Des, double dSLim, double dDt);
+    static bool ramp_back(vv3* pvv3GRamp, const v3& v3G1, const v3& v3G1Des, int64_t lNSamp, double dDt);
+    static bool catGrad(vv3* pvv3Grad, const lvv3& lvv3GradList);
+    static bool revGrad(v3* pv3M0Dst, vv3* pvv3Dst, const v3& v3M0Src, const vv3& vv3Src, double dDt);
+    static v3 calM0(const vv3& vv3Grad, double dDt, const v3& v3GBegin=v3(0,0,0), const v3& v3GEnd=v3(0,0,0));
 private:
     const TrajFunc* m_ptTraj;
     const double m_dSLim, m_dGLim;
     const double m_dDt;
     const int64_t m_lOs;
     const double m_dG0Norm, m_dG1Norm;
-    const bool m_bWithEndPt;
 
     bool sovQDE(double* pdSol0, double* pdSol1, double dA, double dB, double dC);
     double getCurRad(double dP);

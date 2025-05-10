@@ -22,17 +22,17 @@ argCom = dict(dFov=fov, lNPix=nPix, dSLim=sLim, dGLim=gLim, dDt=dtGrad)
 # calculate gradient
 t = time()
 
-lstArrK0, lstArrGrad = mag.Function.getG_Spiral(bIs3D=True, **argCom); nAx = 3 # 0.380s
+# lstArrK0, lstArrGrad = mag.Function.getG_Spiral(bIs3D=False, **argCom); nAx = 2 # 0.380s
 
-# lstArrK0, lstArrGrad = mag.Function.getG_VarDenSpiral(bIs3D=True, **argCom); nAx = 3 # 0.499s
+# lstArrK0, lstArrGrad = mag.Function.getG_VarDenSpiral(bIs3D=False, **argCom, dRhoPhi0=0.5/(4*pi), dRhoPhi1=0.5/(32*pi)); nAx = 2 # 0.499s
 
 # lstArrK0, lstArrGrad = mag.Function.getG_Rosette(**argCom, dOm1=5*pi, dOm2=3*pi, dTmax=1); nAx = 2 # 16.39s (9 frames)
 
-# lstArrK0, lstArrGrad = mag.Function.getG_Rosette_Trad(**argCom, dOm1=5*pi, dOm2=3*pi, dTmax=1); nAx = 2 # 16.39s (9 frames)
+# tAcq_ms = 8.66; lstArrK0, lstArrGrad = mag.Function.getG_Rosette_Trad(**argCom, dOm1=5*pi/tAcq_ms, dOm2=3*pi/tAcq_ms, dTmax=1*tAcq_ms); nAx = 2 # 16.39s (9 frames)
 
-# lstArrK0, lstArrGrad = mag.Function.getG_Shell3d(dRhoTht=0.5/(4*pi), **argCom); nAx = 3 # 183.7
+# lstArrK0, lstArrGrad = mag.Function.getG_Shell3d(dRhoTht=0.5/(2*pi), **argCom); nAx = 3 # 183.7
 
-# lstArrK0, lstArrGrad = mag.Function.getG_Yarnball(dRhoPhi=0.5/(4*pi), **argCom); nAx = 3 # 196.1
+lstArrK0, lstArrGrad = mag.Function.getG_Yarnball(dRhoPhi=0.5/(2*pi), **argCom); nAx = 3 # 196.1
     
 # lstArrK0, lstArrGrad = mag.Function.getG_Seiffert(**argCom); nAx = 3 # 232.9s
 
@@ -41,6 +41,8 @@ lstArrK0, lstArrGrad = mag.Function.getG_Spiral(bIs3D=True, **argCom); nAx = 3 #
 t = time() - t
 print(f"Exe Time: {t}")
 print(f"Intlea Num.: {len(lstArrGrad)}")
+
+if all(array(lstArrK0)==0): print("NO PE")
 
 nRO_Max = max(arrG.shape[0] for arrG in lstArrGrad)
 print(f"Tacq: {nRO_Max*dtGrad*1e3:.3f} ms")
@@ -69,60 +71,38 @@ for arrK0, arrGrad in zip(lstArrK0, lstArrGrad):
     arrK += arrK0
     lstArrK.append(arrK)
 
-# plot
-if nAx==3:
-    figure(figsize=(9,9), dpi=120)
-    subplot(111, projection="3d")
-    plot(*array([arrK[-1,:] for arrK in lstArrK[-100:]]).T, ".", linestyle='')
-    title("last 100 intlea.")
+# # plot
+# if nAx==3:
+#     figure(figsize=(9,9), dpi=120)
+#     subplot(111, projection="3d")
+#     plot(*array([arrK[-1,:] for arrK in lstArrK[-100:]]).T, ".", linestyle='')
+#     title("last 100 intlea.")
 
+# interleaf to be plotted
+# iArrK = argmax(array([amax(norm(arrS,axis=-1)) for arrS in lstArrSlew]))
+iArrK = 0
+
+# k-space and g-space
 figure(figsize=(18,9), dpi=120)
 
-iArrK = len(lstArrK)//2
-
-subplot(261)
-plot(*lstArrK[iArrK].T[(0,1),:], ".-")
+subplot(221, projection="3d" if nAx==3 else None)
+plot(*lstArrK[iArrK].T, ".-")
 axis("equal")
 grid("on")
-title(f"kx-ky {1}/{len(lstArrGrad)}")
+title(f"kspace {1}/{len(lstArrGrad)}")
 
-if nAx==3:
-    subplot(262)
-    plot(*lstArrK[iArrK].T[(0,2),:], ".-")
-    axis("equal")
-    grid("on")
-    title("kx-kz")
+subplot(223, projection="3d" if nAx==3 else None)
+plot(*lstArrGrad[iArrK].T, ".-")
+axis("equal")
+grid("on")
+title("gspace")
 
-    subplot(263)
-    plot(*lstArrK[iArrK].T[(1,2),:], ".-")
-    axis("equal")
-    grid("on")
-    title("ky-kz")
-
+# gradient and slewrate
 subplot(222)
 for iAx in range(nAx):
     plot(lstArrGrad[iArrK][:,iAx]/gamma*nPix/fov, ".-")
 grid("on")
 title(f"Gradient, max:{gMax*1e3:.3f}")
-
-subplot(267)
-plot(*lstArrGrad[iArrK].T[(0,1),:], ".-")
-axis("equal")
-grid("on")
-title("gx-gy")
-
-if nAx==3:
-    subplot(268)
-    plot(*lstArrGrad[iArrK].T[(0,2),:], ".-")
-    axis("equal")
-    grid("on")
-    title("gx-gz")
-
-    subplot(269)
-    plot(*lstArrGrad[iArrK].T[(1,2),:], ".-")
-    axis("equal")
-    grid("on")
-    title("gy-gz")
 
 subplot(224)
 plot(norm(lstArrSlew[iArrK],axis=-1)/gamma*nPix/fov, ".-")

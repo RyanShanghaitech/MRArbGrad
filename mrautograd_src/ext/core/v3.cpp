@@ -228,12 +228,30 @@ bool v3::rotate
 bool v3::saveF64(FILE* pfBHdr, FILE* pfBin, vv3& vv3Data)
 {
     bool bRet = true;
-    fprintf(pfBHdr, "double[%ld][3];\n", (int64_t)vv3Data.size());
+    fprintf(pfBHdr, "float64[%ld][3];\n", (int64_t)vv3Data.size());
     for (int64_t i = 0; i < (int64_t)vv3Data.size(); ++i)
     {
         bRet &= (fwrite(&vv3Data[i].m_dX, sizeof(double), 1, pfBin) == 1);
         bRet &= (fwrite(&vv3Data[i].m_dY, sizeof(double), 1, pfBin) == 1);
         bRet &= (fwrite(&vv3Data[i].m_dZ, sizeof(double), 1, pfBin) == 1);
+    }
+    return bRet;
+}
+
+bool v3::saveF32(FILE* pfBHdr, FILE* pfBin, vv3& vv3Data)
+{
+    bool bRet = true;
+    fprintf(pfBHdr, "float32[%ld][3];\n", (int64_t)vv3Data.size());
+    
+    float f32X, f32Y, f32Z;
+    for (int64_t i = 0; i < (int64_t)vv3Data.size(); ++i)
+    {
+        f32X = float(vv3Data[i].m_dX);
+        f32Y = float(vv3Data[i].m_dY);
+        f32Z = float(vv3Data[i].m_dZ);
+        bRet &= (fwrite(&f32X, sizeof(float), 1, pfBin) == 1);
+        bRet &= (fwrite(&f32Y, sizeof(float), 1, pfBin) == 1);
+        bRet &= (fwrite(&f32Z, sizeof(float), 1, pfBin) == 1);
     }
     return bRet;
 }
@@ -247,7 +265,7 @@ bool v3::saveI16(FILE* pfBHdr, FILE* pfBin, vv3& vv3Data)
     {
         dRef = std::max(dRef, v3::norm(vv3Data[i]));
     }
-    fprintf(pfBHdr, "int16_t[%ld][3]; // Ref:%.6e\n", (int64_t)vv3Data.size(), dRef);
+    fprintf(pfBHdr, "int16[%ld][3]; // Ref:%.6e\n", (int64_t)vv3Data.size(), dRef);
 
     int16_t i16X, i16Y, i16Z;
     for (int64_t i = 0; i < (int64_t)vv3Data.size(); ++i)

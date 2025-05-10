@@ -11,19 +11,53 @@ public:
     virtual ~MrTraj_2D()
     {}
     
-    bool getGrad(v3* pv3K0, vv3* pgGrad, int64_t lIAcq) const
+    bool getM0PE(v3* pv3M0PE, int64_t lIAcq) const
     {
         bool bRet = true;
         int64_t lIStack = lIAcq%m_lNStack;
         int64_t lIRot = lIAcq/m_lNStack;
         
-        m_ptfBasicTraj->getK0(pv3K0);
-        pv3K0->m_dZ += getK0z(lIStack, m_lNStack);
-
-        bRet &= v3::rotate(pv3K0, 2, m_dRotAngInc*lIRot, *pv3K0);
-        bRet &= v3::rotate(pgGrad, 2, m_dRotAngInc*lIRot, m_vv3BasicGrad);
+        *pv3M0PE = m_v3BaseM0PE;
+        pv3M0PE->m_dZ += getK0z(lIStack, m_lNStack);
+        
+        bRet &= v3::rotate(pv3M0PE, 2, m_dRotAngInc*lIRot, *pv3M0PE);
 
         return bRet;
+    }
+
+    bool getGRO(vv3* pvv3GRO, int64_t lIAcq) const
+    {
+        bool bRet = true;
+        // int64_t lIStack = lIAcq%m_lNStack;
+        int64_t lIRot = lIAcq/m_lNStack;
+
+        bRet &= v3::rotate(pvv3GRO, 2, m_dRotAngInc*lIRot, m_vv3BaseGRO);
+
+        return bRet;
+    }
+    
+    bool getM0SP(v3* pv3M0SP, int64_t lIAcq) const
+    {
+        bool bRet = true;
+        int64_t lIStack = lIAcq%m_lNStack;
+        int64_t lIRot = lIAcq/m_lNStack;
+        
+        *pv3M0SP = m_v3BaseM0SP;
+        pv3M0SP->m_dZ += getK0z(lIStack, m_lNStack);
+        
+        bRet &= v3::rotate(pv3M0SP, 2, m_dRotAngInc*lIRot, *pv3M0SP);
+
+        return bRet;
+    }
+
+    int64_t getNWaitAdc(int64_t lIAcq) const
+    {
+        return m_lNWaitAdc;
+    }
+
+    int64_t getNSampAdc(int64_t lIAcq) const
+    {
+        return m_lNSampAdc;
     }
 
     int64_t getNRot()
@@ -35,18 +69,21 @@ public:
     double getRotAngInc()
     { return m_dRotAngInc; }
 
-    bool tran2GoldAng(int64_t lNRot=1000000)
+    bool setRotAngInc(double dRotAngInc=GOLDANG)
     {
-        m_lNRot = lNRot;
-        m_dRotAngInc = GOLDANG;
+        m_dRotAngInc = dRotAngInc;
         return true;
     }
 
 protected:
     int64_t m_lNRot, m_lNStack;
     double m_dRotAngInc;
-    TrajFunc* m_ptfBasicTraj;
-    vv3 m_vv3BasicGrad;
+
+    v3 m_v3BaseM0PE;
+    vv3 m_vv3BaseGRO;
+    v3 m_v3BaseM0SP;
+    int64_t m_lNWaitAdc;
+    int64_t m_lNSampAdc;
 
     static double getK0z(int64_t lIStack, int64_t lNStack=256)
     {

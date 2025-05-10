@@ -47,6 +47,7 @@ public:
         const std::vector<v3>& vv3Src
     );
     static bool saveF64(FILE* pfBHdr, FILE* pfBin, vv3& vv3Data);
+    static bool saveF32(FILE* pfBHdr, FILE* pfBin, vv3& vv3Data);
     static bool saveI16(FILE* pfBHdr, FILE* pfBin, vv3& vv3Data);
 private:
     static bool genRotMat(std::array<v3,3>* pav3RotMat, int iAx, double dAng);
