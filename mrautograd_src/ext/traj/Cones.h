@@ -44,12 +44,14 @@ public:
         m_sGeoPara = sGeoPara;
         m_sGradPara = sGradPara;
         const int64_t& lNPix = m_sGeoPara.lNPix;
+        const bool& bMaxG0 = m_sGradPara.bMaxG0;
+        const bool& bMaxG1 = m_sGradPara.bMaxG1;
 
         m_lNSet = getNLayer_Cones(lNPix);
         m_vlNRot.resize(m_lNSet);
         m_vptfBaseTraj.resize(m_lNSet);
         m_vv3BaseM0PE.resize(m_lNSet);
-        m_vvv3BaseGRO.resize(m_lNSet);
+        m_vlv3BaseGRO.resize(m_lNSet);
         m_vv3BaseM0SP.resize(m_lNSet);
         m_vlNWaitAdc.resize(m_lNSet);
         m_vlNSampAdc.resize(m_lNSet);
@@ -63,7 +65,7 @@ public:
             m_vptfBaseTraj[i] = new Cones_TrajFun(dRhoPhi, dTht0);
             if(!m_vptfBaseTraj[i]) throw std::runtime_error("out of memory");
 
-            calGrad(&m_vv3BaseM0PE[i], &m_vvv3BaseGRO[i], &m_vv3BaseM0SP[i], &m_vlNWaitAdc[i], &m_vlNSampAdc[i], m_vptfBaseTraj[i], m_sGradPara, m_sGradPara.bMaxG0?2:8);
+            calGrad(&m_vv3BaseM0PE[i], &m_vlv3BaseGRO[i], NULL, &m_vv3BaseM0SP[i], &m_vlNWaitAdc[i], &m_vlNSampAdc[i], m_vptfBaseTraj[i], m_sGradPara, bMaxG0&&bMaxG1?2:8);
 
             m_vlNRot[i] = calNRot
             (
@@ -107,7 +109,7 @@ public:
         return bRet;
     }
     
-    bool getGRO(vv3* pvv3GRO, int64_t lIAcq) const
+    bool getGRO(lv3* plv3GRO, int64_t lIAcq) const
     {
         bool bRet = true;
         lIAcq %= m_lNAcq;
@@ -115,8 +117,8 @@ public:
         int64_t lIRot = m_vlRotIdx[lIAcq];
         double dPhiInc = calRotAngInc(m_vlNRot[lISet]);
 
-        *pvv3GRO = m_vvv3BaseGRO[lISet];
-        bRet &= v3::rotate(pvv3GRO, 2, dPhiInc*lIRot, *pvv3GRO);
+        *plv3GRO = m_vlv3BaseGRO[lISet];
+        bRet &= v3::rotate(plv3GRO, 2, dPhiInc*lIRot, *plv3GRO);
 
         return bRet;
     }
@@ -154,7 +156,7 @@ protected:
 
     vptf m_vptfBaseTraj;
     vv3 m_vv3BaseM0PE;
-    vvv3 m_vvv3BaseGRO;
+    vlv3 m_vlv3BaseGRO;
     vv3 m_vv3BaseM0SP;
     vl m_vlNWaitAdc;
     vl m_vlNSampAdc;

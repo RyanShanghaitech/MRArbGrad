@@ -35,6 +35,8 @@ public:
     {
         m_sGeoPara = sGeoPara;
         m_sGradPara = sGradPara;
+        const bool& bMaxG0 = m_sGradPara.bMaxG0;
+        const bool& bMaxG1 = m_sGradPara.bMaxG1;
         m_lNRot = calNRot(dRhoPhi, m_sGeoPara.lNPix);
         m_lNStack = m_sGeoPara.bIs3D ? m_sGeoPara.lNPix : 1;
         m_lNAcq = m_lNRot*m_lNStack;
@@ -43,7 +45,7 @@ public:
         m_ptfBaseTraj = new Spiral_TrajFunc(dRhoPhi);
         if(!m_ptfBaseTraj) throw std::runtime_error("out of memory");
 
-        calGrad(&m_v3BaseM0PE, &m_vv3BaseGRO, &m_v3BaseM0SP, &m_lNWaitAdc, &m_lNSampAdc, m_ptfBaseTraj, m_sGradPara, m_sGradPara.bMaxG0?2:8);
+        calGrad(&m_v3BaseM0PE, &m_lv3BaseGRO, NULL, &m_v3BaseM0SP, &m_lNWaitAdc, &m_lNSampAdc, m_ptfBaseTraj, m_sGradPara, bMaxG0&&bMaxG1?2:8);
     }
     
     virtual ~Spiral()

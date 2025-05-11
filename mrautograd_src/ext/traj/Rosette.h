@@ -43,6 +43,8 @@ public:
     {
         m_sGeoPara = sGeoPara;
         m_sGradPara = sGradPara;
+        const bool& bMaxG0 = m_sGradPara.bMaxG0;
+        const bool& bMaxG1 = m_sGradPara.bMaxG1;
 
         m_ptfBaseTraj = new Rosette_TrajFunc(dOm1, dOm2, dTmax);
         if(!m_ptfBaseTraj) throw std::runtime_error("out of memory");
@@ -52,7 +54,7 @@ public:
 
         m_dRotAngInc = calRotAngInc(m_lNRot);
 
-        calGrad(&m_v3BaseM0PE, &m_vv3BaseGRO, &m_v3BaseM0SP, &m_lNWaitAdc, &m_lNSampAdc, m_ptfBaseTraj, m_sGradPara, m_sGradPara.bMaxG0?2:8);
+        calGrad(&m_v3BaseM0PE, &m_lv3BaseGRO, NULL, &m_v3BaseM0SP, &m_lNWaitAdc, &m_lNSampAdc, m_ptfBaseTraj, m_sGradPara, bMaxG0&&bMaxG1?2:8);
     }
     
     virtual ~Rosette()
@@ -82,31 +84,29 @@ public:
 
         // readout
         int64_t lNSamp = (dTmax_ms*1e-3)/m_sGradPara.dDt;
-        vv3 vv3GRO(lNSamp);
         for(int64_t i = 0; i < lNSamp; ++i)
         {
-            m_ptfBaseTraj->getDkDp(&vv3GRO[i], dTmax_ms*i/(double)lNSamp); // derivative to p
-            vv3GRO[i] = vv3GRO[i]*1e3; // derivative to t
+            m_lv3BaseGRO.push_back(v3());
+            m_ptfBaseTraj->getDkDp(&*m_lv3BaseGRO.rbegin(), dTmax_ms*i/(double)lNSamp); // derivative to p
+            *m_lv3BaseGRO.rbegin() *= 1e3; // derivative to t
         }
-        vv3 vv3GRampFront; GradGen::ramp_front(&vv3GRampFront, *vv3GRO.begin(), v3(0,0,0), m_sGradPara.dSLim, m_sGradPara.dDt);
-        vv3 vv3GRampBack; GradGen::ramp_back(&vv3GRampBack, *vv3GRO.rbegin(), v3(0,0,0), m_sGradPara.dSLim, m_sGradPara.dDt);
-        
-        // calculate GRO with ramp-up and ramp-down
-        lvv3 lvv3FullGRO;
-        lvv3FullGRO.push_back(vv3GRampFront);
-        lvv3FullGRO.push_back(vv3GRO);
-        lvv3FullGRO.push_back(vv3GRampBack);
-        GradGen::catGrad(&m_vv3BaseGRO, lvv3FullGRO);
-        m_lNWaitAdc = vv3GRampFront.size();
-        m_lNSampAdc = vv3GRO.size();
+        lv3 lv3GRampFront; GradGen::ramp_front(&lv3GRampFront, *m_lv3BaseGRO.begin(), v3(0,0,0), m_sGradPara.dSLim, m_sGradPara.dDt);
+        lv3 lv3GRampBack; GradGen::ramp_back(&lv3GRampBack, *m_lv3BaseGRO.rbegin(), v3(0,0,0), m_sGradPara.dSLim, m_sGradPara.dDt);
+
+        m_lNWaitAdc = lv3GRampFront.size();
+        m_lNSampAdc = m_lv3BaseGRO.size();
 
         // calculate M0 of PE
         m_ptfBaseTraj->getK0(&m_v3BaseM0PE);
-        m_v3BaseM0PE = m_v3BaseM0PE - GradGen::calM0(vv3GRampFront, m_sGradPara.dDt, v3(0,0,0), *vv3GRO.begin());
+        m_v3BaseM0PE = m_v3BaseM0PE - GradGen::calM0(lv3GRampFront, m_sGradPara.dDt, v3(0,0,0), *m_lv3BaseGRO.begin());
 
         // calculate M0 of SP
         m_ptfBaseTraj->getK1(&m_v3BaseM0SP);
-        m_v3BaseM0SP = v3::norm(m_v3BaseM0SP)!=0?m_v3BaseM0SP/v3::norm(m_v3BaseM0SP):v3(1,0,0);
+        m_v3BaseM0SP = v3::norm(m_v3BaseM0SP)!=0 ? m_v3BaseM0SP/v3::norm(m_v3BaseM0SP) : v3(1,0,0);
+        
+        // concate ramp gradient
+        m_lv3BaseGRO.splice(m_lv3BaseGRO.begin(), lv3GRampFront);
+        m_lv3BaseGRO.splice(m_lv3BaseGRO.end(), lv3GRampBack);
     }
     
     virtual ~Rosette_Trad()

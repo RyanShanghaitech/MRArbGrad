@@ -30,7 +30,7 @@ public:
         double dG0Norm=0e0, double dG1Norm=0e0
     );
     ~GradGen();
-    bool compute(vv3* pvv3G);
+    bool compute(lv3* plv3G, ld* pldP=NULL);
     template <typename T>
     static bool decomp
     (
@@ -41,13 +41,12 @@ public:
         bool bResize = false,
         bool bFillZero = true
     );
-    static bool ramp_front(vv3* pvv3GRamp, const v3& v3G0, const v3& v3G0Des, double dSLim, double dDt);
-    static bool ramp_front(vv3* pvv3GRamp, const v3& v3G0, const v3& v3G0Des, int64_t lNSamp, double dDt);
-    static bool ramp_back(vv3* pvv3GRamp, const v3& v3G1, const v3& v3G1Des, double dSLim, double dDt);
-    static bool ramp_back(vv3* pvv3GRamp, const v3& v3G1, const v3& v3G1Des, int64_t lNSamp, double dDt);
-    static bool catGrad(vv3* pvv3Grad, const lvv3& lvv3GradList);
-    static bool revGrad(v3* pv3M0Dst, vv3* pvv3Dst, const v3& v3M0Src, const vv3& vv3Src, double dDt);
-    static v3 calM0(const vv3& vv3Grad, double dDt, const v3& v3GBegin=v3(0,0,0), const v3& v3GEnd=v3(0,0,0));
+    static bool ramp_front(lv3* plv3GRamp, const v3& v3G0, const v3& v3G0Des, double dSLim, double dDt);
+    static bool ramp_front(lv3* plv3GRamp, const v3& v3G0, const v3& v3G0Des, int64_t lNSamp, double dDt);
+    static bool ramp_back(lv3* plv3GRamp, const v3& v3G1, const v3& v3G1Des, double dSLim, double dDt);
+    static bool ramp_back(lv3* plv3GRamp, const v3& v3G1, const v3& v3G1Des, int64_t lNSamp, double dDt);
+    static bool revGrad(v3* pv3M0Dst, lv3* plv3Dst, const v3& v3M0Src, const lv3& lv3Src, double dDt);
+    static v3 calM0(const lv3& lv3Grad, double dDt, const v3& v3GBegin=v3(0,0,0), const v3& v3GEnd=v3(0,0,0));
 private:
     const TrajFunc* m_ptTraj;
     const double m_dSLim, m_dGLim;

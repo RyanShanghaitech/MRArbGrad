@@ -106,12 +106,14 @@ public:
         m_sGeoPara = sGeoPara;
         m_sGradPara = sGradPara;
         const int64_t& lNPix = m_sGeoPara.lNPix;
+        const bool& bMaxG0 = m_sGradPara.bMaxG0;
+        const bool& bMaxG1 = m_sGradPara.bMaxG1;
         m_lNAcq = (int64_t)round(-2.53819233e-03*lNPix*lNPix + 8.53447761e+01*lNPix); // fitted
 
         m_ptfBaseTraj = new Seiffert_Trajfunc(dM, dUMax);
         if(!m_ptfBaseTraj) throw std::runtime_error("out of memory");
 
-        calGrad(&m_v3BaseM0PE, &m_vv3BaseGRO, &m_v3BaseM0SP, &m_lNWaitAdc, &m_lNSampAdc, m_ptfBaseTraj, m_sGradPara, m_sGradPara.bMaxG0?2:8);
+        calGrad(&m_v3BaseM0PE, &m_lv3BaseGRO, NULL, &m_v3BaseM0SP, &m_lNWaitAdc, &m_lNSampAdc, m_ptfBaseTraj, m_sGradPara, bMaxG0&&bMaxG1?2:8);
     }
     
     virtual ~Seiffert()
@@ -129,12 +131,12 @@ public:
         return bRet;
     }
     
-    bool getGRO(vv3* pvv3GRO, int64_t lIAcq) const
+    bool getGRO(lv3* plv3GRO, int64_t lIAcq) const
     {
         bool bRet = true;
         vl vlAx; vd vdAng;
         bRet &= getRotAng(&vlAx, &vdAng, lIAcq);
-        bRet &= appRotAng(pvv3GRO, m_vv3BaseGRO, vlAx, vdAng);
+        bRet &= appRotAng(plv3GRO, m_lv3BaseGRO, vlAx, vdAng);
 
         return bRet;
     }
@@ -162,7 +164,7 @@ public:
 protected:
     TrajFunc* m_ptfBaseTraj;
     v3 m_v3BaseM0PE;
-    vv3 m_vv3BaseGRO;
+    lv3 m_lv3BaseGRO;
     v3 m_v3BaseM0SP;
     int64_t m_lNWaitAdc;
     int64_t m_lNSampAdc;

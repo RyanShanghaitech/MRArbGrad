@@ -25,13 +25,13 @@ public:
         return bRet;
     }
 
-    bool getGRO(vv3* pvv3GRO, int64_t lIAcq) const
+    bool getGRO(lv3* plv3GRO, int64_t lIAcq) const
     {
         bool bRet = true;
         // int64_t lIStack = lIAcq%m_lNStack;
         int64_t lIRot = lIAcq/m_lNStack;
 
-        bRet &= v3::rotate(pvv3GRO, 2, m_dRotAngInc*lIRot, m_vv3BaseGRO);
+        bRet &= v3::rotate(plv3GRO, 2, m_dRotAngInc*lIRot, m_lv3BaseGRO);
 
         return bRet;
     }
@@ -80,7 +80,7 @@ protected:
     double m_dRotAngInc;
 
     v3 m_v3BaseM0PE;
-    vv3 m_vv3BaseGRO;
+    lv3 m_lv3BaseGRO;
     v3 m_v3BaseM0SP;
     int64_t m_lNWaitAdc;
     int64_t m_lNSampAdc;

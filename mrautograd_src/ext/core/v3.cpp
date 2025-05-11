@@ -15,6 +15,14 @@ v3 v3::operator+(const v3 &rhs) const
     );
 }
 
+v3 v3::operator+=(const v3 &rhs)
+{
+    this->m_dX += rhs.m_dX;
+    this->m_dY += rhs.m_dY;
+    this->m_dZ += rhs.m_dZ;
+    return *this;
+}
+
 v3 v3::operator+(const double &rhs) const
 {
     return v3
@@ -23,6 +31,14 @@ v3 v3::operator+(const double &rhs) const
         this->m_dY + rhs,
         this->m_dZ + rhs
     );
+}
+
+v3 v3::operator+=(const double &rhs)
+{
+    this->m_dX += rhs;
+    this->m_dY += rhs;
+    this->m_dZ += rhs;
+    return *this;
 }
 
 v3 v3::operator-(const v3 &rhs) const
@@ -35,6 +51,14 @@ v3 v3::operator-(const v3 &rhs) const
     );
 }
 
+v3 v3::operator-=(const v3 &rhs)
+{
+    this->m_dX -= rhs.m_dX;
+    this->m_dY -= rhs.m_dY;
+    this->m_dZ -= rhs.m_dZ;
+    return *this;
+}
+
 v3 v3::operator-(const double &rhs) const
 {
     return v3
@@ -43,6 +67,14 @@ v3 v3::operator-(const double &rhs) const
         this->m_dY - rhs,
         this->m_dZ - rhs
     );
+}
+
+v3 v3::operator-=(const double &rhs)
+{
+    this->m_dX -= rhs;
+    this->m_dY -= rhs;
+    this->m_dZ -= rhs;
+    return *this;
 }
 
 v3 v3::operator*(const v3 &rhs) const
@@ -55,6 +87,14 @@ v3 v3::operator*(const v3 &rhs) const
     );
 }
 
+v3 v3::operator*=(const v3 &rhs)
+{
+    this->m_dX *= rhs.m_dX;
+    this->m_dY *= rhs.m_dY;
+    this->m_dZ *= rhs.m_dZ;
+    return *this;
+}
+
 v3 v3::operator*(const double &rhs) const
 {
     return v3
@@ -63,6 +103,14 @@ v3 v3::operator*(const double &rhs) const
         this->m_dY * rhs,
         this->m_dZ * rhs
     );
+}
+
+v3 v3::operator*=(const double &rhs)
+{
+    this->m_dX *= rhs;
+    this->m_dY *= rhs;
+    this->m_dZ *= rhs;
+    return *this;
 }
 
 v3 v3::operator/(const v3 &rhs) const
@@ -75,6 +123,14 @@ v3 v3::operator/(const v3 &rhs) const
     );
 }
 
+v3 v3::operator/=(const v3 &rhs)
+{
+    this->m_dX /= rhs.m_dX;
+    this->m_dY /= rhs.m_dY;
+    this->m_dZ /= rhs.m_dZ;
+    return *this;
+}
+
 v3 v3::operator/(const double &rhs) const
 {
     return v3
@@ -83,6 +139,14 @@ v3 v3::operator/(const double &rhs) const
         this->m_dY / rhs,
         this->m_dZ / rhs
     );
+}
+
+v3 v3::operator/=(const double &rhs)
+{
+    this->m_dX /= rhs;
+    this->m_dY /= rhs;
+    this->m_dZ /= rhs;
+    return *this;
 }
 
 bool v3::operator==(const v3 &rhs) const
@@ -195,9 +259,9 @@ bool v3::rotate
 
 bool v3::rotate
 (
-    std::vector<v3>* pvv3Dst,
+    vv3* pvv3Dst,
     int iAx, double dAng,
-    const std::vector<v3>& vv3Src
+    const vv3& vv3Src
 )
 {
     bool bRet = true;
@@ -206,21 +270,53 @@ bool v3::rotate
     bRet &= genRotMat(&av3RotMat, iAx, dAng);
 
     // apply rotation matrix
-    std::vector<v3> vv3Dst(vv3Src.size());
-    std::vector<v3>::const_iterator ivv3CoordSrc = vv3Src.begin();
-    std::vector<v3>::iterator ivv3CoordDst = vv3Dst.begin();
-    while (ivv3CoordDst != vv3Dst.end())
+    vv3 _vv3Dst(vv3Src.size()); // for self-in self-out compatible
+    vv3::const_iterator ivv3CoordSrc = vv3Src.begin();
+    vv3::iterator ivv3CoordDst = _vv3Dst.begin();
+    while (ivv3CoordSrc != vv3Src.end())
     {
-        *ivv3CoordDst = v3
-        (
-            v3::inner(av3RotMat[0], *ivv3CoordSrc),
-            v3::inner(av3RotMat[1], *ivv3CoordSrc),
-            v3::inner(av3RotMat[2], *ivv3CoordSrc)
-        );
+        ivv3CoordDst->m_dX = v3::inner(av3RotMat[0], *ivv3CoordSrc);
+        ivv3CoordDst->m_dY = v3::inner(av3RotMat[1], *ivv3CoordSrc);
+        ivv3CoordDst->m_dZ = v3::inner(av3RotMat[2], *ivv3CoordSrc);
+
         ++ivv3CoordSrc;
         ++ivv3CoordDst;
     }
-    *pvv3Dst = vv3Dst;
+    *pvv3Dst = _vv3Dst;
+
+    return bRet;
+}
+
+bool v3::rotate
+(
+    lv3* plv3Dst,
+    int iAx, double dAng,
+    const lv3& lv3Src
+)
+{
+    bool bRet = true;
+
+    std::array<v3,3> av3RotMat;
+    bRet &= genRotMat(&av3RotMat, iAx, dAng);
+
+    // apply rotation matrix
+    lv3 _lv3Dst; // for self-in self-out compatible
+    lv3::const_iterator ilv3CoordSrc = lv3Src.begin();
+    while (ilv3CoordSrc != lv3Src.end())
+    {
+        _lv3Dst.push_back
+        (
+            v3
+            (
+                v3::inner(av3RotMat[0], *ilv3CoordSrc),
+                v3::inner(av3RotMat[1], *ilv3CoordSrc),
+                v3::inner(av3RotMat[2], *ilv3CoordSrc)
+            )
+        );
+
+        ++ilv3CoordSrc;
+    }
+    *plv3Dst = _lv3Dst;
 
     return bRet;
 }

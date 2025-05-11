@@ -19,20 +19,22 @@ dtGrad = 10e-6
 dtADC = 5e-6
 argCom = dict(dFov=fov, lNPix=nPix, dSLim=sLim, dGLim=gLim, dDt=dtGrad)
 
+enSim = 1
+
 # calculate gradient
 t = time()
 
-# lstArrK0, lstArrGrad = mag.Function.getG_Spiral(bIs3D=False, **argCom); nAx = 2 # 0.380s
+# lstArrK0, lstArrGrad = mag.Function.getG_Spiral(bIs3D=1, **argCom); nAx = 3 # 0.380s
 
-# lstArrK0, lstArrGrad = mag.Function.getG_VarDenSpiral(bIs3D=False, **argCom, dRhoPhi0=0.5/(4*pi), dRhoPhi1=0.5/(32*pi)); nAx = 2 # 0.499s
+# lstArrK0, lstArrGrad = mag.Function.getG_VarDenSpiral(bIs3D=1, **argCom, dRhoPhi0=0.5/(4*pi), dRhoPhi1=0.5/(32*pi)); nAx = 3 # 0.499s
 
 # lstArrK0, lstArrGrad = mag.Function.getG_Rosette(**argCom, dOm1=5*pi, dOm2=3*pi, dTmax=1); nAx = 2 # 16.39s (9 frames)
 
-# tAcq_ms = 8.66; lstArrK0, lstArrGrad = mag.Function.getG_Rosette_Trad(**argCom, dOm1=5*pi/tAcq_ms, dOm2=3*pi/tAcq_ms, dTmax=1*tAcq_ms); nAx = 2 # 16.39s (9 frames)
+tAcq_ms = 8.66; lstArrK0, lstArrGrad = mag.Function.getG_Rosette_Trad(**argCom, dOm1=5*pi/tAcq_ms, dOm2=3*pi/tAcq_ms, dTmax=1*tAcq_ms); nAx = 2 # 16.39s (9 frames)
 
 # lstArrK0, lstArrGrad = mag.Function.getG_Shell3d(dRhoTht=0.5/(2*pi), **argCom); nAx = 3 # 183.7
 
-lstArrK0, lstArrGrad = mag.Function.getG_Yarnball(dRhoPhi=0.5/(2*pi), **argCom); nAx = 3 # 196.1
+# lstArrK0, lstArrGrad = mag.Function.getG_Yarnball(dRhoPhi=0.5/(2*pi), **argCom); nAx = 3 # 196.1
     
 # lstArrK0, lstArrGrad = mag.Function.getG_Seiffert(**argCom); nAx = 3 # 232.9s
 
@@ -79,8 +81,8 @@ for arrK0, arrGrad in zip(lstArrK0, lstArrGrad):
 #     title("last 100 intlea.")
 
 # interleaf to be plotted
-# iArrK = argmax(array([amax(norm(arrS,axis=-1)) for arrS in lstArrSlew]))
-iArrK = 0
+iArrK = argmax(array([amax(norm(arrS,axis=-1)) for arrS in lstArrSlew]))
+# iArrK = 0
 
 # k-space and g-space
 figure(figsize=(18,9), dpi=120)
@@ -113,9 +115,9 @@ title(f"Slewrate, max:{sMax:.3f}")
 subplots_adjust(0.05,0.1,0.95,0.9, 0.2, 0.2)
 
 
-
-show()
-exit(0)
+if not enSim:
+    show()
+    exit(0)
 
 
 

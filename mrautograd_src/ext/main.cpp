@@ -17,12 +17,13 @@
 
 #define FLAG_REVERSE (0)
 #define FLAG_GOLDANG (0)
-#define FLAG_MAXG0 (0)
-#define FLAG_MAXG1 (0)
+#define FLAG_MAXG0 (1)
+#define FLAG_MAXG1 (1)
 
 typedef std::vector<double> vd;
 typedef std::vector<int64_t> vl;
 typedef std::vector<v3> vv3;
+typedef std::list<v3> lv3;
 typedef std::vector<vv3> vvv3;
 
 PyObject* cvtVv3toNparr(vv3& vv3Src)
@@ -230,7 +231,7 @@ public:
         );
 
         GradGen gg(ptfTrajFunc, dSLim, dGLim, dDt, 8);
-        gg.compute(&m_vv3Grad);
+        gg.compute(&m_lv3Grad, NULL);
     }
 
     ~ExTraj()
@@ -245,10 +246,10 @@ public:
         return bRet;
     }
 
-    bool getGRO(vv3* pvv3GRO, int64_t lIAcq) const
+    bool getGRO(lv3* plv3GRO, int64_t lIAcq) const
     {
         bool bRet = true;
-        *pvv3GRO = m_vv3Grad;
+        *plv3GRO = m_lv3Grad;
         return bRet;
     }
 
@@ -266,12 +267,12 @@ public:
 
     int64_t getNSampAdc(int64_t lIAcq) const
     {
-        return m_vv3Grad.size();
+        return m_lv3Grad.size();
     }
 
 private:
     TrajFunc* ptfTrajFunc;
-    vv3 m_vv3Grad;
+    lv3 m_lv3Grad;
 };
 
 PyObject* calGrad(PyObject* self, PyObject* const* args, Py_ssize_t narg)
@@ -291,20 +292,21 @@ PyObject* calGrad(PyObject* self, PyObject* const* args, Py_ssize_t narg)
         args[6], args[7], args[8], 
         dP0, dP1
     );
-    
-    vv3 vv3G;
-    traj.getGRO(&vv3G, 0);
 
+    lv3 lv3G;
+    traj.getGRO(&lv3G, 0);
+
+    vv3 vv3G(lv3G.begin(), lv3G.end());
     return cvtVv3toNparr(vv3G);
 }
 
-bool getGrad_Main(MrTraj* pmt, vv3* pvv3K0, vvv3* pvvv3G, bool bShuf)
+bool getGrad_Main(MrTraj* pmt, vv3* pvv3M0PE, vvv3* pvvv3GRO, bool bShuf)
 {
     bool bRet = true;
     int64_t lNAcq = pmt->getNAcq();
     double dDt = pmt->getGradPara().dDt;
-    pvv3K0->resize(lNAcq);
-    pvvv3G->resize(lNAcq);
+    pvv3M0PE->resize(lNAcq);
+    pvvv3GRO->resize(lNAcq);
 
     bShuf = false; // test
 	vl vlShufIdx; MrTraj::genRandIdx(&vlShufIdx, lNAcq);
@@ -313,22 +315,28 @@ bool getGrad_Main(MrTraj* pmt, vv3* pvv3K0, vvv3* pvvv3G, bool bShuf)
         int64_t _i = bShuf?vlShufIdx[i]:i;
         
         // get M0PE and GRO
-        bRet &= pmt->getM0PE(&pvv3K0->at(i), _i);
-        bRet &= pmt->getGRO(&pvvv3G->at(i), _i);
-
-        // crop gradient as requested
-        v3& v3K0 = pvv3K0->at(i);
-        vv3& vv3G = pvvv3G->at(i);
+        v3 v3M0PE; bRet &= pmt->getM0PE(&v3M0PE, _i);
+        lv3 lv3GRO; bRet &= pmt->getGRO(&lv3GRO, _i);
         int64_t lNWait = pmt->getNWaitAdc(_i);
         int64_t lNSamp = pmt->getNSampAdc(_i);
+
+        // crop gradient as requested
+        lv3::iterator ilv3GRO = lv3GRO.begin();
         for (int64_t j = 0; j < lNWait; ++j)
         {
-            v3K0 = v3K0 + (vv3G[j] + vv3G[j+1])*dDt/2e0;
+            v3M0PE += (*ilv3GRO + *std::next(ilv3GRO))*dDt/2e0;
+            ilv3GRO = lv3GRO.erase(ilv3GRO);
         }
-        vv3G = vv3(vv3G.begin()+lNWait, vv3G.begin()+lNWait+lNSamp);
+        {
+            int64_t n = lv3GRO.size()-lNSamp;
+            while (n--) lv3GRO.pop_back();
+        }
 
         // reverse gradient if needed
-        if (FLAG_REVERSE) bRet &= GradGen::revGrad(&pvv3K0->at(i), &pvvv3G->at(i), pvv3K0->at(i), pvvv3G->at(i), dDt);
+        if (FLAG_REVERSE) bRet &= GradGen::revGrad(&v3M0PE, &lv3GRO, v3M0PE, lv3GRO, dDt);
+
+        pvv3M0PE->at(i) = v3M0PE;
+        pvvv3GRO->at(i) = vv3(lv3GRO.begin(), lv3GRO.end());
     }
     return bRet;
 }
