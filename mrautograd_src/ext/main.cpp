@@ -17,8 +17,8 @@
 
 #define FLAG_REVERSE (0)
 #define FLAG_GOLDANG (0)
-#define FLAG_MAXG0 (1)
-#define FLAG_MAXG1 (1)
+#define FLAG_MAXG0 (0)
+#define FLAG_MAXG1 (0)
 
 typedef std::vector<double> vd;
 typedef std::vector<int64_t> vl;
@@ -253,19 +253,12 @@ public:
         return bRet;
     }
 
-    bool getM0SP(v3* pv3M0PE, int64_t lIAcq) const
-    {
-        bool bRet = true;
-        *pv3M0PE = v3(0,0,0);
-        return bRet;
-    }
-
-    int64_t getNWaitAdc(int64_t lIAcq) const
+    int64_t getNWait(int64_t lIAcq) const
     {
         return 0;
     }
 
-    int64_t getNSampAdc(int64_t lIAcq) const
+    int64_t getNSamp(int64_t lIAcq) const
     {
         return m_lv3Grad.size();
     }
@@ -308,7 +301,7 @@ bool getGrad_Main(MrTraj* pmt, vv3* pvv3M0PE, vvv3* pvvv3GRO, bool bShuf)
     pvv3M0PE->resize(lNAcq);
     pvvv3GRO->resize(lNAcq);
 
-    bShuf = false; // test
+    // bShuf = false; // test
 	vl vlShufIdx; MrTraj::genRandIdx(&vlShufIdx, lNAcq);
     for (int64_t i = 0; i < lNAcq; ++i)
     {
@@ -317,8 +310,8 @@ bool getGrad_Main(MrTraj* pmt, vv3* pvv3M0PE, vvv3* pvvv3GRO, bool bShuf)
         // get M0PE and GRO
         v3 v3M0PE; bRet &= pmt->getM0PE(&v3M0PE, _i);
         lv3 lv3GRO; bRet &= pmt->getGRO(&lv3GRO, _i);
-        int64_t lNWait = pmt->getNWaitAdc(_i);
-        int64_t lNSamp = pmt->getNSampAdc(_i);
+        int64_t lNWait = pmt->getNWait(_i);
+        int64_t lNSamp = pmt->getNSamp(_i);
 
         // crop gradient as requested
         lv3::iterator ilv3GRO = lv3GRO.begin();
@@ -393,6 +386,7 @@ PyObject* getG_Rosette(PyObject* self, PyObject* const* args, Py_ssize_t narg)
     double dTmax = (double)PyFloat_AsDouble(args[8]);
 
     Rosette traj(sGeoPara, sGradPara, dOm1, dOm2, dTmax);
+    printf("Rosette DTE: %e s\n", traj.getAvrDTE());
     if (FLAG_GOLDANG) traj.setRotAngInc(traj.getNRot());
 
     vv3 vv3K0;
@@ -404,7 +398,7 @@ PyObject* getG_Rosette(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 
 PyObject* getG_Rosette_Trad(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 {
-    checkNarg(narg, 9);
+    checkNarg(narg, 10);
 
     MrTraj::GeoPara sGeoPara;
     MrTraj::GradPara sGradPara;
@@ -413,8 +407,9 @@ PyObject* getG_Rosette_Trad(PyObject* self, PyObject* const* args, Py_ssize_t na
     double dOm1 = (double)PyFloat_AsDouble(args[6]);
     double dOm2 = (double)PyFloat_AsDouble(args[7]);
     double dTmax = (double)PyFloat_AsDouble(args[8]);
+    double dDTE = (double)PyFloat_AsDouble(args[9]);
 
-    Rosette_Trad traj(sGeoPara, sGradPara, dOm1, dOm2, dTmax);
+    Rosette_Trad traj(sGeoPara, sGradPara, dOm1, dOm2, dTmax, dDTE);
     if (FLAG_GOLDANG) traj.setRotAngInc(traj.getNRot());
 
     vv3 vv3K0;

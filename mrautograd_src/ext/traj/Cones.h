@@ -52,9 +52,8 @@ public:
         m_vptfBaseTraj.resize(m_lNSet);
         m_vv3BaseM0PE.resize(m_lNSet);
         m_vlv3BaseGRO.resize(m_lNSet);
-        m_vv3BaseM0SP.resize(m_lNSet);
-        m_vlNWaitAdc.resize(m_lNSet);
-        m_vlNSampAdc.resize(m_lNSet);
+        m_vlNWait.resize(m_lNSet);
+        m_vlNSamp.resize(m_lNSet);
         m_lNAcq = 0;
         ll llSetIdx, llRotIdx;
         for (int i = 0; i < m_lNSet; ++i)
@@ -65,7 +64,7 @@ public:
             m_vptfBaseTraj[i] = new Cones_TrajFun(dRhoPhi, dTht0);
             if(!m_vptfBaseTraj[i]) throw std::runtime_error("out of memory");
 
-            calGrad(&m_vv3BaseM0PE[i], &m_vlv3BaseGRO[i], NULL, &m_vv3BaseM0SP[i], &m_vlNWaitAdc[i], &m_vlNSampAdc[i], m_vptfBaseTraj[i], m_sGradPara, bMaxG0&&bMaxG1?2:8);
+            calGrad(&m_vv3BaseM0PE[i], &m_vlv3BaseGRO[i], NULL, &m_vlNWait[i], &m_vlNSamp[i], m_vptfBaseTraj[i], m_sGradPara, bMaxG0&&bMaxG1?2:8);
 
             m_vlNRot[i] = calNRot
             (
@@ -123,28 +122,14 @@ public:
         return bRet;
     }
 
-    bool getM0SP(v3* pv3M0SP, int64_t lIAcq) const
+    int64_t getNWait(int64_t lIAcq) const
     {
-        bool bRet = true;
-        lIAcq %= m_lNAcq;
-        int64_t lISet = m_vlSetIdx[lIAcq];
-        int64_t lIRot = m_vlRotIdx[lIAcq];
-        double dPhiInc = calRotAngInc(m_vlNRot[lISet]);
-
-        *pv3M0SP = m_vv3BaseM0SP[lISet];
-        bRet &= v3::rotate(pv3M0SP, 2, dPhiInc*lIRot, *pv3M0SP);
-
-        return bRet;
+        return m_vlNWait[m_vlSetIdx[lIAcq]];
     }
 
-    int64_t getNWaitAdc(int64_t lIAcq) const
+    int64_t getNSamp(int64_t lIAcq) const
     {
-        return m_vlNWaitAdc[m_vlSetIdx[lIAcq]];
-    }
-
-    int64_t getNSampAdc(int64_t lIAcq) const
-    {
-        return m_vlNSampAdc[m_vlSetIdx[lIAcq]];
+        return m_vlNSamp[m_vlSetIdx[lIAcq]];
     }
 
 protected:
@@ -157,9 +142,8 @@ protected:
     vptf m_vptfBaseTraj;
     vv3 m_vv3BaseM0PE;
     vlv3 m_vlv3BaseGRO;
-    vv3 m_vv3BaseM0SP;
-    vl m_vlNWaitAdc;
-    vl m_vlNSampAdc;
+    vl m_vlNWait;
+    vl m_vlNSamp;
 
     static int64_t getNLayer_Cones(int64_t lNPix)
     {

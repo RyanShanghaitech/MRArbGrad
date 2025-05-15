@@ -53,9 +53,8 @@ public:
         m_vptfBaseTraj.resize(m_lNRot);
         m_vv3BaseM0PE.resize(m_lNRot);
         m_vlv3BaseGRO.resize(m_lNRot);
-        m_vv3BaseM0SP.resize(m_lNRot);
-        m_vlNWaitAdc.resize(m_lNRot);
-        m_vlNSampAdc.resize(m_lNRot);
+        m_vlNWait.resize(m_lNRot);
+        m_vlNSamp.resize(m_lNRot);
         for(int64_t i = 0; i < m_lNRot; ++i)
         {
             // printf("%ld/%ld\n", i, m_lNRot); // test
@@ -64,7 +63,7 @@ public:
             m_vptfBaseTraj[i] = new Yarnball_TrajFunc(dRhoPhi, dTht0);
             if(!m_vptfBaseTraj[i]) throw std::runtime_error("out of memory");
 
-            calGrad(&m_vv3BaseM0PE[i], &m_vlv3BaseGRO[i], NULL, &m_vv3BaseM0SP[i], &m_vlNWaitAdc[i], &m_vlNSampAdc[i], m_vptfBaseTraj[i], m_sGradPara, bMaxG0&&bMaxG1?2:8);
+            calGrad(&m_vv3BaseM0PE[i], &m_vlv3BaseGRO[i], NULL, &m_vlNWait[i], &m_vlNSamp[i], m_vptfBaseTraj[i], m_sGradPara, bMaxG0&&bMaxG1?2:8);
         }
     }
     
@@ -102,29 +101,16 @@ public:
         return bRet;
     }
 
-    bool getM0SP(v3* pv3M0SP, int64_t lIAcq) const
+    int64_t getNWait(int64_t lIAcq) const
     {
-        bool bRet = true;
-        const double& dPhiInc = m_dRotInc;
         int64_t lISet = lIAcq%m_lNRot;
-        int64_t lIRot = lIAcq/m_lNRot;
-
-        *pv3M0SP = m_vv3BaseM0SP[lISet];
-        bRet &= v3::rotate(pv3M0SP, 2, dPhiInc*lIRot, *pv3M0SP);
-
-        return bRet;
+        return m_vlNWait[lISet];
     }
 
-    int64_t getNWaitAdc(int64_t lIAcq) const
+    int64_t getNSamp(int64_t lIAcq) const
     {
         int64_t lISet = lIAcq%m_lNRot;
-        return m_vlNWaitAdc[lISet];
-    }
-
-    int64_t getNSampAdc(int64_t lIAcq) const
-    {
-        int64_t lISet = lIAcq%m_lNRot;
-        return m_vlNSampAdc[lISet];
+        return m_vlNSamp[lISet];
     }
 
 protected:
@@ -134,7 +120,6 @@ protected:
     vptf m_vptfBaseTraj;
     vv3 m_vv3BaseM0PE;
     vlv3 m_vlv3BaseGRO;
-    vv3 m_vv3BaseM0SP;
-    vl m_vlNWaitAdc;
-    vl m_vlNSampAdc;
+    vl m_vlNWait;
+    vl m_vlNSamp;
 };

@@ -70,11 +70,9 @@ public:
     
     virtual bool getGRO(lv3* plv3GRO, int64_t lIAcq) const = 0;
     
-    virtual bool getM0SP(v3* pv3M0SP, int64_t lIAcq) const = 0;
+    virtual int64_t getNWait(int64_t lIAcq) const = 0;
     
-    virtual int64_t getNWaitAdc(int64_t lIAcq) const = 0;
-    
-    virtual int64_t getNSampAdc(int64_t lIAcq) const = 0;
+    virtual int64_t getNSamp(int64_t lIAcq) const = 0;
 
     const GeoPara& getGeoPara() const
     { return m_sGeoPara; }
@@ -110,6 +108,36 @@ public:
         }
 
         return true;
+    }
+
+    static bool calM0SP(v3* pv3M0SP, const v3& v3M0PE, const lv3 lv3GRO)
+    {
+        bool bRet = true;
+        *pv3M0SP = v3M0PE;
+        lv3::const_iterator ilv3GRO = lv3GRO.begin();
+        lv3::const_iterator ilv3NonZero = ilv3GRO;
+        for(int64_t i = 0; i < (int64_t)lv3GRO.size()-1; ++i)
+        {
+            *pv3M0SP += (*ilv3GRO + *std::next(ilv3GRO))*1e0/2e0; // assume `dt` to be 1
+            if (v3::norm(*ilv3GRO)!=0e0) ilv3NonZero = ilv3GRO;
+            ++ilv3GRO;
+        }
+
+        if (v3::norm(*pv3M0SP) != 0e0)
+        {
+            *pv3M0SP /= v3::norm(*pv3M0SP);
+        }
+        else if (v3::norm(*ilv3NonZero) != 0e0)
+        {
+            *pv3M0SP = *ilv3NonZero/v3::norm(*ilv3NonZero);
+        }
+        else
+        {
+            *pv3M0SP = v3(1,0,0);
+            bRet = false;
+        }
+
+        return bRet;
     }
 
 protected:
@@ -184,37 +212,37 @@ protected:
         const bool& bMaxG1 = sGradPara.bMaxG1;
 
         // calculate gradient
-        TIC;
+        // TIC;
 
         GradGen gg(&tf, dSLim, dGLim, dDt, lOs, bMaxG0?1e15:0e0, bMaxG1?1e15:0e0);
         bRet &= gg.compute(plv3G, pldP);
 
-        TOC;
+        // TOC;
 
         return true;
     }
 
-    static bool calGrad(v3* pv3M0PE, lv3* plv3GRO, ld* pldP, v3* pv3M0SP, int64_t* plNWaitAdc, int64_t* plNSampAdc, const TrajFunc* ptfBaseTraj, const GradPara& sGradPara, int64_t lOs=16, double dTRampFront=0.5e-3, double dTRampBack=0.5e-3)
+    static bool calGrad(v3* pv3M0PE, lv3* plv3GRO, ld* pldP, int64_t* plNWait, int64_t* plNSamp, const TrajFunc* ptfBaseTraj, const GradPara& sGradPara, int64_t lOs=16)
     {
         bool bRet = true;
+        const double& dGLim = sGradPara.dGLim;
+        const double& dSLim = sGradPara.dSLim;
         const double& dDt = sGradPara.dDt;
+        double dTRampFront = sGradPara.bMaxG0 ? dGLim/dSLim : 0e0;
+        double dTRampBack = sGradPara.bMaxG1 ? dGLim/dSLim : 0e0;
         
         // calculate GRO with ramp-up and ramp-down
         calGRO(plv3GRO, pldP, *ptfBaseTraj, sGradPara, lOs);
-        lv3 lv3GRampFront; bRet &= GradGen::ramp_front(&lv3GRampFront, *plv3GRO->begin(), v3(0,0,0), int64_t(dTRampFront/dDt), dDt);
-        lv3 lv3GRampBack; bRet &= GradGen::ramp_back(&lv3GRampBack, *plv3GRO->rbegin(), v3(0,0,0), int64_t(dTRampBack/dDt), dDt);
+        lv3 lv3GRampFront; bRet &= dSLim>=GradGen::ramp_front(&lv3GRampFront, *plv3GRO->begin(), v3(0,0,0), int64_t(dTRampFront/dDt), dDt);
+        lv3 lv3GRampBack; bRet &= dSLim>=GradGen::ramp_back(&lv3GRampBack, *plv3GRO->rbegin(), v3(0,0,0), int64_t(dTRampBack/dDt), dDt);
 
-        *plNWaitAdc = lv3GRampFront.size();
-        *plNSampAdc = plv3GRO->size();
+        *plNWait = lv3GRampFront.size();
+        *plNSamp = plv3GRO->size();
 
         // calculate M0 of PE
         bRet &= ptfBaseTraj->getK0(pv3M0PE);
-        *pv3M0PE -= GradGen::calM0(lv3GRampFront, dDt, v3(0,0,0), *plv3GRO->begin());
-
-        // calculate M0 of SP
-        bRet &= ptfBaseTraj->getK1(pv3M0SP);
-        *pv3M0SP += GradGen::calM0(lv3GRampBack, dDt, *plv3GRO->rbegin(), v3(0,0,0));
-        *pv3M0SP = v3::norm(*pv3M0SP)!=0 ? *pv3M0SP/v3::norm(*pv3M0SP) : v3(1,0,0);
+        v3 v3M0Ramp; GradGen::calM0(&v3M0Ramp, lv3GRampFront, dDt, v3(0,0,0), *plv3GRO->begin());
+        *pv3M0PE -= v3M0Ramp;
 
         // concate ramp gradient
         plv3GRO->splice(plv3GRO->begin(), lv3GRampFront);

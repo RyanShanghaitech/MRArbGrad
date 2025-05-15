@@ -8,16 +8,19 @@ uMax = 30
 
 fov = 0.5
 nPix = 256
+sLim = 100 * 42.5756e6 * fov / nPix
+gLim = 120e-3 * 42.5756e6 * fov / nPix
+dt = 10e-6
 m = 0.07
 
 def getK(u:float64) -> ndarray:
-    sn, cn = g4n.calJacElip(u, m)
+    sn, cn = mag.calJacElip(u, m)
     phi = sqrt(m)*u
     rho = 0.5*((u/uMax)**1)
     return rho*array([sn*cos(phi), sn*sin(phi), cn], dtype=float64).T
-g4n.init(100*42.58e6*(fov/nPix), inf, 10e-6)
-arrG = g4n.compute(getK, 0, uMax)
-arrK = g4n.cvtGrad2Traj(arrG, 10e-6, 2.5e-6)
+
+arrG = mag.calGrad(False, fov, nPix, sLim, gLim, dt, getK, None, None, 0, uMax)
+arrK = mag.cvtGrad2Traj(arrG, 10e-6, 2.5e-6)
 tRO = arrG.shape[0]*10e-6
 
 # plot

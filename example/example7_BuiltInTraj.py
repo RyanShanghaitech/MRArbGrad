@@ -6,35 +6,34 @@ from time import time
 import finufft as fn
 import slime
 import fars
-import torch as tor
-import torchkbnufft as tkbn
 
 gamma = 42.5756e6
 # fov = 0.384
-fov = 0.256
+# fov = 0.256
+fov = 0.192
 nPix = 256
-sLim = 100 * gamma * fov/nPix
-gLim = 120e-3 * gamma * fov/nPix
+sLim = 50 * gamma * fov/nPix
+gLim = 50e-3 * gamma * fov/nPix
 dtGrad = 10e-6
 dtADC = 5e-6
 argCom = dict(dFov=fov, lNPix=nPix, dSLim=sLim, dGLim=gLim, dDt=dtGrad)
 
-enSim = 1
+enSim = 0
 
 # calculate gradient
 t = time()
 
-# lstArrK0, lstArrGrad = mag.Function.getG_Spiral(bIs3D=1, **argCom); nAx = 3 # 0.380s
+# lstArrK0, lstArrGrad = mag.Function.getG_Spiral(bIs3D=0, **argCom); nAx = 2 # 0.380s
 
-# lstArrK0, lstArrGrad = mag.Function.getG_VarDenSpiral(bIs3D=1, **argCom, dRhoPhi0=0.5/(4*pi), dRhoPhi1=0.5/(32*pi)); nAx = 3 # 0.499s
+# lstArrK0, lstArrGrad = mag.Function.getG_VarDenSpiral(bIs3D=0, **argCom, dRhoPhi0=0.5/(1*pi), dRhoPhi1=0.5/(256*pi)); nAx = 2 # 0.499s
 
 # lstArrK0, lstArrGrad = mag.Function.getG_Rosette(**argCom, dOm1=5*pi, dOm2=3*pi, dTmax=1); nAx = 2 # 16.39s (9 frames)
 
-tAcq_ms = 8.66; lstArrK0, lstArrGrad = mag.Function.getG_Rosette_Trad(**argCom, dOm1=5*pi/tAcq_ms, dOm2=3*pi/tAcq_ms, dTmax=1*tAcq_ms); nAx = 2 # 16.39s (9 frames)
+# lstArrK0, lstArrGrad = mag.Function.getG_Rosette_Trad(**argCom, dOm1=10*pi, dOm2=8*pi, dTmax=1, dTacq=2e-03); nAx = 2 # 16.39s (9 frames)
 
 # lstArrK0, lstArrGrad = mag.Function.getG_Shell3d(dRhoTht=0.5/(2*pi), **argCom); nAx = 3 # 183.7
 
-# lstArrK0, lstArrGrad = mag.Function.getG_Yarnball(dRhoPhi=0.5/(2*pi), **argCom); nAx = 3 # 196.1
+lstArrK0, lstArrGrad = mag.Function.getG_Yarnball(dRhoPhi=0.5/(1*pi), **argCom); nAx = 3 # 196.1
     
 # lstArrK0, lstArrGrad = mag.Function.getG_Seiffert(**argCom); nAx = 3 # 232.9s
 
@@ -44,11 +43,9 @@ t = time() - t
 print(f"Exe Time: {t}")
 print(f"Intlea Num.: {len(lstArrGrad)}")
 
-if all(array(lstArrK0)==0): print("NO PE")
-
 nRO_Max = max(arrG.shape[0] for arrG in lstArrGrad)
 print(f"Tacq: {nRO_Max*dtGrad*1e3:.3f} ms")
-tTR = (nRO_Max*dtGrad + 6e-3)
+tTR = (nRO_Max*dtGrad + 2.5e-3)
 print(f"TR: {tTR*1e3:.3f} ms")
 tScan = tTR*len(lstArrGrad)
 print(f"Tscan: {tScan:.3e} s")
@@ -69,7 +66,7 @@ print(f"gMax: {gMax}")
 # derive trajectory
 lstArrK = []
 for arrK0, arrGrad in zip(lstArrK0, lstArrGrad):
-    arrK = mag.cvtGrad2Traj(arrGrad, dtGrad, dtADC)
+    arrK, _ = mag.cvtGrad2Traj(arrGrad, dtGrad, dtADC)
     arrK += arrK0
     lstArrK.append(arrK)
 
@@ -123,14 +120,9 @@ if not enSim:
 
 # simulate phantom
 arrI = slime.genPhan(nAx, nPix)["M0"].squeeze()
-# if nAx == 2: arrI = arrI[nPix//2,:,:]
 arrK = concatenate(lstArrK, axis=0)
 
 arrDcf = fars.calDcf(nPix, arrK[:,:nAx]).astype(complex64)
-
-# tenK = tor.from_numpy(arrK)
-# tenDcf = tkbn.calc_density_compensation_function((2*pi)*tenK.T, (nPix,nPix), numpoints=8, kbwidth=4, num_iterations=1, table_oversamp=2**10)
-# arrDcf = tenDcf.detach().cpu().numpy().squeeze().astype(complex64)
 
 arrOm = 2*pi*arrK; arrOm = arrOm.astype(float32)
 
@@ -143,7 +135,7 @@ plan.setpts(*arrOm.T)
 arrI_Reco = plan.execute(arrS*arrDcf)
 
 if nAx==2:
-    figure(figsize=(9,9), dpi=120)
+    figure(figsize=(9,5), dpi=120)
     
     subplot(121)
     imshow(abs(arrI), cmap="gray")
@@ -152,7 +144,7 @@ if nAx==2:
     imshow(abs(arrI_Reco), cmap="gray")
     
 if nAx==3:
-    figure(figsize=(9,9), dpi=120)
+    figure(figsize=(6,9), dpi=120)
     
     subplot(321)
     imshow(abs(arrI[nPix//2,:,:]), cmap="gray")

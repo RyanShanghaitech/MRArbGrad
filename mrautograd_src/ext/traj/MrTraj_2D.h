@@ -35,29 +35,15 @@ public:
 
         return bRet;
     }
-    
-    bool getM0SP(v3* pv3M0SP, int64_t lIAcq) const
-    {
-        bool bRet = true;
-        int64_t lIStack = lIAcq%m_lNStack;
-        int64_t lIRot = lIAcq/m_lNStack;
-        
-        *pv3M0SP = m_v3BaseM0SP;
-        pv3M0SP->m_dZ += getK0z(lIStack, m_lNStack);
-        
-        bRet &= v3::rotate(pv3M0SP, 2, m_dRotAngInc*lIRot, *pv3M0SP);
 
-        return bRet;
+    int64_t getNWait(int64_t lIAcq) const
+    {
+        return m_lNWait;
     }
 
-    int64_t getNWaitAdc(int64_t lIAcq) const
+    int64_t getNSamp(int64_t lIAcq) const
     {
-        return m_lNWaitAdc;
-    }
-
-    int64_t getNSampAdc(int64_t lIAcq) const
-    {
-        return m_lNSampAdc;
+        return m_lNSamp;
     }
 
     int64_t getNRot()
@@ -81,9 +67,8 @@ protected:
 
     v3 m_v3BaseM0PE;
     lv3 m_lv3BaseGRO;
-    v3 m_v3BaseM0SP;
-    int64_t m_lNWaitAdc;
-    int64_t m_lNSampAdc;
+    int64_t m_lNWait;
+    int64_t m_lNSamp;
 
     static double getK0z(int64_t lIStack, int64_t lNStack=256)
     {

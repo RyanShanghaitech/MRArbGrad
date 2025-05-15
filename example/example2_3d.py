@@ -46,6 +46,8 @@ expZ = expRho*sp.cos(expTht)
 
 expK = sp.Array([expX,expY,expZ]).simplify()
 getK = sp.lambdify(symP, expK, "numpy")
+getK_D1p = None
+getK_D2p = None
 
 p1 = (pi*nPix)**2/(2*uPhi*uTht)
 p0 = 10e-4 # we recommand not to start from 0 because the trajectory equation is undifferentrative at p=0.
@@ -56,7 +58,7 @@ p0 = 10e-4 # we recommand not to start from 0 because the trajectory equation is
 # p0 = 0
 # def getK(p:float64):
 #     # sn, cn, _, _ = ellipj(p, k)
-#     sn, cn = g4n.calJacElip(p, k)
+#     sn, cn = mag.calJacElip(p, k)
     
 #     x = sn*cos(p*sqrt(k))
 #     y = sn*sin(p*sqrt(k))
@@ -85,7 +87,8 @@ print("getK(p0)", getK(p0))
 
 # derive slew-rate constrained trajectory
 t = time()
-arrG = g4n.calGrad(p0, p1, getK, None, None, sLim, 1e8, dt)
+arrG = mag.calGrad(False, fov, nPix, sLim, gLim, dt, getK, getK_D1p, getK_D2p, p0, p1)
+# arrG = mag.calGrad(p0, p1, getK, None, None, sLim, 1e8, dt)
 t = time() - t
 print(f"Exe Time: {t:.3f} s")
 print(f"Wave Time: {arrG.shape[0]*dt*1e3:.3f} ms")

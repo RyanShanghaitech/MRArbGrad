@@ -21,10 +21,10 @@ arrPtUnif = uniform(0,1,(Npt,2))
 arrPtClus = uniform(0.4,0.6,(Npt,2))
 
 # Calculate Diaphony
-diaSobel = g4n.calDiaphony(arrPtSobel)
-diaHalton = g4n.calDiaphony(arrPtHalton)
-diaUnif = g4n.calDiaphony(arrPtUnif)
-diaClus = g4n.calDiaphony(arrPtClus)
+diaSobel = mag.calDiaphony(arrPtSobel)
+diaHalton = mag.calDiaphony(arrPtHalton)
+diaUnif = mag.calDiaphony(arrPtUnif)
+diaClus = mag.calDiaphony(arrPtClus)
 
 print("diaSobel", diaSobel)
 print("diaHalton", diaHalton)

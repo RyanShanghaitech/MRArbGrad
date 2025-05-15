@@ -13,24 +13,24 @@ nK = 1000
 for iM in range(nM):
     print(f"{iM}/{nM}")
     m = arrM[iM]
-    # uPrd = 4*g4n.calCompElipInt(m) # period of argument u
+    # uPrd = 4*mag.calCompElipInt(m) # period of argument u
     arrU = linspace(0,20,nK)
-    arrSn, arrCn = g4n.calJacElip(arrU, m)
+    arrSn, arrCn = mag.calJacElip(arrU, m)
     arrPhi = sqrt(m)*arrU
     arrK = 0.5*(linspace(0,1,nK)[:,newaxis]**2)*array([arrSn*cos(arrPhi), arrSn*sin(arrPhi), arrCn], dtype=float64).T
     
     # continue
     
-    d = g4n.calDiaphony(arrK*(254/256)+1/2)
+    d = mag.calDiaphony(arrK*(254/256)+1/2)
     arrD[iM] = d
     
 iM_Optm = argmin(arrD)
 m = arrM[iM_Optm]
 arrU = linspace(0,20,nK)
-arrSn, arrCn = g4n.calJacElip(arrU, m)
+arrSn, arrCn = mag.calJacElip(arrU, m)
 arrPhi = sqrt(m)*arrU
 arrK = 0.5*(linspace(0,1,nK)[:,newaxis]**1)*array([arrSn*cos(arrPhi), arrSn*sin(arrPhi), arrCn], dtype=float64).T
-d = g4n.calDiaphony(arrK*(254/256)+1/2)
+d = mag.calDiaphony(arrK*(254/256)+1/2)
 
 # plot
 fig = figure(figsize=(12,6), dpi=120)

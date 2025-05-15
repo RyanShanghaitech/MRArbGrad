@@ -9,31 +9,33 @@ nInt = 100
 
 fov = 0.22
 nPix = 258
+sLim = 100 * 42.5756e6 * fov / nPix
+gLim = 120e-3 * 42.5756e6 * fov / nPix
+dt = 10e-6
 m = 0.07 # measuared by discrepancy test
 uMax = 20 # meansured by readout duration
 dtGrad = 10e-6
 dtADC = 2.5e-6
 
 def getK(u:float64) -> ndarray:
-    sn, cn = g4n.calJacElip(u, m)
+    sn, cn = mag.calJacElip(u, m)
     phi = sqrt(m)*u
     rho = 0.5*((u/uMax)**1)
     return rho*array([sn*cos(phi), sn*sin(phi), cn], dtype=float64).T
-g4n.init(100*42.58e6*(fov/nPix), inf, 10e-6)
-arrG = g4n.compute(getK, 0, uMax)
+arrG = mag.calGrad(False, fov, nPix, sLim, gLim, dt, getK, None, None, 0, uMax)
 print(f"readout: {arrG.shape[0]*dtGrad*1000} ms")
 arrK = cumsum(arrG*dtGrad, axis=0)
 
 # ensures trajectory ends at (0, 0, 0.5)
-arrG = g4n.rotate(arrG, -arctan2(arrK[-1,1],arrK[-1,0]), 2)
+arrG = mag.rotate(arrG, -arctan2(arrK[-1,1],arrK[-1,0]), 2)
 arrK = cumsum(arrG*dtGrad, axis=0)
-arrG = g4n.rotate(arrG, -arctan2(arrK[-1,0],arrK[-1,2]), 1)
+arrG = mag.rotate(arrG, -arctan2(arrK[-1,0],arrK[-1,2]), 1)
 arrK = cumsum(arrG*dtGrad, axis=0)
 arrG_Ref = arrG.copy()
 arrK_Ref = arrK.copy()
 
 # generate Fibonacci points
-arrFib = g4n.calSphFibPt(nInt)
+arrFib = mag.calSphFibPt(nInt)
 
 # generate other interleaves
 lstArrG = []
@@ -41,9 +43,9 @@ lstArrK = []
 for iInt in range(nInt):
     if iInt%1000==999: print(f"{iInt+1}/{nInt}")
     arrG = arrG_Ref.copy()
-    arrG = g4n.rotate(arrG, uniform(-pi, pi), 2) # randomly rotate along z-axis
-    arrG = g4n.rotate(arrG, arctan2(norm(arrFib[iInt,:2]),arrFib[iInt,2]), 1) # apply theta
-    arrG = g4n.rotate(arrG, arctan2(arrFib[iInt,1],arrFib[iInt,0]), 2) # apply phi
+    arrG = mag.rotate(arrG, uniform(-pi, pi), 2) # randomly rotate along z-axis
+    arrG = mag.rotate(arrG, arctan2(norm(arrFib[iInt,:2]),arrFib[iInt,2]), 1) # apply theta
+    arrG = mag.rotate(arrG, arctan2(arrFib[iInt,1],arrFib[iInt,0]), 2) # apply phi
     arrK = cumsum(arrG*dtGrad, axis=0)
     lstArrG.append(arrG)
     lstArrK.append(arrK)

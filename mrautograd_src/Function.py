@@ -134,7 +134,8 @@ def getG_Rosette_Trad\
     
     dOm1: float64 = 10*pi, 
     dOm2: float64 = 8*pi, 
-    dTmax: float64 = 1e0
+    dTmax: float64 = 1e0,
+    dTacq: float64 = 20e-3,
 ) -> tuple[list[NDArray], list[NDArray]]:
     return ext.getG_Rosette_Trad\
     (
@@ -148,7 +149,8 @@ def getG_Rosette_Trad\
         
         float64(dOm1),
         float64(dOm2),
-        float64(dTmax)
+        float64(dTmax),
+        float64(dTacq)
     )
 
 def getG_Shell3d\

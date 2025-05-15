@@ -7,7 +7,7 @@ arrU = linspace(0, 8*pi/2, 1002)[1:-1]
 m = 0.1
 
 # AGM
-arrSn, arrCn = g4n.calJacElip(arrU, m)
+arrSn, arrCn = mag.calJacElip(arrU, m)
 
 # scipy implementation
 arrSn_Ref, arrCn_Ref, _, _ = ellipj(arrU, m)

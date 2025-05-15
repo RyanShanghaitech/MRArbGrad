@@ -1,7 +1,7 @@
 from numpy import *
 from matplotlib.pyplot import *
 
-def cvtGrad2Traj(arrG:ndarray, dtGrad:int|float, dtADC:int|float) -> ndarray:
+def cvtGrad2Traj(arrG:ndarray, dtGrad:int|float, dtADC:int|float) -> tuple[ndarray, ndarray]:
     """
     # description:
     interpolate gradient waveform and calculate trajectory
@@ -11,7 +11,7 @@ def cvtGrad2Traj(arrG:ndarray, dtGrad:int|float, dtADC:int|float) -> ndarray:
     `dtGrad`, `dtADC`: temporal resolution of gradient system and ADC
 
     # return:
-    interpolated trajectory
+    interpolated trajectory and gradient
     """
     nGrad, nDim = arrG.shape
     nADC = int(dtGrad/dtADC)*(nGrad-1)
@@ -19,10 +19,51 @@ def cvtGrad2Traj(arrG:ndarray, dtGrad:int|float, dtADC:int|float) -> ndarray:
     for iDim in range(nDim):
         arrG_Resamp[:,iDim] = interp(dtADC*arange(nADC)+dtADC/2, dtGrad*arange(nGrad), arrG[:,iDim])
     arrDk = zeros_like(arrG_Resamp)
-    arrDk[0,:] = (0 + arrG_Resamp[0,:])*dtADC/2
+    arrDk[0,:] = (arrG[0,:] + arrG_Resamp[0,:])*dtADC/4
     arrDk[1:,:] = (arrG_Resamp[:-1] + arrG_Resamp[1:])*dtADC/2
     arrK = cumsum(arrDk,axis=0)
-    return arrK
+    return arrK, arrG_Resamp
+
+def delGrad(arrG:ndarray, tau:int|float) -> ndarray:
+    """
+    # description:
+    delay the input gradient waveform by time constant tau
+
+    # parameter
+    `arrG`: array of single gradient waveform
+    `tau`: time constant in RL circuit transfer function
+
+    # return:
+    delayed gradient waveform
+    """
+    assert arrG.ndim == 2, "only single gradient waveform is supported."
+    if tau == 0: return arrG.copy() # avoid divided-by-0 later
+    nPt, nAx = arrG.shape
+
+    # perform oversample to get better impluse response profile
+    ov = clip(10/tau, 1, 1e3).astype(int64) # the smaller the ov, the bigger oversampling is needed
+    arrG_ov = zeros([nPt*ov,nAx], dtype=arrG.dtype)
+    for iAx in range(nAx):
+        arrG_ov[:,iAx] = interp(linspace(0,nPt,nPt*ov,0), linspace(0,nPt,nPt,0), arrG[:,iAx]) # oversample
+    nPt *= ov
+    tau *= ov
+
+    # derive impluse response of RL circuit
+    arrG_Pad = zeros_like(arrG_ov)
+    arrG_Pad[:nPt//2,:] = arrG_ov[-1:,:]
+    arrG_Pad[nPt//2:,:] = arrG_ov[:1,:]
+    arrG_ov = concatenate([arrG_ov, arrG_Pad], axis=0)
+    arrT = linspace(0,2*nPt,2*nPt,0) + 0.5
+    arrImpResRL = (1/tau)*exp(-arrT/tau)
+    if abs(arrImpResRL.sum() - 1) > 1e-2: raise ValueError(f"arrImpResRL.sum() = {arrImpResRL.sum():.2f} (supposed to be 1) (tau too small or too large)")
+    
+    # perform convolution between input waveform and impulse response
+    arrG_ov = fft.ifft(fft.fft(arrG_ov,axis=0)*fft.fft(arrImpResRL)[:,newaxis], axis=0).real
+    
+    # de-oversample
+    arrG = arrG_ov[:nPt:ov,:]
+
+    return arrG
 
 def _walsh(b:float64, k:float64, x:float64) -> float64:
     assert x>=0 and x<1

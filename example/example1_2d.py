@@ -86,7 +86,7 @@ arrDk = zeros((nRO+1,nAx))
 arrDk[1:,:] = arrG*dt
 arrK = getK(p0)*ones_like(arrDk)
 arrK += cumsum(arrDk, axis=0)
-# arrK = g4n.cvtGrad2Traj(arrG, dt, dt)
+# arrK = mag.cvtGrad2Traj(arrG, dt, dt)
 
 # derive reference trajectory
 arrTht = linspace(p0, p1, int(1e6))

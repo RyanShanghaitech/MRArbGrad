@@ -113,7 +113,7 @@ public:
         m_ptfBaseTraj = new Seiffert_Trajfunc(dM, dUMax);
         if(!m_ptfBaseTraj) throw std::runtime_error("out of memory");
 
-        calGrad(&m_v3BaseM0PE, &m_lv3BaseGRO, NULL, &m_v3BaseM0SP, &m_lNWaitAdc, &m_lNSampAdc, m_ptfBaseTraj, m_sGradPara, bMaxG0&&bMaxG1?2:8);
+        calGrad(&m_v3BaseM0PE, &m_lv3BaseGRO, NULL, &m_lNWait, &m_lNSamp, m_ptfBaseTraj, m_sGradPara, bMaxG0&&bMaxG1?2:8);
     }
     
     virtual ~Seiffert()
@@ -141,33 +141,22 @@ public:
         return bRet;
     }
 
-    bool getM0SP(v3* pv3M0SP, int64_t lIAcq) const
+    int64_t getNWait(int64_t lIAcq) const
     {
-        bool bRet = true;
-        vl vlAx; vd vdAng;
-        bRet &= getRotAng(&vlAx, &vdAng, lIAcq);
-        bRet &= appRotAng(pv3M0SP, m_v3BaseM0SP, vlAx, vdAng);
-
-        return bRet;
+        return m_lNWait;
     }
 
-    int64_t getNWaitAdc(int64_t lIAcq) const
+    int64_t getNSamp(int64_t lIAcq) const
     {
-        return m_lNWaitAdc;
-    }
-
-    int64_t getNSampAdc(int64_t lIAcq) const
-    {
-        return m_lNSampAdc;
+        return m_lNSamp;
     }
     
 protected:
     TrajFunc* m_ptfBaseTraj;
     v3 m_v3BaseM0PE;
     lv3 m_lv3BaseGRO;
-    v3 m_v3BaseM0SP;
-    int64_t m_lNWaitAdc;
-    int64_t m_lNSampAdc;
+    int64_t m_lNWait;
+    int64_t m_lNSamp;
 
     bool getRotAng(vl* pvlAx, vd* pvdAng, int64_t lIAcq) const
     {
