@@ -212,12 +212,10 @@ protected:
         const bool& bMaxG1 = sGradPara.bMaxG1;
 
         // calculate gradient
-        // TIC;
-
+        TIC;
         GradGen gg(&tf, dSLim, dGLim, dDt, lOs, bMaxG0?1e15:0e0, bMaxG1?1e15:0e0);
         bRet &= gg.compute(plv3G, pldP);
-
-        // TOC;
+        TOC;
 
         return true;
     }

@@ -9,8 +9,8 @@ import fars
 
 gamma = 42.5756e6
 # fov = 0.384
-# fov = 0.256
-fov = 0.192
+fov = 0.256
+# fov = 0.192
 nPix = 256
 sLim = 50 * gamma * fov/nPix
 gLim = 50e-3 * gamma * fov/nPix
@@ -18,14 +18,14 @@ dtGrad = 10e-6
 dtADC = 5e-6
 argCom = dict(dFov=fov, lNPix=nPix, dSLim=sLim, dGLim=gLim, dDt=dtGrad)
 
-enSim = 0
+enSim = 1
 
 # calculate gradient
 t = time()
 
 # lstArrK0, lstArrGrad = mag.Function.getG_Spiral(bIs3D=0, **argCom); nAx = 2 # 0.380s
 
-# lstArrK0, lstArrGrad = mag.Function.getG_VarDenSpiral(bIs3D=0, **argCom, dRhoPhi0=0.5/(1*pi), dRhoPhi1=0.5/(256*pi)); nAx = 2 # 0.499s
+lstArrK0, lstArrGrad = mag.Function.getG_VarDenSpiral(bIs3D=0, **argCom, dRhoPhi0=0.5/(8*pi), dRhoPhi1=0.5/(2*pi)); nAx = 2 # 0.499s
 
 # lstArrK0, lstArrGrad = mag.Function.getG_Rosette(**argCom, dOm1=5*pi, dOm2=3*pi, dTmax=1); nAx = 2 # 16.39s (9 frames)
 
@@ -33,11 +33,20 @@ t = time()
 
 # lstArrK0, lstArrGrad = mag.Function.getG_Shell3d(dRhoTht=0.5/(2*pi), **argCom); nAx = 3 # 183.7
 
-lstArrK0, lstArrGrad = mag.Function.getG_Yarnball(dRhoPhi=0.5/(1*pi), **argCom); nAx = 3 # 196.1
+# lstArrK0, lstArrGrad = mag.Function.getG_Yarnball(dRhoPhi=0.5/(2*pi), **argCom); nAx = 3 # 196.1
     
 # lstArrK0, lstArrGrad = mag.Function.getG_Seiffert(**argCom); nAx = 3 # 232.9s
 
 # lstArrK0, lstArrGrad = mag.Function.getG_Cones(**argCom); nAx = 3 # 149.9s
+
+lstArrGrad_Del = lstArrGrad.copy()
+for i in range(len(lstArrGrad_Del)):
+    arrG_r0 = lstArrGrad_Del[i]
+    arrG_r1 = roll(lstArrGrad_Del[i], (1,), 0); arrG_r1[:1,:]*=0
+    arrG_r2 = roll(lstArrGrad_Del[i], (2,), 0); arrG_r2[:2,:]*=0
+    arrG_r3 = roll(lstArrGrad_Del[i], (3,), 0); arrG_r3[:3,:]*=0
+    sumw = 1+2+4
+    lstArrGrad_Del[i] = arrG_r0*0 + arrG_r1*1 + arrG_r2*0 + arrG_r3*0/7
 
 t = time() - t
 print(f"Exe Time: {t}")
@@ -45,15 +54,16 @@ print(f"Intlea Num.: {len(lstArrGrad)}")
 
 nRO_Max = max(arrG.shape[0] for arrG in lstArrGrad)
 print(f"Tacq: {nRO_Max*dtGrad*1e3:.3f} ms")
-tTR = (nRO_Max*dtGrad + 2.5e-3)
+tTR = (nRO_Max*dtGrad + 2e-3)
 print(f"TR: {tTR*1e3:.3f} ms")
 tScan = tTR*len(lstArrGrad)
 print(f"Tscan: {tScan:.3e} s")
 
 # derive shape parameter
 if nAx==2:
-    lstArrGrad = [arrG[:,:2] for arrG in lstArrGrad]
     lstArrK0 = [arrK0[:2] for arrK0 in lstArrK0]
+    lstArrGrad = [arrG[:,:2] for arrG in lstArrGrad]
+    lstArrGrad_Del = [arrG[:,:2] for arrG in lstArrGrad_Del]
 nRO, nAx = lstArrGrad[0].shape
 
 # derive slewrate
@@ -69,6 +79,12 @@ for arrK0, arrGrad in zip(lstArrK0, lstArrGrad):
     arrK, _ = mag.cvtGrad2Traj(arrGrad, dtGrad, dtADC)
     arrK += arrK0
     lstArrK.append(arrK)
+    
+lstArrK_Del = []
+for arrK0, arrGrad in zip(lstArrK0, lstArrGrad_Del):
+    arrK, _ = mag.cvtGrad2Traj(arrGrad, dtGrad, dtADC)
+    arrK += arrK0
+    lstArrK_Del.append(arrK)
 
 # # plot
 # if nAx==3:
@@ -78,8 +94,8 @@ for arrK0, arrGrad in zip(lstArrK0, lstArrGrad):
 #     title("last 100 intlea.")
 
 # interleaf to be plotted
-iArrK = argmax(array([amax(norm(arrS,axis=-1)) for arrS in lstArrSlew]))
-# iArrK = 0
+# iArrK = argmax(array([amax(norm(arrS,axis=-1)) for arrS in lstArrSlew]))
+iArrK = 0
 
 # k-space and g-space
 figure(figsize=(18,9), dpi=120)
@@ -121,13 +137,15 @@ if not enSim:
 # simulate phantom
 arrI = slime.genPhan(nAx, nPix)["M0"].squeeze()
 arrK = concatenate(lstArrK, axis=0)
+arrK_Del = concatenate(lstArrK_Del, axis=0)
 
 arrDcf = fars.calDcf(nPix, arrK[:,:nAx]).astype(complex64)
 
 arrOm = 2*pi*arrK; arrOm = arrOm.astype(float32)
+arrOm_Del = 2*pi*arrK_Del; arrOm_Del = arrOm_Del.astype(float32)
 
 plan = fn.Plan(2, tuple(nPix for _ in range(nAx)), isign=-1, dtype="complex64")
-plan.setpts(*arrOm.T)
+plan.setpts(*arrOm_Del.T)
 arrS = plan.execute(arrI.astype(complex64))
 
 plan = fn.Plan(1, tuple(nPix for _ in range(nAx)), isign=1, dtype="complex64")
@@ -139,26 +157,34 @@ if nAx==2:
     
     subplot(121)
     imshow(abs(arrI), cmap="gray")
+    colorbar()
     
     subplot(122)
     imshow(abs(arrI_Reco), cmap="gray")
+    colorbar()
     
 if nAx==3:
     figure(figsize=(6,9), dpi=120)
     
     subplot(321)
     imshow(abs(arrI[nPix//2,:,:]), cmap="gray")
+    colorbar()
     subplot(322)
     imshow(abs(arrI_Reco[nPix//2,:,:]), cmap="gray")
+    colorbar()
     
     subplot(323)
     imshow(abs(arrI[:,nPix//2,:]), cmap="gray")
+    colorbar()
     subplot(324)
     imshow(abs(arrI_Reco[:,nPix//2,:]), cmap="gray")
+    colorbar()
     
     subplot(325)
     imshow(abs(arrI[:,:,nPix//2]), cmap="gray")
+    colorbar()
     subplot(326)
     imshow(abs(arrI_Reco[:,:,nPix//2]), cmap="gray")
+    colorbar()
     
 show()

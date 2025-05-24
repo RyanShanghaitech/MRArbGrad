@@ -61,32 +61,24 @@ double GradGen::getCurRad(double dP)
 #if 1
 double GradGen::getDp(const v3& v3G, double dDt, double dP, double dSignDp)
 {
-    // solve `ΔP` by RK4
+    // solve `ΔP` by RK2
     v3 v3Dk = v3G*dDt;
-    double dDl = v3::norm(v3Dk)*dSignDp;
+    double dDl = v3::norm(v3Dk);
     // k1
     double dK1;
     {
         v3 v3DkDp; m_ptTraj->getDkDp(&v3DkDp, dP);
-        double dDlDp = v3::norm(v3DkDp);
+        double dDlDp = v3::norm(v3DkDp)*dSignDp;
         dK1 = 1/dDlDp;
     }
-    // k2, k3
-    double dK2, dK3;
-    {
-        v3 v3DkDp; m_ptTraj->getDkDp(&v3DkDp, dP+dK1*dDl/2);
-        double dDlDp = v3::norm(v3DkDp);
-        dK2 = 1/dDlDp;
-        dK3 = 1/dDlDp;
-    }
-    // k4
-    double dK4;
+    // k2
+    double dK2;
     {
         v3 v3DkDp; m_ptTraj->getDkDp(&v3DkDp, dP+dK1*dDl);
-        double dDlDp = v3::norm(v3DkDp);
-        dK4 = 1/dDlDp;
+        double dDlDp = v3::norm(v3DkDp)*dSignDp;
+        dK2 = 1/dDlDp;
     }
-    double dDp = dDl*(dK1 + 2*dK2 + 2*dK3 + dK4)/6;
+    double dDp = dDl*(dK1 + dK2)/2e0;
     return dDp;
 }
 #else
@@ -94,16 +86,16 @@ double GradGen::getDp(const v3& v3G, double dDt, double dP, double dSignDp)
 {
     // solve `ΔP`
     v3 v3Dk = v3G*dDt;
-    double dDl = v3::norm(v3Dk)*dSignDp;
+    double dDl = v3::norm(v3Dk);
     v3 v3DkDp; m_ptTraj->getDkDp(&v3DkDp, dP);
-    double dDlDp = v3::norm(v3DkDp);
+    double dDlDp = v3::norm(v3DkDp)*dSignDp;
     double dDp = dDl/dDlDp;
 
-    // correct `ΔP`
-    v3 v3K0; m_ptTraj->getK(&v3K0, dP);
-    v3 v3K1; m_ptTraj->getK(&v3K1, dP+dDp);
-    double dDl_ = v3::norm(v3K1-v3K0)*dSignDp;
-    dDp *= dDl/dDl_;
+    // // correct `ΔP`
+    // v3 v3K0; m_ptTraj->getK(&v3K0, dP);
+    // v3 v3K1; m_ptTraj->getK(&v3K1, dP+dDp);
+    // double dDl_ = v3::norm(v3K1-v3K0)*dSignDp;
+    // dDp *= dDl/dDl_;
 
     return dDp;
 }

@@ -1,7 +1,7 @@
 from numpy import *
 from matplotlib.pyplot import *
 
-def cvtGrad2Traj(arrG:ndarray, dtGrad:int|float, dtADC:int|float) -> tuple[ndarray, ndarray]:
+def cvtGrad2Traj(arrG:ndarray, dtGrad:int|float, dtADC:int|float, nShift:int|float=1.0) -> tuple[ndarray, ndarray]:
     """
     # description:
     interpolate gradient waveform and calculate trajectory
@@ -13,13 +13,14 @@ def cvtGrad2Traj(arrG:ndarray, dtGrad:int|float, dtADC:int|float) -> tuple[ndarr
     # return:
     interpolated trajectory and gradient
     """
+    dtShift = nShift*dtADC
     nGrad, nDim = arrG.shape
     nADC = int(dtGrad/dtADC)*(nGrad-1)
     arrG_Resamp = zeros([nADC,nDim], dtype=float64)
     for iDim in range(nDim):
-        arrG_Resamp[:,iDim] = interp(dtADC*arange(nADC)+dtADC/2, dtGrad*arange(nGrad), arrG[:,iDim])
+        arrG_Resamp[:,iDim] = interp(dtADC*arange(nADC)+dtShift, dtGrad*arange(nGrad), arrG[:,iDim])
     arrDk = zeros_like(arrG_Resamp)
-    arrDk[0,:] = (arrG[0,:] + arrG_Resamp[0,:])*dtADC/4
+    arrDk[0,:] = (arrG[0,:] + arrG_Resamp[0,:])*dtShift/2
     arrDk[1:,:] = (arrG_Resamp[:-1] + arrG_Resamp[1:])*dtADC/2
     arrK = cumsum(arrDk,axis=0)
     return arrK, arrG_Resamp

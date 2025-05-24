@@ -301,7 +301,7 @@ bool getGrad_Main(MrTraj* pmt, vv3* pvv3M0PE, vvv3* pvvv3GRO, bool bShuf)
     pvv3M0PE->resize(lNAcq);
     pvvv3GRO->resize(lNAcq);
 
-    // bShuf = false; // test
+    bShuf = false; // test
 	vl vlShufIdx; MrTraj::genRandIdx(&vlShufIdx, lNAcq);
     for (int64_t i = 0; i < lNAcq; ++i)
     {
