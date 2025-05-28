@@ -18,14 +18,19 @@ dtGrad = 10e-6
 dtADC = 5e-6
 argCom = dict(dFov=fov, lNPix=nPix, dSLim=sLim, dGLim=gLim, dDt=dtGrad)
 
-enSim = 1
+enSim = 0
+mag.ext.setSolverMtg(0)
+mag.ext.setTrajRev(0)
+mag.ext.setGoldAng(0)
+mag.ext.setMaxG0(0)
+mag.ext.setMaxG1(0)
 
 # calculate gradient
 t = time()
 
 # lstArrK0, lstArrGrad = mag.Function.getG_Spiral(bIs3D=0, **argCom); nAx = 2 # 0.380s
 
-lstArrK0, lstArrGrad = mag.Function.getG_VarDenSpiral(bIs3D=0, **argCom, dRhoPhi0=0.5/(8*pi), dRhoPhi1=0.5/(2*pi)); nAx = 2 # 0.499s
+# lstArrK0, lstArrGrad = mag.Function.getG_VarDenSpiral(bIs3D=0, **argCom, dRhoPhi0=0.5/(8*pi), dRhoPhi1=0.5/(2*pi)); nAx = 2 # 0.499s
 
 # lstArrK0, lstArrGrad = mag.Function.getG_Rosette(**argCom, dOm1=5*pi, dOm2=3*pi, dTmax=1); nAx = 2 # 16.39s (9 frames)
 
@@ -33,11 +38,15 @@ lstArrK0, lstArrGrad = mag.Function.getG_VarDenSpiral(bIs3D=0, **argCom, dRhoPhi
 
 # lstArrK0, lstArrGrad = mag.Function.getG_Shell3d(dRhoTht=0.5/(2*pi), **argCom); nAx = 3 # 183.7
 
-# lstArrK0, lstArrGrad = mag.Function.getG_Yarnball(dRhoPhi=0.5/(2*pi), **argCom); nAx = 3 # 196.1
+lstArrK0, lstArrGrad = mag.Function.getG_Yarnball(dRhoPhi=0.5/(2*pi), **argCom); nAx = 3 # 196.1
     
 # lstArrK0, lstArrGrad = mag.Function.getG_Seiffert(**argCom); nAx = 3 # 232.9s
 
 # lstArrK0, lstArrGrad = mag.Function.getG_Cones(**argCom); nAx = 3 # 149.9s
+
+t = time() - t
+print(f"Exe Time: {t}")
+print(f"Intlea Num.: {len(lstArrGrad)}")
 
 lstArrGrad_Del = lstArrGrad.copy()
 for i in range(len(lstArrGrad_Del)):
@@ -45,12 +54,7 @@ for i in range(len(lstArrGrad_Del)):
     arrG_r1 = roll(lstArrGrad_Del[i], (1,), 0); arrG_r1[:1,:]*=0
     arrG_r2 = roll(lstArrGrad_Del[i], (2,), 0); arrG_r2[:2,:]*=0
     arrG_r3 = roll(lstArrGrad_Del[i], (3,), 0); arrG_r3[:3,:]*=0
-    sumw = 1+2+4
-    lstArrGrad_Del[i] = arrG_r0*0 + arrG_r1*1 + arrG_r2*0 + arrG_r3*0/7
-
-t = time() - t
-print(f"Exe Time: {t}")
-print(f"Intlea Num.: {len(lstArrGrad)}")
+    lstArrGrad_Del[i] = arrG_r0*1 + arrG_r1*0 + arrG_r2*0 + arrG_r3*0
 
 nRO_Max = max(arrG.shape[0] for arrG in lstArrGrad)
 print(f"Tacq: {nRO_Max*dtGrad*1e3:.3f} ms")

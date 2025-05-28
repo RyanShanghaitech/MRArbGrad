@@ -82,11 +82,11 @@ nRO, nAx = arrG.shape
 arrS = diff(arrG, axis=0)/dt
 print(f"sMax: {max(norm(arrS,axis=-1))/(42.58e6)*(nPix/fov)}")
 
-arrDk = zeros((nRO+1,nAx))
-arrDk[1:,:] = arrG*dt
-arrK = getK(p0)*ones_like(arrDk)
-arrK += cumsum(arrDk, axis=0)
-# arrK = mag.cvtGrad2Traj(arrG, dt, dt)
+# arrDk = zeros((nRO+1,nAx))
+# arrDk[1:,:] = arrG*dt
+# arrK = getK(p0)*ones_like(arrDk)
+# arrK += cumsum(arrDk, axis=0)
+arrK, _ = mag.cvtGrad2Traj(arrG, dt, dt, 0.5)
 
 # derive reference trajectory
 arrTht = linspace(p0, p1, int(1e6))
@@ -96,8 +96,8 @@ arrK_Ref = getK(arrTht).T
 figure(figsize=(20,10), dpi=120)
 
 subplot(221)
-plot(arrK[:,0], arrK[:,1], ".-", label="K_Imp")
 plot(arrK_Ref[:,0], arrK_Ref[:,1], "--", label="K_Ref")
+plot(arrK[:,0], arrK[:,1], ".-", label="K_Imp")
 xlim(-0.5,0.5)
 ylim(-0.5,0.5)
 axis("equal")

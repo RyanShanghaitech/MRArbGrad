@@ -5,6 +5,10 @@
 #include <string>
 #include <stdexcept>
 #include <ctime>
+#include "../mtg/header.h"
+
+bool bUseMtg = false; // use Micky's MinTimeGrad solver
+
 
 #define GOLDRAT ((1e0+std::sqrt(5e0))/2e0)
 #define GOLDANG ((3e0-std::sqrt(5e0))*M_PI)
@@ -212,12 +216,77 @@ protected:
         const bool& bMaxG1 = sGradPara.bMaxG1;
 
         // calculate gradient
-        TIC;
-        GradGen gg(&tf, dSLim, dGLim, dDt, lOs, bMaxG0?1e15:0e0, bMaxG1?1e15:0e0);
-        bRet &= gg.compute(plv3G, pldP);
-        TOC;
+        // TIC;
+        if(!bUseMtg)
+        {
+            GradGen gg(&tf, dSLim, dGLim, dDt, lOs, bMaxG0?1e15:0e0, bMaxG1?1e15:0e0);
+            bRet &= gg.compute(plv3G, pldP);
+        }
+        else
+        {
+            // Prepare trajectory sampling
+            int64_t lNSampTraj = 1000;
+            std::vector<double> C(lNSampTraj * 3, 0.0);
 
-        return true;
+            // Sample the trajectory at N points
+            double dP0 = tf.getP0();
+            double dP1 = tf.getP1();
+            for (int i = 0; i < lNSampTraj; ++i)
+            {
+                double dP = dP0 + (dP1-dP0)* (i)/double(lNSampTraj-1);
+                v3 v3K; tf.getK(&v3K, dP);
+                v3K *= 4.257; // k is defined by k*4.257 in Lustig's method
+                C[i] = v3K.m_dX;
+                C[i + lNSampTraj] = v3K.m_dY;
+                C[i + 2*lNSampTraj] = v3K.m_dZ;
+            }
+
+            // Prepare arg. for Lustig's function
+            double g0 = bMaxG0?1e15:0e0, gfin = bMaxG1?1e15:0e0, gmax = dGLim, smax = dSLim, T = dDt, ds = -1;
+
+            double *p_Cx = nullptr, *p_Cy = nullptr, *p_Cz = nullptr;
+            double *p_gx = nullptr, *p_gy = nullptr, *p_gz = nullptr;
+            double *p_p = nullptr;
+            double *p_sx = nullptr, *p_sy = nullptr, *p_sz = nullptr;
+            double *p_kx = nullptr, *p_ky = nullptr, *p_kz = nullptr;
+            double *p_sdot = nullptr, *p_sta = nullptr, *p_stb = nullptr;
+            
+            double time = 0;
+            int size_interpolated = 0, size_sdot = 0, size_st = 0;
+            int gfin_empty = 0, ds_empty = 1;
+
+            // Call Lustig's function (assume it is linked in or compiled as C)
+            minTimeGradientRIV(
+                C.data(), lNSampTraj, 3, g0, gfin, gmax, smax, T, ds,
+                &p_Cx, &p_Cy, &p_Cz, &p_gx, &p_gy, &p_gz, &p_p,
+                &p_sx, &p_sy, &p_sz, &p_kx, &p_ky, &p_kz, &p_sdot, &p_sta, &p_stb, &time,
+                &size_interpolated, &size_sdot, &size_st, gfin_empty, ds_empty);
+
+            // Copy results to C++ outputs
+            plv3G->clear();
+            for (int i = 0; i < size_interpolated; ++i)
+            {
+                plv3G->push_back(v3(p_gx[i], p_gy[i], p_gz[i]));
+            }
+            if (pldP)
+            {
+                pldP->clear();
+                for (int i = 0; i < size_interpolated; ++i)
+                {
+                    pldP->push_back(p_p[i]);
+                }
+            }
+
+            free(p_Cx);    free(p_Cy);    free(p_Cz);
+            free(p_gx);    free(p_gy);    free(p_gz);
+            free(p_p);
+            free(p_sx);    free(p_sy);    free(p_sz);
+            free(p_kx);    free(p_ky);    free(p_kz);
+            free(p_sdot);  free(p_sta);   free(p_stb);
+        }
+        // TOC;
+
+        return bRet;
     }
 
     static bool calGrad(v3* pv3M0PE, lv3* plv3GRO, ld* pldP, int64_t* plNWait, int64_t* plNSamp, const TrajFunc* ptfBaseTraj, const GradPara& sGradPara, int64_t lOs=16)
