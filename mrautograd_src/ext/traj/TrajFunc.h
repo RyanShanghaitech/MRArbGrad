@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../core/global.h"
-#include "../core/v3.h"
-// #include "../core/GradGen.h" // VS2010 does not like this...
+#include "../mag/global.h"
+#include "../mag/v3.h"
+// #include "../mag/GradGen.h" // VS2010 does not like this...
 
 /* 
  * Single trajectory define by a parameterized function getK()

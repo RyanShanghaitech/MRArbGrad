@@ -175,7 +175,7 @@ def calJacElip(arrU:ndarray, m:float64) -> tuple[ndarray, ndarray]: # calculate 
 
 def calCompElipInt(m:float64) -> float64: # calculate complete Elliptical integral of the first kind
     lstA = [1]
-    lstB = [sqrt(1-m**2)]
+    lstB = [sqrt(1-m)]
     while abs(lstB[-1]-lstA[-1]) > 1e-8:
         aNew = (lstA[-1]+lstB[-1])/2
         bNew = sqrt(lstA[-1]*lstB[-1])

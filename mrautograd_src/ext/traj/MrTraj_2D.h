@@ -1,7 +1,7 @@
 #pragma once
 
 #include "MrTraj.h"
-#include "../core/GradGen.h"
+#include "../mag/GradGen.h"
 
 class MrTraj_2D: public MrTraj
 {

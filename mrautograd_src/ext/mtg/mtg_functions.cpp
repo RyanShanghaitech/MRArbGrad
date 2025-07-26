@@ -8,6 +8,7 @@ minTimeGradientRV    -   Computes the rotationally variant solution
 
 #include <float.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
@@ -73,9 +74,9 @@ void minTimeGradientRIV(double *Ci, int Cr, int Cc, double g0, double gfin, doub
 
     double *x, *y, *z;
     /* Ci given as Nx3 array, parse into x, y, z components */
-    x = malloc(Cr * sizeof(double));
-    y = malloc(Cr * sizeof(double));
-    z = malloc(Cr * sizeof(double));
+    x = (double*)malloc(Cr * sizeof(double));
+    y = (double*)malloc(Cr * sizeof(double));
+    z = (double*)malloc(Cr * sizeof(double));
     
     for(i=0; i < Cr; i++) {
         x[i] = Ci[i];
@@ -87,7 +88,8 @@ void minTimeGradientRIV(double *Ci, int Cr, int Cc, double g0, double gfin, doub
         }
     }
     
-    double p [Lp];
+    // double p [Lp];
+    double* p = (double*)malloc(Lp*sizeof(double));
     
     /* Representing the curve with parameter p */
     
@@ -100,17 +102,17 @@ void minTimeGradientRIV(double *Ci, int Cr, int Cc, double g0, double gfin, doub
             *c1y, *c2y, *c3y,
             *c1z, *c2z, *c3z;       /* arrays used by spline function to store coefficients. */
     
-    c1z = malloc(Lp * sizeof(double));
-    c2z = malloc(Lp * sizeof(double));
-    c3z = malloc(Lp * sizeof(double));
+    c1z = (double*)malloc(Lp * sizeof(double));
+    c2z = (double*)malloc(Lp * sizeof(double));
+    c3z = (double*)malloc(Lp * sizeof(double));
     
-    c1x = malloc(Lp * sizeof(double));
-    c2x = malloc(Lp * sizeof(double));
-    c3x = malloc(Lp * sizeof(double));
+    c1x = (double*)malloc(Lp * sizeof(double));
+    c2x = (double*)malloc(Lp * sizeof(double));
+    c3x = (double*)malloc(Lp * sizeof(double));
     
-    c1y = malloc(Lp * sizeof(double));
-    c2y = malloc(Lp * sizeof(double));
-    c3y = malloc(Lp * sizeof(double));
+    c1y = (double*)malloc(Lp * sizeof(double));
+    c2y = (double*)malloc(Lp * sizeof(double));
+    c3y = (double*)malloc(Lp * sizeof(double));
     
     spline(Lp, 0, 0, 1, 1, p, x, c1x, c2x, c3x, iflag);
     spline(Lp, 0, 0, 1, 1, p, y, c1y, c2y, c3y, iflag);
@@ -120,9 +122,9 @@ void minTimeGradientRIV(double *Ci, int Cr, int Cc, double g0, double gfin, doub
     int num_evals = (int) floor((Lp-1) / dp)+ 1;
     
     double *CCx, *CCy, *CCz;
-    CCx = malloc(num_evals * sizeof(double));
-    CCy = malloc(num_evals * sizeof(double));
-    CCz = malloc(num_evals * sizeof(double));
+    CCx = (double*)malloc(num_evals * sizeof(double));
+    CCy = (double*)malloc(num_evals * sizeof(double));
+    CCz = (double*)malloc(num_evals * sizeof(double));
     
     double toeval = 0;
     
@@ -131,10 +133,10 @@ void minTimeGradientRIV(double *Ci, int Cr, int Cc, double g0, double gfin, doub
     last = &holder;
     
     double *Cpx, *Cpy, *Cp_abs, *Cpz;               /* interpolated curve in p-parameterization */
-    Cpx = malloc(num_evals * sizeof(double));
-    Cpy =  malloc(num_evals * sizeof(double));
-    Cpz = malloc(num_evals * sizeof(double));
-    Cp_abs =  malloc(num_evals * sizeof(double));
+    Cpx = (double*)malloc(num_evals * sizeof(double));
+    Cpy =  (double*)malloc(num_evals * sizeof(double));
+    Cpz = (double*)malloc(num_evals * sizeof(double));
+    Cp_abs =  (double*)malloc(num_evals * sizeof(double));
     
     for (i = 0; i < num_evals; i++) {
         toeval = (double) i * dp;
@@ -151,12 +153,12 @@ void minTimeGradientRIV(double *Ci, int Cr, int Cc, double g0, double gfin, doub
     /* converting to arc-length parameterization from p, using trapezoidal integration */
     
     double *s_of_p;
-    s_of_p = malloc(num_evals * sizeof(double));
+    s_of_p = (double*)malloc(num_evals * sizeof(double));
     s_of_p[0] = 0;
     
     double sofar = 0;
     
-    for (i=0; i < num_evals; i++) {
+    for (i=1; i < num_evals; i++) { // bug fix: i=0 -> i=1
         
         sofar += (Cp_abs[i]+ Cp_abs[i-1])/2;
         s_of_p[i] =  dp * sofar;
@@ -179,12 +181,14 @@ void minTimeGradientRIV(double *Ci, int Cr, int Cc, double g0, double gfin, doub
     int length_of_s =  (int) floor(L/ds);
     int half_ls = (int) floor(L/(ds/2));
 
+    printf("MTG Nit: %ld\n", (int64_t)(length_of_s*2-2));
+
     *size_sdot = half_ls;
     
     double *s;
-    s = malloc(length_of_s * sizeof(double));
-    sta[0] =  malloc(length_of_s * sizeof(double));
-    stb[0] =  malloc(length_of_s * sizeof(double));
+    s = (double*)malloc(length_of_s * sizeof(double));
+    sta[0] =  (double*)malloc(length_of_s * sizeof(double));
+    stb[0] =  (double*)malloc(length_of_s * sizeof(double));
     
     *size_st= length_of_s;
     
@@ -193,22 +197,22 @@ void minTimeGradientRIV(double *Ci, int Cr, int Cc, double g0, double gfin, doub
         sta[0][i] = 0;
         stb[0][i] = 0;
     }
-    double *s_half =  malloc(half_ls*sizeof(double));
+    double *s_half =  (double*)malloc(half_ls*sizeof(double));
     
     for (i=0; i < half_ls; i++) {
         s_half[i] = (double)i*(ds/2);
     }
     
     double *p_of_s_half;
-    p_of_s_half = malloc(half_ls * sizeof(double));
+    p_of_s_half = (double*)malloc(half_ls * sizeof(double));
     
     /* Convert from s(p) to p(s) and interpolate for accuracy */
     double *a1x, *a2x, *a3x;
-    a1x = malloc(num_evals * sizeof(double));
-    a2x = malloc(num_evals * sizeof(double));
-    a3x = malloc(num_evals * sizeof(double));
+    a1x = (double*)malloc(num_evals * sizeof(double));
+    a2x = (double*)malloc(num_evals * sizeof(double));
+    a3x = (double*)malloc(num_evals * sizeof(double));
     
-    double sop_num[num_evals];
+    double* sop_num = (double*)malloc(num_evals*sizeof(double));
     for (i=0; i<num_evals; i++) {
         sop_num[i] = i * dp;
     }
@@ -219,26 +223,27 @@ void minTimeGradientRIV(double *Ci, int Cr, int Cc, double g0, double gfin, doub
         p_of_s_half[i] = seval(num_evals, s_half[i], s_of_p, sop_num, a1x, a2x, a3x, last);
     }
     
+    free(sop_num);
     free(a1x); free(a2x); free(a3x);
     free(s_of_p);
     
     int size_p_of_s = half_ls/2;
     
     double *p_of_s;
-    p_of_s = malloc(size_p_of_s * sizeof(double));
+    p_of_s = (double*)malloc(size_p_of_s * sizeof(double));
     
     for (i=0; i<size_p_of_s; i++) {
         p_of_s[i] = p_of_s_half[2*i];
     }
     
     double *k;
-    k = malloc(half_ls*sizeof(double));        /* k is the curvature along the curve */
+    k = (double*)malloc(half_ls*sizeof(double));        /* k is the curvature along the curve */
     
     double *Cspx, *Cspy, *Cspz;
     /* Csp is C(s(p)) = [Cx(p(s)) Cy(p(s)) Cz(p(s))] */
-    Cspx =  malloc(length_of_s*sizeof(double));
-    Cspy =  malloc(length_of_s*sizeof(double));
-    Cspz =  malloc(length_of_s*sizeof(double));
+    Cspx =  (double*)malloc(length_of_s*sizeof(double));
+    Cspy =  (double*)malloc(length_of_s*sizeof(double));
+    Cspz =  (double*)malloc(length_of_s*sizeof(double));
     
     for (i=0; i<length_of_s; i++) {
         Cspx[i] = seval(Lp, p_of_s[i], p, x, c1x, c2x, c3x, last);
@@ -247,15 +252,15 @@ void minTimeGradientRIV(double *Ci, int Cr, int Cc, double g0, double gfin, doub
     }
     
     double *Csp1x, *Csp2x, *Csp3x, *Csp1y, *Csp2y, *Csp3y,  *Csp1z, *Csp2z, *Csp3z; /* arrays used by spline function to store coefficients. */
-    Csp1x =  malloc(length_of_s*sizeof(double));
-    Csp2x =  malloc(length_of_s*sizeof(double));
-    Csp3x =  malloc(length_of_s*sizeof(double));
-    Csp1y =  malloc(length_of_s*sizeof(double));
-    Csp2y =  malloc(length_of_s*sizeof(double));
-    Csp3y =  malloc(length_of_s*sizeof(double));
-    Csp1z =  malloc(length_of_s*sizeof(double));
-    Csp2z =  malloc(length_of_s*sizeof(double));
-    Csp3z =  malloc(length_of_s*sizeof(double));
+    Csp1x =  (double*)malloc(length_of_s*sizeof(double));
+    Csp2x =  (double*)malloc(length_of_s*sizeof(double));
+    Csp3x =  (double*)malloc(length_of_s*sizeof(double));
+    Csp1y =  (double*)malloc(length_of_s*sizeof(double));
+    Csp2y =  (double*)malloc(length_of_s*sizeof(double));
+    Csp3y =  (double*)malloc(length_of_s*sizeof(double));
+    Csp1z =  (double*)malloc(length_of_s*sizeof(double));
+    Csp2z =  (double*)malloc(length_of_s*sizeof(double));
+    Csp3z =  (double*)malloc(length_of_s*sizeof(double));
     spline(length_of_s, 0, 0, 1, 1, s, Cspx, Csp1x, Csp2x, Csp3x, iflag);
     spline(length_of_s, 0, 0, 1, 1, s, Cspy, Csp1y, Csp2y, Csp3y, iflag);
     spline(length_of_s, 0, 0, 1, 1, s, Cspz, Csp1z, Csp2z, Csp3z, iflag);
@@ -273,10 +278,10 @@ void minTimeGradientRIV(double *Ci, int Cr, int Cc, double g0, double gfin, doub
     /* computing geomtry dependent constraints (forbidden line curve) */
     
     double *sdot1, *sdot2;
-    sdot1 =  malloc(half_ls*sizeof(double));
-    sdot2 =  malloc(half_ls*sizeof(double));
+    sdot1 =  (double*)malloc(half_ls*sizeof(double));
+    sdot2 =  (double*)malloc(half_ls*sizeof(double));
     
-    sdot[0] =  malloc(half_ls * sizeof(double));
+    sdot[0] =  (double*)malloc(half_ls * sizeof(double));
     *size_sdot = half_ls;
     /* Calculating the upper bound for the time parametrization */
     /* sdot (which is a non scaled max gradient constaint) as a function of s. */
@@ -301,7 +306,7 @@ void minTimeGradientRIV(double *Ci, int Cr, int Cc, double g0, double gfin, doub
     
     int size_k2 = half_ls+2;    /* extend of k for RK4 */
     double *k2;
-    k2 = malloc(size_k2*sizeof(double));
+    k2 = (double*)malloc(size_k2*sizeof(double));
     
     for(i=0; i < half_ls; i++) {
         k2[i] = k[i];
@@ -375,8 +380,8 @@ void minTimeGradientRIV(double *Ci, int Cr, int Cc, double g0, double gfin, doub
     
     /* take st(s) to be the minimum of the curves sta and stb */
     double *st_of_s, *st_ds_i;
-    st_of_s = malloc(length_of_s*sizeof(double));
-    st_ds_i = malloc(length_of_s*sizeof(double));
+    st_of_s = (double*)malloc(length_of_s*sizeof(double));
+    st_ds_i = (double*)malloc(length_of_s*sizeof(double));
     
     for (i=0; i<length_of_s; i++) {
         if (sta[0][i] < stb[0][i]) {
@@ -392,7 +397,7 @@ void minTimeGradientRIV(double *Ci, int Cr, int Cc, double g0, double gfin, doub
     /*Final interpolation */
     
     /* Converting to the time parameterization, t(s) using trapezoidal integration. t(s) = integral (1/st) ds */
-    double *t_of_s= malloc(length_of_s*sizeof(double));
+    double *t_of_s= (double*)malloc(length_of_s*sizeof(double));
     t_of_s[0] = 0;
     for (i=1; i < length_of_s; i++) {
         t_of_s[i] =  t_of_s[i-1] + (st_ds_i[i]+ st_ds_i[i-1])/2;
@@ -401,19 +406,19 @@ void minTimeGradientRIV(double *Ci, int Cr, int Cc, double g0, double gfin, doub
     int l_t =  (int) floor(t_of_s[length_of_s-1]/dt);
     *size_interpolated = l_t;       /* size of the interpolated trajectory */
     
-    double t[l_t];
+    double* t = (double*)malloc(l_t*sizeof(double));
     for (i=0; i<l_t; i++) {
         t[i] = i*dt;                /* time array */
     }
     
     double *t1x, *t2x, *t3x;        /* coefficient arrays for spline interpolation of t(s) to get s(t) */
     
-    t1x = malloc(length_of_s*sizeof(double));
-    t2x = malloc(length_of_s*sizeof(double));
-    t3x = malloc(length_of_s*sizeof(double));
+    t1x = (double*)malloc(length_of_s*sizeof(double));
+    t2x = (double*)malloc(length_of_s*sizeof(double));
+    t3x = (double*)malloc(length_of_s*sizeof(double));
     
     double *s_of_t;
-    s_of_t = malloc(l_t * sizeof(double));
+    s_of_t = (double*)malloc(l_t * sizeof(double));
     
     spline(length_of_s, 0, 0, 1, 1, t_of_s, s, t1x, t2x, t3x, iflag);
     
@@ -427,13 +432,13 @@ void minTimeGradientRIV(double *Ci, int Cr, int Cc, double g0, double gfin, doub
     free(t_of_s);
     
     double *p1x, *p2x, *p3x;        /* coefficient arrays for spline interpolation of p(s) with s(t) to get p(s(t)) = p(t) */
-    p1x = malloc(length_of_s*sizeof(double));
-    p2x = malloc(length_of_s*sizeof(double));
-    p3x = malloc(length_of_s*sizeof(double));
+    p1x = (double*)malloc(length_of_s*sizeof(double));
+    p2x = (double*)malloc(length_of_s*sizeof(double));
+    p3x = (double*)malloc(length_of_s*sizeof(double));
     
     spline(length_of_s, 0, 0, 1, 1, s, p_of_s, p1x, p2x, p3x, iflag);
     
-    p_of_t[0] = malloc(l_t*sizeof(double));
+    p_of_t[0] = (double*)malloc(l_t*sizeof(double));
     
     for (i=0; i < l_t; i++){
         p_of_t[0][i] = seval(length_of_s, s_of_t[i], s, p_of_s, p1x, p2x, p3x, last);
@@ -446,9 +451,9 @@ void minTimeGradientRIV(double *Ci, int Cr, int Cc, double g0, double gfin, doub
     
     /*  interpolated k-space trajectory */
     
-    Cx[0] =  malloc(l_t * sizeof(double));
-    Cy[0] =  malloc(l_t * sizeof(double));
-    Cz[0] =  malloc(l_t * sizeof(double));
+    Cx[0] =  (double*)malloc(l_t * sizeof(double));
+    Cy[0] =  (double*)malloc(l_t * sizeof(double));
+    Cz[0] =  (double*)malloc(l_t * sizeof(double));
     
     for (i=0; i<l_t; i++) {
         Cx[0][i] = seval(Lp, p_of_t[0][i], p, x, c1x, c2x, c3x, last);
@@ -456,15 +461,16 @@ void minTimeGradientRIV(double *Ci, int Cr, int Cc, double g0, double gfin, doub
         Cz[0][i] = seval(Lp, p_of_t[0][i], p, z, c1z, c2z, c3z, last);
     }
     
+    free(p);
     free(x);  free(y);  free(z);
     free(c1x);    free(c2x);    free(c3x);
     free(c1y);    free(c2y);    free(c3y);
     free(c1z);    free(c2z);    free(c3z);
     
     /* Final gradient waveforms to be returned */
-    gx[0] =  malloc(l_t * sizeof(double));
-    gy[0] =  malloc(l_t * sizeof(double));
-    gz[0] =  malloc(l_t * sizeof(double));
+    gx[0] =  (double*)malloc(l_t * sizeof(double));
+    gy[0] =  (double*)malloc(l_t * sizeof(double));
+    gz[0] =  (double*)malloc(l_t * sizeof(double));
     
     for (i=0; i< l_t -1; i++) {
         gx[0][i] = (Cx[0][i+1] - Cx[0][i]) / (gamma * dt);
@@ -478,9 +484,9 @@ void minTimeGradientRIV(double *Ci, int Cr, int Cc, double g0, double gfin, doub
     
     
     /* k-space trajecoty to be returned (calculated by integrating gradient waveforms by trapezoidal integration) */
-    kx[0] =  malloc(l_t * sizeof(double));
-    ky[0] =  malloc(l_t * sizeof(double));
-    kz[0] =  malloc(l_t * sizeof(double));
+    kx[0] =  (double*)malloc(l_t * sizeof(double));
+    ky[0] =  (double*)malloc(l_t * sizeof(double));
+    kz[0] =  (double*)malloc(l_t * sizeof(double));
     
     double sofarx = 0;
     double sofary = 0;
@@ -500,9 +506,9 @@ void minTimeGradientRIV(double *Ci, int Cr, int Cc, double g0, double gfin, doub
     }
     free(k);
     /* slew waveforms to be returned */
-    sx[0] =  malloc(l_t * sizeof(double));
-    sy[0] =  malloc(l_t * sizeof(double));
-    sz[0] =  malloc(l_t * sizeof(double));
+    sx[0] =  (double*)malloc(l_t * sizeof(double));
+    sy[0] =  (double*)malloc(l_t * sizeof(double));
+    sz[0] =  (double*)malloc(l_t * sizeof(double));
     
     for (i=0; i < l_t-1; i++) {
         sx[0][i] = (gx[0][i+1] - gx[0][i])/dt;
@@ -515,4 +521,5 @@ void minTimeGradientRIV(double *Ci, int Cr, int Cc, double g0, double gfin, doub
     
     /* total traversal time */
     *time = t[l_t-1];
+    free(t);
 }

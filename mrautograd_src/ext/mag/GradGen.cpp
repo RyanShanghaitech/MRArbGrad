@@ -3,6 +3,8 @@
 #include <cstdio>
 #include "GradGen.h"
 
+bool g_bExGEnd_MAG = true;
+
 // interpolation function
 template<typename T>
 static T intp(double dXEv, double dX0, T tY0, double dX1, T tY1)
@@ -58,47 +60,65 @@ double GradGen::getCurRad(double dP)
     return dNume/dDeno;
 }
 
-#if 1
 double GradGen::getDp(const v3& v3G, double dDt, double dP, double dSignDp)
 {
     // solve `ΔP` by RK2
-    v3 v3Dk = v3G*dDt;
-    double dDl = v3::norm(v3Dk);
+    double dDl = v3::norm(v3G)*dDt;
     // k1
     double dK1;
     {
         v3 v3DkDp; m_ptTraj->getDkDp(&v3DkDp, dP);
         double dDlDp = v3::norm(v3DkDp)*dSignDp;
-        dK1 = 1/dDlDp;
+        dK1 = 1e0/dDlDp;
     }
     // k2
     double dK2;
     {
         v3 v3DkDp; m_ptTraj->getDkDp(&v3DkDp, dP+dK1*dDl);
         double dDlDp = v3::norm(v3DkDp)*dSignDp;
-        dK2 = 1/dDlDp;
+        dK2 = 1e0/dDlDp;
     }
     double dDp = dDl*(dK1 + dK2)/2e0;
     return dDp;
 }
-#else
-double GradGen::getDp(const v3& v3G, double dDt, double dP, double dSignDp)
+
+#if 1
+
+double GradGen::getDp(const v3& v3GPrev, const v3& v3GThis, double dDt, double dPPrev, double dPThis, double dSignDp)
 {
-    // solve `ΔP`
-    v3 v3Dk = v3G*dDt;
-    double dDl = v3::norm(v3Dk);
-    v3 v3DkDp; m_ptTraj->getDkDp(&v3DkDp, dP);
-    double dDlDp = v3::norm(v3DkDp)*dSignDp;
-    double dDp = dDl/dDlDp;
-
-    // // correct `ΔP`
-    // v3 v3K0; m_ptTraj->getK(&v3K0, dP);
-    // v3 v3K1; m_ptTraj->getK(&v3K1, dP+dDp);
-    // double dDl_ = v3::norm(v3K1-v3K0)*dSignDp;
-    // dDp *= dDl/dDl_;
-
+    // solve `ΔP` by RK2
+    double dDl = v3::norm(v3GThis)*dDt;
+    // k1
+    double dK1;
+    {
+        v3 v3DkDp; m_ptTraj->getDkDp(&v3DkDp, dPThis);
+        double dDlDp = v3::norm(v3DkDp)*dSignDp;
+        dK1 = 1e0/dDlDp;
+    }
+    // k2
+    double dK2;
+    {
+        v3 v3DkDp; m_ptTraj->getDkDp(&v3DkDp, dPThis+dK1*dDl);
+        double dDlDp = v3::norm(v3DkDp)*dSignDp;
+        dK2 = 1e0/dDlDp;
+    }
+    double dDp = dDl*(0.5*dK1 + 0.5*dK2);
     return dDp;
 }
+
+#else // less accurate due to estimation of PNext
+
+double GradGen::getDp(const v3& v3GPrev, const v3& v3GThis, double dDt, double dPPrev, double dPThis, double dSignDp)
+{
+    // solve `ΔP` by RK2
+    double dDl = v3::norm(v3GThis)*dDt;
+    v3 v3DkDp0; m_ptTraj->getDkDp(&v3DkDp0, dPThis);
+    v3 v3DkDp1; m_ptTraj->getDkDp(&v3DkDp1, dPThis*2e0-dPPrev);
+    double dDlDp0 = v3::norm(v3DkDp0)*dSignDp;
+    double dDlDp1 = v3::norm(v3DkDp1)*dSignDp;
+    return dDl*(1e0/dDlDp0 + 1e0/dDlDp1)/2e0;
+}
+
 #endif
 
 bool GradGen::step(v3* pv3GUnit, double* pdGNormMin, double* pdGNormMax, double dP, double dSignDp, const v3& v3G, double dSLim, double dDt)
@@ -123,6 +143,8 @@ bool GradGen::compute(lv3* plv3G, ld* pldP)
     bool bRet = true;
     double dP0 = m_ptTraj->getP0();
     double dP1 = m_ptTraj->getP1();
+
+    int64_t lNit = 0;
 
     // backward
     v3 v3G1Unit; bRet &= m_ptTraj->getDkDp(&v3G1Unit, dP1);
@@ -149,7 +171,8 @@ bool GradGen::compute(lv3* plv3G, ld* pldP)
         v3G = v3GUnit*dGNorm;
 
         // update para
-        dP += getDp(v3G, m_dDt/m_lOs, dP, (dP0-dP1)/std::fabs(dP0-dP1));
+        dP += getDp(*lv3G_Bac.rbegin(), v3G, m_dDt/m_lOs, *ldP_Bac.rbegin(), dP, (dP0-dP1)/std::fabs(dP0-dP1));
+        // dP += getDp(v3G, m_dDt/m_lOs, dP, (dP0-dP1)/std::fabs(dP0-dP1));
 
         // stop or append
         if (std::fabs(*ldP_Bac.rbegin() - dP1) >= (1-1e-6)*std::fabs(dP0 - dP1))
@@ -166,6 +189,8 @@ bool GradGen::compute(lv3* plv3G, ld* pldP)
     }
     vd vdP_Bac(ldP_Bac.rbegin(), ldP_Bac.rend());
     vd vdGNorm_Bac(ldGNorm_Bac.rbegin(), ldGNorm_Bac.rend());
+    
+    lNit += ldP_Bac.size();
 
     // forward
     v3 v3G0Unit; bRet &= m_ptTraj->getDkDp(&v3G0Unit, dP0);
@@ -210,7 +235,8 @@ bool GradGen::compute(lv3* plv3G, ld* pldP)
         v3G = v3GUnit*dGNorm;
 
         // update para
-        dP += getDp(v3G, m_dDt/m_lOs, dP, (dP1-dP0)/std::fabs(dP1-dP0));
+        dP += getDp(*plv3G->rbegin(), v3G, m_dDt/m_lOs, *pldP->rbegin(), dP, (dP1-dP0)/std::fabs(dP1-dP0));
+        // dP += getDp(v3G, m_dDt/m_lOs, dP, (dP1-dP0)/std::fabs(dP1-dP0));
 
         // stop or append
         if (std::fabs(*pldP->rbegin() - dP0) >= (1-1e-6)*std::fabs(dP1 - dP0) || dGNorm <= 0)
@@ -225,6 +251,9 @@ bool GradGen::compute(lv3* plv3G, ld* pldP)
         }
     }
     v3G1 = (v3::norm(v3G1)!=0 ? v3G1/v3::norm(v3G1) : v3(0,0,0)) * std::min(v3::norm(v3G1), v3::norm(*plv3G->rbegin()));
+    
+    lNit += pldP->size();
+    printf("MAG Nit: %ld\n", (int64_t)lNit);
 
     // deoversamp the para. vec.
     {
@@ -250,19 +279,22 @@ bool GradGen::compute(lv3* plv3G, ld* pldP)
             ++ildP;
         }
     }
-
-    // add ramp gradient to satisfy desired Gstart and Gfinal
-    lv3 lv3GRampFront; bRet &= GradGen::ramp_front(&lv3GRampFront, *plv3G->begin(), v3G0, m_dSLim, m_dDt);
-    lv3 lv3GRampBack; bRet &= GradGen::ramp_back(&lv3GRampBack, *plv3G->rbegin(), v3G1*-1, m_dSLim, m_dDt);
-    
-    // corresponding parameter sequence
     pldP->pop_front();
-    for (int64_t i = 0; i < (int64_t)lv3GRampFront.size(); ++i) pldP->push_front(dP0);
-    for (int64_t i = 0; i < (int64_t)lv3GRampBack.size(); ++i) pldP->push_back(dP1);
 
-    // concate ramp gradient
-    plv3G->splice(plv3G->begin(), lv3GRampFront);
-    plv3G->splice(plv3G->end(), lv3GRampBack);
+    if (g_bExGEnd_MAG)
+    {
+        // add ramp gradient to satisfy desired Gstart and Gfinal
+        lv3 lv3GRampFront; bRet &= GradGen::ramp_front(&lv3GRampFront, *plv3G->begin(), v3G0, m_dSLim, m_dDt);
+        lv3 lv3GRampBack; bRet &= GradGen::ramp_back(&lv3GRampBack, *plv3G->rbegin(), v3G1*-1, m_dSLim, m_dDt);
+        
+        // corresponding parameter sequence
+        for (int64_t i = 0; i < (int64_t)lv3GRampFront.size(); ++i) pldP->push_front(dP0);
+        for (int64_t i = 0; i < (int64_t)lv3GRampBack.size(); ++i) pldP->push_back(dP1);
+
+        // concate ramp gradient
+        plv3G->splice(plv3G->begin(), lv3GRampFront);
+        plv3G->splice(plv3G->end(), lv3GRampBack);
+    }
 
     return bRet;
 }

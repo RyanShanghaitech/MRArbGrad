@@ -48,8 +48,10 @@ public:
         m_dRotAngInc = calRotAngInc(m_lNRot);
         m_ptfBaseTraj = new VarDenSpiral_TrajFunc(dRhoPhi0, dRhoPhi1);
         if(!m_ptfBaseTraj) throw std::runtime_error("out of memory");
-
+        
+        TIC;
         calGrad(&m_v3BaseM0PE, &m_lv3BaseGRO, NULL, &m_lNWait, &m_lNSamp, m_ptfBaseTraj, m_sGradPara, bMaxG0&&bMaxG1?2:8);
+        TOC;
     }
     
     virtual ~VarDenSpiral()

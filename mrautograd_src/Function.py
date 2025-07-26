@@ -12,8 +12,8 @@ def calGrad\
     dFov: float64 = 0.256,
     lNPix: int64 = 256,
     
-    dSLim: float64 = 100 * 42.5756e6 * 0.25 / 256,
-    dGLim: float64 = 120e-3 * 42.5756e6 * 0.25 / 256,
+    dSLim: float64 = 50 * 42.5756e6 * 0.256 / 256,
+    dGLim: float64 = 50e-3 * 42.5756e6 * 0.256 / 256,
     dDt: float64 = 10e-6,
     
     getK: Callable|None = None,
@@ -25,7 +25,7 @@ def calGrad\
 ) -> NDArray:
     return ext.calGrad\
     (
-        bool(bIs3D),
+        int64(bIs3D),
         float64(dFov),
         int64(lNPix),
         
@@ -47,15 +47,15 @@ def getG_Spiral\
     dFov: float64 = 0.256,
     lNPix: int64 = 256,
     
-    dSLim: float64 = 100 * 42.5756e6 * 0.25 / 256,
-    dGLim: float64 = 120e-3 * 42.5756e6 * 0.25 / 256,
+    dSLim: float64 = 50 * 42.5756e6 * 0.256 / 256,
+    dGLim: float64 = 50e-3 * 42.5756e6 * 0.256 / 256,
     dDt: float64 = 10e-6,
     
-    dRhoPhi: float64 = 0.5 / (8 * pi)
+    dRhoPhi: float64 = 0.5 / (4 * pi)
 ) -> tuple[list[NDArray], list[NDArray]]:
     return ext.getG_Spiral\
     (
-        bool(bIs3D),
+        int64(bIs3D),
         float64(dFov),
         int64(lNPix),
         
@@ -72,16 +72,16 @@ def getG_VarDenSpiral\
     dFov: float64 = 0.256,
     lNPix: int64 = 256,
     
-    dSLim: float64 = 100 * 42.5756e6 * 0.25 / 256,
-    dGLim: float64 = 120e-3 * 42.5756e6 * 0.25 / 256,
+    dSLim: float64 = 50 * 42.5756e6 * 0.256 / 256,
+    dGLim: float64 = 50e-3 * 42.5756e6 * 0.256 / 256,
     dDt: float64 = 10e-6,
     
-    dRhoPhi0: float64 = 0.5 / (16 * pi),
-    dRhoPhi1: float64 = 0.5 / (4 * pi),
+    dRhoPhi0: float64 = 0.5 / (8 * pi),
+    dRhoPhi1: float64 = 0.5 / (2 * pi),
 ) -> tuple[list[NDArray], list[NDArray]]:
     return ext.getG_VarDenSpiral\
     (
-        bool(bIs3D),
+        int64(bIs3D),
         float64(dFov),
         int64(lNPix),
         
@@ -99,17 +99,17 @@ def getG_Rosette\
     dFov: float64 = 0.256,
     lNPix: int64 = 256,
     
-    dSLim: float64 = 100 * 42.5756e6 * 0.25 / 256,
-    dGLim: float64 = 120e-3 * 42.5756e6 * 0.25 / 256,
+    dSLim: float64 = 50 * 42.5756e6 * 0.256 / 256,
+    dGLim: float64 = 50e-3 * 42.5756e6 * 0.256 / 256,
     dDt: float64 = 10e-6,
     
-    dOm1: float64 = 10*pi, 
-    dOm2: float64 = 8*pi, 
+    dOm1: float64 = 5*pi, 
+    dOm2: float64 = 3*pi, 
     dTmax: float64 = 1e0,
 ) -> tuple[list[NDArray], list[NDArray]]:
     return ext.getG_Rosette\
     (
-        bool(bIs3D),
+        int64(bIs3D),
         float64(dFov),
         int64(lNPix),
         
@@ -128,18 +128,18 @@ def getG_Rosette_Trad\
     dFov: float64 = 0.256,
     lNPix: int64 = 256,
     
-    dSLim: float64 = 100 * 42.5756e6 * 0.25 / 256,
-    dGLim: float64 = 120e-3 * 42.5756e6 * 0.25 / 256,
+    dSLim: float64 = 50 * 42.5756e6 * 0.256 / 256,
+    dGLim: float64 = 50e-3 * 42.5756e6 * 0.256 / 256,
     dDt: float64 = 10e-6,
     
-    dOm1: float64 = 10*pi, 
-    dOm2: float64 = 8*pi, 
+    dOm1: float64 = 5*pi, 
+    dOm2: float64 = 3*pi, 
     dTmax: float64 = 1e0,
-    dTacq: float64 = 20e-3,
+    dTacq: float64 = 2.523e-3,
 ) -> tuple[list[NDArray], list[NDArray]]:
     return ext.getG_Rosette_Trad\
     (
-        bool(bIs3D),
+        int64(bIs3D),
         float64(dFov),
         int64(lNPix),
         
@@ -159,15 +159,15 @@ def getG_Shell3d\
     dFov: float64 = 0.256,
     lNPix: int64 = 256,
     
-    dSLim: float64 = 100 * 42.5756e6 * 0.25 / 256,
-    dGLim: float64 = 120e-3 * 42.5756e6 * 0.25 / 256,
+    dSLim: float64 = 50 * 42.5756e6 * 0.256 / 256,
+    dGLim: float64 = 50e-3 * 42.5756e6 * 0.256 / 256,
     dDt: float64 = 10e-6,
     
     dRhoTht: float64 = 0.5 / (2 * pi),
 ) -> tuple[list[NDArray], list[NDArray]]:
     return ext.getG_Shell3d\
     (
-        bool(bIs3D),
+        int64(bIs3D),
         float64(dFov),
         int64(lNPix),
         
@@ -184,15 +184,15 @@ def getG_Yarnball\
     dFov: float64 = 0.256,
     lNPix: int64 = 256,
     
-    dSLim: float64 = 100 * 42.5756e6 * 0.25 / 256,
-    dGLim: float64 = 120e-3 * 42.5756e6 * 0.25 / 256,
+    dSLim: float64 = 50 * 42.5756e6 * 0.256 / 256,
+    dGLim: float64 = 50e-3 * 42.5756e6 * 0.256 / 256,
     dDt: float64 = 10e-6,
     
     dRhoPhi: float64 = 0.5 / (2 * pi),
 ) -> tuple[list[NDArray], list[NDArray]]:
     return ext.getG_Yarnball\
     (
-        bool(bIs3D),
+        int64(bIs3D),
         float64(dFov),
         int64(lNPix),
         
@@ -209,8 +209,8 @@ def getG_Seiffert\
     dFov: float64 = 0.256,
     lNPix: int64 = 256,
     
-    dSLim: float64 = 100 * 42.5756e6 * 0.25 / 256,
-    dGLim: float64 = 120e-3 * 42.5756e6 * 0.25 / 256,
+    dSLim: float64 = 50 * 42.5756e6 * 0.256 / 256,
+    dGLim: float64 = 50e-3 * 42.5756e6 * 0.256 / 256,
     dDt: float64 = 10e-6,
     
     dM: float64 = 0.07, 
@@ -218,7 +218,7 @@ def getG_Seiffert\
 ) -> tuple[list[NDArray], list[NDArray]]:
     return ext.getG_Seiffert\
     (
-        bool(bIs3D),
+        int64(bIs3D),
         float64(dFov),
         int64(lNPix),
         
@@ -236,15 +236,15 @@ def getG_Cones\
     dFov: float64 = 0.256,
     lNPix: int64 = 256,
     
-    dSLim: float64 = 100 * 42.5756e6 * 0.25 / 256,
-    dGLim: float64 = 120e-3 * 42.5756e6 * 0.25 / 256,
+    dSLim: float64 = 50 * 42.5756e6 * 0.256 / 256,
+    dGLim: float64 = 50e-3 * 42.5756e6 * 0.256 / 256,
     dDt: float64 = 10e-6,
     
-    dRhoPhi: float64 = 0.5 / (8 * pi),
+    dRhoPhi: float64 = 0.5 / (4 * pi),
 ) -> tuple[list[NDArray], list[NDArray]]:
     return ext.getG_Cones\
     (
-        bool(bIs3D),
+        int64(bIs3D),
         float64(dFov),
         int64(lNPix),
         
@@ -254,4 +254,12 @@ def getG_Cones\
         
         float64(dRhoPhi),
     )
-    
+
+def setSolverMtg(x): ext.setSolverMtg(x)
+def setTrajRev(x): ext.setTrajRev(x)
+def setGoldAng(x): ext.setGoldAng(x)
+def setShuf(x): ext.setShuf(x)
+def setMaxG0(x): ext.setMaxG0(x)
+def setMaxG1(x): ext.setMaxG1(x)
+def setExGEnd(x): ext.setExGEnd(x)
+def setMagOs(x): ext.setMagOs(x)

@@ -1,8 +1,8 @@
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+// #ifdef __cplusplus
+// extern "C" {
+// #endif
 
 void minTimeGradientRIV(double *Ci, int Cr, int Cc, double g0, double gfin, double gmax, double smax, double T, double ds,
         double **Cx, double **Cy, double **Cz, double **gx, double **gy, double **gz, double **p_of_t,
@@ -32,6 +32,6 @@ double seval (int n, double u,
               double b[], double c[], double d[],
               int *last);
 
-#ifdef __cplusplus
-}
-#endif
+// #ifdef __cplusplus
+// }
+// #endif

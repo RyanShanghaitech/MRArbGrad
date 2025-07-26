@@ -56,6 +56,7 @@ private:
 
     bool sovQDE(double* pdSol0, double* pdSol1, double dA, double dB, double dC);
     double getCurRad(double dP);
+    double getDp(const v3& v3GPrev, const v3& v3GThis, double dDt, double dPPrev, double dPThis, double dSignDp);
     double getDp(const v3& v3G, double dDt, double dP, double dSignDp);
     bool step(v3* pv3GUnit, double* pdGNormMin, double* pdGNormMax, double dP, double dSignDp, const v3& v3G, double dSLim, double dDt);
 };

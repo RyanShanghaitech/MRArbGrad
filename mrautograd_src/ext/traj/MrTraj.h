@@ -1,24 +1,17 @@
 #pragma once
 
 #include "TrajFunc.h"
-#include "../core/GradGen.h"
+#include "../mag/GradGen.h"
 #include <string>
 #include <stdexcept>
 #include <ctime>
 #include "../mtg/header.h"
 
-bool bUseMtg = false; // use Micky's MinTimeGrad solver
-
+bool g_bUseMtg_MrTraj = false; // use Lustig's MinTimeGrad solver
+int64_t g_lOsOw_MrTraj = -1; // oversample ratio, overwrite set value
 
 #define GOLDRAT ((1e0+std::sqrt(5e0))/2e0)
 #define GOLDANG ((3e0-std::sqrt(5e0))*M_PI)
-
-#define TIC \
-    clock_t cTick = std::clock();\
-
-#define TOC \
-    cTick = std::clock() - cTick;\
-    printf("Elapsed time: %.3f ms\n", (float)1e3*cTick/CLOCKS_PER_SEC);
 
 /* 
  * A set of trajectories sufficient to fully-sample the k-space
@@ -216,8 +209,7 @@ protected:
         const bool& bMaxG1 = sGradPara.bMaxG1;
 
         // calculate gradient
-        // TIC;
-        if(!bUseMtg)
+        if(!g_bUseMtg_MrTraj)
         {
             GradGen gg(&tf, dSLim, dGLim, dDt, lOs, bMaxG0?1e15:0e0, bMaxG1?1e15:0e0);
             bRet &= gg.compute(plv3G, pldP);
@@ -225,7 +217,7 @@ protected:
         else
         {
             // Prepare trajectory sampling
-            int64_t lNSampTraj = 1000;
+            int64_t lNSampTraj = 100;
             std::vector<double> C(lNSampTraj * 3, 0.0);
 
             // Sample the trajectory at N points
@@ -276,7 +268,7 @@ protected:
                     pldP->push_back(p_p[i]);
                 }
             }
-
+            
             free(p_Cx);    free(p_Cy);    free(p_Cz);
             free(p_gx);    free(p_gy);    free(p_gz);
             free(p_p);
@@ -284,12 +276,11 @@ protected:
             free(p_kx);    free(p_ky);    free(p_kz);
             free(p_sdot);  free(p_sta);   free(p_stb);
         }
-        // TOC;
 
         return bRet;
     }
 
-    static bool calGrad(v3* pv3M0PE, lv3* plv3GRO, ld* pldP, int64_t* plNWait, int64_t* plNSamp, const TrajFunc* ptfBaseTraj, const GradPara& sGradPara, int64_t lOs=16)
+    static bool calGrad(v3* pv3M0PE, lv3* plv3GRO, ld* pldP, int64_t* plNWait, int64_t* plNSamp, const TrajFunc* ptfBaseTraj, const GradPara& sGradPara, int64_t lOs=8)
     {
         bool bRet = true;
         const double& dGLim = sGradPara.dGLim;
@@ -297,9 +288,11 @@ protected:
         const double& dDt = sGradPara.dDt;
         double dTRampFront = sGradPara.bMaxG0 ? dGLim/dSLim : 0e0;
         double dTRampBack = sGradPara.bMaxG1 ? dGLim/dSLim : 0e0;
+        if (g_lOsOw_MrTraj>0) lOs = g_lOsOw_MrTraj;
         
         // calculate GRO with ramp-up and ramp-down
         calGRO(plv3GRO, pldP, *ptfBaseTraj, sGradPara, lOs);
+
         lv3 lv3GRampFront; bRet &= dSLim>=GradGen::ramp_front(&lv3GRampFront, *plv3GRO->begin(), v3(0,0,0), int64_t(dTRampFront/dDt), dDt);
         lv3 lv3GRampBack; bRet &= dSLim>=GradGen::ramp_back(&lv3GRampBack, *plv3GRO->rbegin(), v3(0,0,0), int64_t(dTRampBack/dDt), dDt);
 
@@ -314,7 +307,7 @@ protected:
         // concate ramp gradient
         plv3GRO->splice(plv3GRO->begin(), lv3GRampFront);
         plv3GRO->splice(plv3GRO->end(), lv3GRampBack);
-
+        
         return bRet;
     }
 };

@@ -5,6 +5,8 @@
 #include <vector>
 #include <list>
 
+#define LOOKUP_TABLE (0)
+
 static bool cvtXyz2Ang(double* pdTht, double* pdPhi, const v3& v3Xyz)
 {
     const double& dX = v3Xyz.m_dX;
@@ -23,10 +25,14 @@ public:
     typedef std::vector<double> vd;
     typedef std::list<double> ld;
 
-    Seiffert_Trajfunc(double dM, double dUMax)
+    Seiffert_Trajfunc(double dM, double dUMax):
+        m_lNPhi(100000)
     {
         m_dM = dM;
         m_dUMax = dUMax;
+
+        initJacElip(m_dM);
+
         m_dP0 = 0e0;
         m_dP1 = dUMax;
         m_dThtBias = 0e0; m_dPhiBias = 0e0;
@@ -37,7 +43,7 @@ public:
     bool getK(v3* pv3K, double dU) const
     {
         double dSn, dCn;
-        calJacElip(&dSn, &dCn, m_dM, dU);
+        calJacElip(&dSn, &dCn, dU);
 
         double dRho = 0.5e0 * (dU/m_dUMax);
         pv3K->m_dX = dRho * dSn * std::cos(dU*std::sqrt(m_dM));
@@ -52,9 +58,17 @@ public:
     
 protected:
     double m_dM, m_dUMax;
-    double m_dThtBias, m_dPhiBias;
+
+    // precompute for AGM
+    ld m_ldA, m_ldB, m_ldC; 
+
+    // precompute lookup table for phi
+    const int64_t m_lNPhi; vd m_vdPhi;
+    double m_dUPeriod;
     
-    static bool calJacElip(double* pdSn, double* pdCn, double dM, double dU)
+    double m_dThtBias, m_dPhiBias;
+
+    bool initJacElip(double dM)
     {
         if (dM<0e0 || dM>1e0)
         {
@@ -62,37 +76,100 @@ protected:
             abort();
         }
 
-        ld ldA; ldA.push_back(1e0);
-        ld ldB; ldB.push_back(std::sqrt(1e0-dM));
-        ld ldC; ldC.push_back(0e0);
-        while (std::fabs(*std::prev(ldB.end()) - *std::prev(ldA.end())) > 1e-8)
+        // calculate a, b, c value of AGM
+        m_ldA.clear(); m_ldA.push_back(1e0);
+        m_ldB.clear(); m_ldB.push_back(std::sqrt(1e0-dM));
+        m_ldC.clear(); m_ldC.push_back(0e0);
+        while (std::fabs(*m_ldB.rbegin() - *m_ldA.rbegin()) > 1e-8)
         {
-            const double& dA_Old = *std::prev(ldA.end());
-            const double& dB_Old = *std::prev(ldB.end());
-            double dA_New = (dA_Old + dB_Old) / 2e0;
-            double dB_New = std::sqrt(dA_Old * dB_Old);
-            double dC_New = (dA_Old - dB_Old) / 2e0;
-            ldA.push_back(dA_New);
-            ldB.push_back(dB_New);
-            ldC.push_back(dC_New);
-        }
-        int64_t lN = ldA.size() - 1;
-        vd vdA(ldA.begin(), ldA.end());
-        vd vdB(ldB.begin(), ldB.end());
-        vd vdC(ldC.begin(), ldC.end());
-
-        vd vdPhi(lN+1, 0e0);
-        vdPhi[lN] = std::pow(2e0,double(lN)) * vdA[lN] * dU;
-        for (int64_t lIdx_N = lN; lIdx_N >= 1; --lIdx_N)
-        {
-            vdPhi[lIdx_N-1] = (1e0/2e0)*(vdPhi[lIdx_N] + std::asin(vdC[lIdx_N]/vdA[lIdx_N]*std::sin(vdPhi[lIdx_N])));
+            const double& dA_Old = *std::prev(m_ldA.end());
+            const double& dB_Old = *std::prev(m_ldB.end());
+            m_ldA.push_back((dA_Old + dB_Old) / 2e0);
+            m_ldB.push_back(std::sqrt(dA_Old * dB_Old));
+            m_ldC.push_back((dA_Old - dB_Old) / 2e0);
         }
 
-        double dAm = vdPhi[0];
-        *pdSn = std::sin(dAm);
-        *pdCn = std::cos(dAm);
+        #if LOOKUP_TABLE
+        // calculate corresponding phi of m
+        int64_t lN = m_ldA.size() - 1;
+
+        double dElipInt = calCompElipInt(dM);
+        m_dUPeriod = 4e0*dElipInt;
+        m_vdPhi.resize(m_lNPhi);
+        for (int64_t i = 0; i < m_lNPhi; ++i)
+        {
+            double dU = m_dUPeriod * i/(double)m_lNPhi;
+
+            // calculate phi with AGM
+            ld::const_reverse_iterator ildA = m_ldA.rbegin();
+            ld::const_reverse_iterator ildC = m_ldC.rbegin();
+            double dPhi = std::pow(2e0,double(lN)) * (*ildA) * dU;
+            for (int64_t j = 0; j < lN; ++j)
+            {
+                dPhi = (1e0/2e0)*(dPhi + std::asin((*ildC)/(*ildA)*std::sin(dPhi)));
+                ++ildA;
+                ++ildC;
+            }
+            m_vdPhi[i] = dPhi;
+        }
+        #endif
+
+        return true;
+    }
+    
+    bool calJacElip(double* pdSn, double* pdCn, double dU) const
+    {
+        #if LOOKUP_TABLE
+        double dIPhi = m_lNPhi * dU/m_dUPeriod;
+        double dIPhi0 = std::floor(dIPhi);
+        double dIPhi1 = std::ceil(dIPhi);
+        if (dIPhi1 == dIPhi0) // test
+        {
+            double dPhi = m_vdPhi[(int64_t)dIPhi%m_lNPhi];
+            *pdSn = std::sin(dPhi);
+            *pdCn = std::cos(dPhi);
+        }
+        else
+        {
+            double dPhi0 = m_vdPhi[int64_t(dIPhi0)%m_lNPhi];
+            double dPhi1 = m_vdPhi[int64_t(dIPhi1)%m_lNPhi];
+
+            *pdSn = std::sin(dPhi0)*(dIPhi1-dIPhi) + std::sin(dPhi1)*(dIPhi-dIPhi0);
+            *pdCn = std::cos(dPhi0)*(dIPhi1-dIPhi) + std::cos(dPhi1)*(dIPhi-dIPhi0);
+        }
+        #else
+        // calculate phi with AGM
+        int64_t lN = m_ldA.size() - 1;
+        ld::const_reverse_iterator ildA = m_ldA.rbegin();
+        ld::const_reverse_iterator ildC = m_ldC.rbegin();
+        double dPhi = std::pow(2e0,double(lN)) * (*ildA) * dU;
+        for (int64_t j = 0; j < lN; ++j)
+        {
+            dPhi = (1e0/2e0)*(dPhi + std::asin((*ildC)/(*ildA)*std::sin(dPhi)));
+            ++ildA;
+            ++ildC;
+        }
+        *pdSn = std::sin(dPhi);
+        *pdCn = std::cos(dPhi);
+        #endif
         
         return true;
+    }
+
+    static double calCompElipInt(double dM)
+    {
+        ld ldA, ldB;
+        ldA.push_back(1e0);
+        ldB.push_back(std::sqrt(1e0 - dM));
+        while (std::fabs(ldB.back() - ldA.back()) > 1e-8)
+        {
+            double aNew = (ldA.back() + ldB.back()) / 2e0;
+            double bNew = std::sqrt(ldA.back() * ldB.back());
+            ldA.push_back(aNew);
+            ldB.push_back(bNew);
+        }
+        double dRes = M_PI / 2e0 / ldA.back();
+        return dRes;
     }
 };
 
@@ -113,7 +190,9 @@ public:
         m_ptfBaseTraj = new Seiffert_Trajfunc(dM, dUMax);
         if(!m_ptfBaseTraj) throw std::runtime_error("out of memory");
 
+        TIC;
         calGrad(&m_v3BaseM0PE, &m_lv3BaseGRO, NULL, &m_lNWait, &m_lNSamp, m_ptfBaseTraj, m_sGradPara, bMaxG0&&bMaxG1?2:8);
+        TOC;
     }
     
     virtual ~Seiffert()
@@ -208,3 +287,5 @@ protected:
         return bRet;
     }
 };
+
+#undef LOOKUP_TABLE

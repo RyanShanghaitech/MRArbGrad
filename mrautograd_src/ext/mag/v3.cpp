@@ -15,7 +15,7 @@ v3 v3::operator+(const v3 &rhs) const
     );
 }
 
-v3 v3::operator+=(const v3 &rhs)
+v3& v3::operator+=(const v3 &rhs)
 {
     this->m_dX += rhs.m_dX;
     this->m_dY += rhs.m_dY;
@@ -33,7 +33,7 @@ v3 v3::operator+(const double &rhs) const
     );
 }
 
-v3 v3::operator+=(const double &rhs)
+v3& v3::operator+=(const double &rhs)
 {
     this->m_dX += rhs;
     this->m_dY += rhs;
@@ -51,7 +51,7 @@ v3 v3::operator-(const v3 &rhs) const
     );
 }
 
-v3 v3::operator-=(const v3 &rhs)
+v3& v3::operator-=(const v3 &rhs)
 {
     this->m_dX -= rhs.m_dX;
     this->m_dY -= rhs.m_dY;
@@ -69,7 +69,7 @@ v3 v3::operator-(const double &rhs) const
     );
 }
 
-v3 v3::operator-=(const double &rhs)
+v3& v3::operator-=(const double &rhs)
 {
     this->m_dX -= rhs;
     this->m_dY -= rhs;
@@ -87,7 +87,7 @@ v3 v3::operator*(const v3 &rhs) const
     );
 }
 
-v3 v3::operator*=(const v3 &rhs)
+v3& v3::operator*=(const v3 &rhs)
 {
     this->m_dX *= rhs.m_dX;
     this->m_dY *= rhs.m_dY;
@@ -105,7 +105,7 @@ v3 v3::operator*(const double &rhs) const
     );
 }
 
-v3 v3::operator*=(const double &rhs)
+v3& v3::operator*=(const double &rhs)
 {
     this->m_dX *= rhs;
     this->m_dY *= rhs;
@@ -123,7 +123,7 @@ v3 v3::operator/(const v3 &rhs) const
     );
 }
 
-v3 v3::operator/=(const v3 &rhs)
+v3& v3::operator/=(const v3 &rhs)
 {
     this->m_dX /= rhs.m_dX;
     this->m_dY /= rhs.m_dY;
@@ -141,7 +141,7 @@ v3 v3::operator/(const double &rhs) const
     );
 }
 
-v3 v3::operator/=(const double &rhs)
+v3& v3::operator/=(const double &rhs)
 {
     this->m_dX /= rhs;
     this->m_dY /= rhs;

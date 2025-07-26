@@ -39,7 +39,6 @@ protected:
 class Rosette: public MrTraj_2D
 {
 public:
-
     Rosette(const GeoPara& sGeoPara, const GradPara& sGradPara, double dOm1, double dOm2, double dTmax)
     {
         m_sGeoPara = sGeoPara;
@@ -57,19 +56,28 @@ public:
 
         // calculate average ΔTE
         ld ldP;
+        TIC;
         calGrad(&m_v3BaseM0PE, &m_lv3BaseGRO, &ldP, &m_lNWait, &m_lNSamp, m_ptfBaseTraj, m_sGradPara, bMaxG0&&bMaxG1?2:8);
-
-        ll llEchoIdx;
-        ld::const_iterator ildp = ldP.begin();
-        for (int64_t i = 0; i < (int64_t)ldP.size(); ++i)
+        TOC;
+        
+        if (ldP.size() != 0)
         {
-            if (std::fmod(*ildp*dOm1, M_PI) > M_PI/2e0 && std::fmod(*std::next(ildp)*dOm1, M_PI) <= M_PI/2e0)
+            ll llEchoIdx;
+            ld::const_iterator ildp = ldP.begin();
+            for (int64_t i = 0; i < (int64_t)ldP.size(); ++i)
             {
-                llEchoIdx.push_back(i);
+                if (std::fmod(*ildp*dOm1, M_PI) > M_PI/2e0 && std::fmod(*std::next(ildp)*dOm1, M_PI) <= M_PI/2e0)
+                {
+                    llEchoIdx.push_back(i);
+                }
+                ++ildp;
             }
-            ++ildp;
+            m_dAvrDTE = m_sGradPara.dDt * (*llEchoIdx.rbegin() - *llEchoIdx.begin())/(llEchoIdx.size() - 1);
         }
-        m_dAvrDTE = m_sGradPara.dDt * (*llEchoIdx.rbegin() - *llEchoIdx.begin())/(llEchoIdx.size() - 1);
+        else // parameter sequence unavailable
+        {
+            m_dAvrDTE = -1e0;
+        }
     }
     
     virtual ~Rosette()

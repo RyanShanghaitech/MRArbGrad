@@ -4,7 +4,7 @@
 #include <cstdio>
 #include <ctime>
 #include <algorithm>
-#include "core/GradGen.h"
+#include "mag/GradGen.h"
 #include "traj/TrajFunc.h"
 #include "traj/MrTraj.h"
 #include "traj/Spiral.h"
@@ -15,10 +15,11 @@
 #include "traj/Seiffert.h"
 #include "traj/Cones.h"
 
-bool bTrajRev (0);
-bool bTrajGoldAng (0);
-bool bMaxG0 (0);
-bool bMaxG1 (0);
+bool g_bTrajRev_Main (0);
+bool g_bTrajGoldAng_Main (0);
+bool g_bShuf_Main (0);
+bool g_bMaxG0_Main (0);
+bool g_bMaxG1_Main (0);
 
 typedef std::vector<double> vd;
 typedef std::vector<int64_t> vl;
@@ -54,6 +55,7 @@ PyObject* cvtVvv3toList(vvv3& vvv3Src)
     {
         PyObject* ppyoArr = cvtVv3toNparr(vvv3Src[i]);
         PyList_Append(ppyoList, ppyoArr);
+        Py_DECREF(ppyoArr);
     }
     return ppyoList;
 }
@@ -82,6 +84,7 @@ PyObject* cvtVv3toList(vv3& vv3Src)
     {
         PyObject* ppyoArr = cvtV3toNparr(vv3Src[i]);
         PyList_Append(ppyoList, ppyoArr);
+        Py_DECREF(ppyoArr);
     }
     return ppyoList;
 }
@@ -111,8 +114,8 @@ bool getGeoGradPara(PyObject* const* args, MrTraj::GeoPara* psGeoPara, MrTraj::G
         (double)PyFloat_AsDouble(args[3]),
         (double)PyFloat_AsDouble(args[4]),
         (double)PyFloat_AsDouble(args[5]),
-        bMaxG0,
-        bMaxG1
+        g_bMaxG0_Main,
+        g_bMaxG1_Main
     };
 
     return true;
@@ -138,8 +141,12 @@ public:
 
     bool getK(v3* pv3K, double dP) const
     {
-        PyObject* ppyoV3 = PyObject_CallOneArg(m_ppyoGetK, PyFloat_FromDouble(dP));
+        PyObject* ppyoP = PyFloat_FromDouble(dP);
+        PyObject* ppyoV3 = PyObject_CallOneArg(m_ppyoGetK, ppyoP);
+        Py_DECREF(ppyoP);
+        PyObject* _ppyoV3 = ppyoV3;
         ppyoV3 = PyArray_FROM_OTF(ppyoV3, NPY_FLOAT64, NPY_ARRAY_CARRAY);
+        Py_DECREF(_ppyoV3);
         if (PyArray_SIZE((PyArrayObject*)ppyoV3) != 3)
         {
             PyErr_SetString(PyExc_RuntimeError, "the return value of getK / getDkDp / getD2kDp2 must be size-3.\n");
@@ -162,8 +169,12 @@ public:
             return TrajFunc::getDkDp(pv3K, dP);
         }
 
-        PyObject* ppyoV3 = PyObject_CallOneArg(m_ppyoGetDkDp, PyFloat_FromDouble(dP));
+        PyObject* ppyoP = PyFloat_FromDouble(dP);
+        PyObject* ppyoV3 = PyObject_CallOneArg(m_ppyoGetDkDp, ppyoP);
+        Py_DECREF(ppyoP);
+        PyObject* _ppyoV3 = ppyoV3;
         ppyoV3 = PyArray_FROM_OTF(ppyoV3, NPY_FLOAT64, NPY_ARRAY_CARRAY);
+        Py_DECREF(_ppyoV3);
         if (PyArray_SIZE((PyArrayObject*)ppyoV3) != 3)
         {
             PyErr_SetString(PyExc_RuntimeError, "the return value of getK / getDkDp / getD2kDp2 must be size-3.\n");
@@ -186,8 +197,12 @@ public:
             return TrajFunc::getD2kDp2(pv3K, dP);
         }
         
-        PyObject* ppyoV3 = PyObject_CallOneArg(m_ppyoGetD2kDp2, PyFloat_FromDouble(dP));
+        PyObject* ppyoP = PyFloat_FromDouble(dP);
+        PyObject* ppyoV3 = PyObject_CallOneArg(m_ppyoGetD2kDp2, ppyoP);
+        Py_DECREF(ppyoP);
+        PyObject* _ppyoV3 = ppyoV3;
         ppyoV3 = PyArray_FROM_OTF(ppyoV3, NPY_FLOAT64, NPY_ARRAY_CARRAY);
+        Py_DECREF(_ppyoV3);
         if (PyArray_SIZE((PyArrayObject*)ppyoV3) != 3)
         {
             PyErr_SetString(PyExc_RuntimeError, "the return value of getK / getDkDp / getD2kDp2 must be size-3.\n");
@@ -296,7 +311,7 @@ bool getGrad_Main(MrTraj* pmt, vv3* pvv3M0PE, vvv3* pvvv3GRO, bool bShuf)
     pvv3M0PE->resize(lNAcq);
     pvvv3GRO->resize(lNAcq);
 
-    bShuf = false; // test
+    bShuf &= g_bShuf_Main;
 	vl vlShufIdx; MrTraj::genRandIdx(&vlShufIdx, lNAcq);
     for (int64_t i = 0; i < lNAcq; ++i)
     {
@@ -321,7 +336,7 @@ bool getGrad_Main(MrTraj* pmt, vv3* pvv3M0PE, vvv3* pvvv3GRO, bool bShuf)
         }
 
         // reverse gradient if needed
-        if (bTrajRev) bRet &= GradGen::revGrad(&v3M0PE, &lv3GRO, v3M0PE, lv3GRO, dDt);
+        if (g_bTrajRev_Main) bRet &= GradGen::revGrad(&v3M0PE, &lv3GRO, v3M0PE, lv3GRO, dDt);
 
         pvv3M0PE->at(i) = v3M0PE;
         pvvv3GRO->at(i) = vv3(lv3GRO.begin(), lv3GRO.end());
@@ -339,11 +354,11 @@ PyObject* getG_Spiral(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 
     double dRhoPhi = (double)PyFloat_AsDouble(args[6]);
     Spiral traj(sGeoPara, sGradPara, dRhoPhi);
-    if (bTrajGoldAng) traj.setRotAngInc(traj.getNRot());
+    if (g_bTrajGoldAng_Main) traj.setRotAngInc(traj.getNRot());
 
     vv3 vv3K0;
     vvv3 vvv3Grad;
-    getGrad_Main(&traj, &vv3K0, &vvv3Grad, !bTrajGoldAng);
+    getGrad_Main(&traj, &vv3K0, &vvv3Grad, !g_bTrajGoldAng_Main);
 
     return Py_BuildValue("OO", cvtVv3toList(vv3K0), cvtVvv3toList(vvv3Grad));
 }
@@ -359,11 +374,11 @@ PyObject* getG_VarDenSpiral(PyObject* self, PyObject* const* args, Py_ssize_t na
     double dRhoPhi0 = (double)PyFloat_AsDouble(args[6]);
     double dRhoPhi1 = (double)PyFloat_AsDouble(args[7]);
     VarDenSpiral traj(sGeoPara, sGradPara, dRhoPhi0, dRhoPhi1);
-    if (bTrajGoldAng) traj.setRotAngInc(traj.getNRot());
+    if (g_bTrajGoldAng_Main) traj.setRotAngInc(traj.getNRot());
 
     vv3 vv3K0;
     vvv3 vvv3Grad;
-    getGrad_Main(&traj, &vv3K0, &vvv3Grad, !bTrajGoldAng);
+    getGrad_Main(&traj, &vv3K0, &vvv3Grad, !g_bTrajGoldAng_Main);
 
     return Py_BuildValue("OO", cvtVv3toList(vv3K0), cvtVvv3toList(vvv3Grad));
 }
@@ -381,12 +396,12 @@ PyObject* getG_Rosette(PyObject* self, PyObject* const* args, Py_ssize_t narg)
     double dTmax = (double)PyFloat_AsDouble(args[8]);
 
     Rosette traj(sGeoPara, sGradPara, dOm1, dOm2, dTmax);
-    printf("Rosette DTE: %e s\n", traj.getAvrDTE());
-    if (bTrajGoldAng) traj.setRotAngInc(traj.getNRot());
+    // printf("Rosette DTE: %e s\n", traj.getAvrDTE());
+    if (g_bTrajGoldAng_Main) traj.setRotAngInc(traj.getNRot());
 
     vv3 vv3K0;
     vvv3 vvv3Grad;
-    getGrad_Main(&traj, &vv3K0, &vvv3Grad, !bTrajGoldAng);
+    getGrad_Main(&traj, &vv3K0, &vvv3Grad, !g_bTrajGoldAng_Main);
 
     return Py_BuildValue("OO", cvtVv3toList(vv3K0), cvtVvv3toList(vvv3Grad));
 }
@@ -405,11 +420,11 @@ PyObject* getG_Rosette_Trad(PyObject* self, PyObject* const* args, Py_ssize_t na
     double dDTE = (double)PyFloat_AsDouble(args[9]);
 
     Rosette_Trad traj(sGeoPara, sGradPara, dOm1, dOm2, dTmax, dDTE);
-    if (bTrajGoldAng) traj.setRotAngInc(traj.getNRot());
+    if (g_bTrajGoldAng_Main) traj.setRotAngInc(traj.getNRot());
 
     vv3 vv3K0;
     vvv3 vvv3Grad;
-    getGrad_Main(&traj, &vv3K0, &vvv3Grad, !bTrajGoldAng);
+    getGrad_Main(&traj, &vv3K0, &vvv3Grad, !g_bTrajGoldAng_Main);
 
     return Py_BuildValue("OO", cvtVv3toList(vv3K0), cvtVvv3toList(vvv3Grad));
 }
@@ -489,46 +504,77 @@ PyObject* getG_Cones(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 
 PyObject* setSolverMtg(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 {
-    extern bool bUseMtg;
+    extern bool g_bUseMtg_MrTraj;
     checkNarg(narg, 1);
-    bUseMtg = PyLong_AsLong(args[0]);
+    g_bUseMtg_MrTraj = PyLong_AsLong(args[0]);
+    Py_INCREF(Py_None);
     return Py_None;
 }
 
 PyObject* setTrajRev(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 {
     checkNarg(narg, 1);
-    bTrajRev = PyLong_AsLong(args[0]);
+    g_bTrajRev_Main = PyLong_AsLong(args[0]);
+    Py_INCREF(Py_None);
     return Py_None;
 }
 
 PyObject* setGoldAng(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 {
     checkNarg(narg, 1);
-    bTrajGoldAng = PyLong_AsLong(args[0]);
+    g_bTrajGoldAng_Main = PyLong_AsLong(args[0]);
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+PyObject* setShuf(PyObject* self, PyObject* const* args, Py_ssize_t narg)
+{
+    checkNarg(narg, 1);
+    g_bShuf_Main = PyLong_AsLong(args[0]);
+    Py_INCREF(Py_None);
     return Py_None;
 }
 
 PyObject* setMaxG0(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 {
     checkNarg(narg, 1);
-    bMaxG0 = PyLong_AsLong(args[0]);
+    g_bMaxG0_Main = PyLong_AsLong(args[0]);
+    Py_INCREF(Py_None);
     return Py_None;
 }
 
 PyObject* setMaxG1(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 {
     checkNarg(narg, 1);
-    bMaxG1 = PyLong_AsLong(args[0]);
+    g_bMaxG1_Main = PyLong_AsLong(args[0]);
+    Py_INCREF(Py_None);
     return Py_None;
 }
 
-vv3 *pvv3Test = NULL;
+PyObject* setExGEnd(PyObject* self, PyObject* const* args, Py_ssize_t narg)
+{
+    extern bool g_bExGEnd_MAG;
+    
+    checkNarg(narg, 1);
+    g_bExGEnd_MAG = PyLong_AsLong(args[0]);
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+PyObject* setMagOs(PyObject* self, PyObject* const* args, Py_ssize_t narg)
+{
+    extern int64_t g_lOsOw_MrTraj;
+    checkNarg(narg, 1);
+    g_lOsOw_MrTraj = PyLong_AsLong(args[0]);
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+vv3 vv3Test;
 PyObject* getTestVal(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 {
     checkNarg(narg, 0);
-    if(pvv3Test) return Py_BuildValue("O", cvtVv3toNparr(*pvv3Test));
-    else return Py_None;
+    return Py_BuildValue("O", cvtVv3toNparr(vv3Test));
 }
 
 static PyMethodDef aMeth[] = 
@@ -545,9 +591,12 @@ static PyMethodDef aMeth[] =
     {"setSolverMtg", (PyCFunction)setSolverMtg, METH_FASTCALL, ""},
     {"setTrajRev", (PyCFunction)setTrajRev, METH_FASTCALL, ""},
     {"setGoldAng", (PyCFunction)setGoldAng, METH_FASTCALL, ""},
+    {"setShuf", (PyCFunction)setShuf, METH_FASTCALL, ""},
     {"setMaxG0", (PyCFunction)setMaxG0, METH_FASTCALL, ""},
     {"setMaxG1", (PyCFunction)setMaxG1, METH_FASTCALL, ""},
+    {"setExGEnd", (PyCFunction)setExGEnd, METH_FASTCALL, ""},
     {"getTestVal", (PyCFunction)getTestVal, METH_FASTCALL, ""},
+    {"setMagOs", (PyCFunction)setMagOs, METH_FASTCALL, ""},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
