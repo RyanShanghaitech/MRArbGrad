@@ -8,7 +8,8 @@ import finufft as fn
 import slime
 import fars
 
-enSim = 0
+mag.setSolverMtg(0)
+enSim = 1
 gamma = 42.5756e6
 fov = 0.256
 nPix = 256
@@ -18,47 +19,30 @@ dtGrad = 10e-6
 dtADC = 2.5e-6
 argCom = dict(dFov=fov, lNPix=nPix, dSLim=sLim, dGLim=gLim, dDt=dtGrad)
 
-mag.setSolverMtg(0)
 mag.setTrajRev(0)
 mag.setGoldAng(1)
 mag.setMaxG0(0)
 mag.setMaxG1(0)
 mag.setExGEnd(0)
 mag.setMagOs(8)
-
-lstArrK0, lstArrGrad = mag.getG_Rosette(bIs3D=0, **argCom); nAx = 2
-
-mag.setSolverMtg(1)
-mag.setTrajRev(0)
-mag.setGoldAng(1)
-mag.setMaxG0(0)
-mag.setMaxG1(0)
-mag.setExGEnd(0)
-mag.setMagOs(8)
-
-lstArrK0, lstArrGrad = mag.getG_Rosette(bIs3D=0, **argCom); nAx = 2
-
-exit()
 
 # calculate gradient
-for i in range(10):
-    # lstArrK0, lstArrGrad = mag.getG_Spiral(bIs3D=0, **argCom); nAx = 2 # 0.380s
-    # lstArrK0, lstArrGrad = mag.getG_VarDenSpiral(bIs3D=0, **argCom); nAx = 2 # 0.499s
-    lstArrK0, lstArrGrad = mag.getG_Rosette(bIs3D=0, **argCom); nAx = 2 # 16.39s (9 frames)
-    # lstArrK0, lstArrGrad = mag.getG_Rosette_Trad(**argCom, dOm1=10*pi, dOm2=8*pi, dTmax=1, dTacq=2e-03); nAx = 2 # 16.39s (9 frames)
-    # lstArrK0, lstArrGrad = mag.getG_Shell3d(**argCom); nAx = 3 # 183.7
-    # lstArrK0, lstArrGrad = mag.getG_Yarnball(**argCom); nAx = 3 # 196.1
-    # lstArrK0, lstArrGrad = mag.getG_Seiffert(**argCom); nAx = 3 # 232.9s
-    # lstArrK0, lstArrGrad = mag.getG_Cones(**argCom); nAx = 3 # 149.9s
+# lstArrK0, lstArrGrad = mag.getG_Spiral(bIs3D=0, **argCom); nAx = 2
+# lstArrK0, lstArrGrad = mag.getG_VarDenSpiral(bIs3D=0, **argCom); nAx = 2
+# lstArrK0, lstArrGrad = mag.getG_Rosette(bIs3D=0, **argCom); nAx = 2
+# lstArrK0, lstArrGrad = mag.getG_Rosette_Trad(**argCom, dOm1=10*pi, dOm2=8*pi, dTmax=1, dTacq=2e-03); nAx = 2
+# lstArrK0, lstArrGrad = mag.getG_Shell3d(**argCom); nAx = 3
+# lstArrK0, lstArrGrad = mag.getG_Yarnball(**argCom); nAx = 3
+# lstArrK0, lstArrGrad = mag.getG_Seiffert(**argCom); nAx = 3
+lstArrK0, lstArrGrad = mag.getG_Cones(**argCom); nAx = 3
 
-# print(f"Intlea Num.: {len(lstArrGrad)}")
-
-nRO_Max = max(arrG.shape[0] for arrG in lstArrGrad)
-# print(f"Tacq: {nRO_Max*dtGrad*1e3:.3f} ms")
+print(f"Intlea Num.: {len(lstArrGrad)}")
+nRO_Max = amax([arrG.shape[0] for arrG in lstArrGrad])
+print(f"Tacq: {nRO_Max*dtGrad*1e3:.3f} ms")
 tTR = (nRO_Max*dtGrad + 2e-3)
-# print(f"TR: {tTR*1e3:.3f} ms")
+print(f"TR: {tTR*1e3:.3f} ms")
 tScan = tTR*len(lstArrGrad)
-# print(f"Tscan: {tScan:.3e} s")
+print(f"Tscan: {tScan:.3e} s")
 
 # derive shape parameter
 if nAx==2:
@@ -90,9 +74,7 @@ for arrK0, arrGrad in zip(lstArrK0, lstArrGrad):
 #     plot(*array([arrK[-1,:] for arrK in lstArrK[-100:]]).T, ".", linestyle='')
 #     title("last 100 intlea.")
 
-# interleaf to be plotted
-# iArrK = argmax(array([amax(norm(arrS,axis=-1)) for arrS in lstArrSlew]))
-iArrK = 0
+iArrK = len(lstArrK)*2//3
 
 # k-space and g-space
 figure(figsize=(18,9), dpi=120)

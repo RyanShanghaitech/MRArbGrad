@@ -32,7 +32,7 @@ double RungeKutte_riv(double ds, double st, double k[], double smax) {
     return rtn;
 }
 
-void minTimeGradientRIV(double *Ci, int Cr, int Cc, double g0, double gfin, double gmax, double smax, double T, double ds,
+void minTimeGradientRIV(const double *Ci, int Cr, int Cc, double g0, double gfin, double gmax, double smax, double T, double ds,
         double **Cx, double **Cy, double **Cz, double **gx, double **gy, double **gz, double **p_of_t,
         double **sx, double **sy, double **sz, double **kx, double **ky, double **kz, double **sdot, double **sta, double **stb, double *time,
         int *size_interpolated, int *size_sdot, int *size_st, int gfin_empty, int ds_empty) {
