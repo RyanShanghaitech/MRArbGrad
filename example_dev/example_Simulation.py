@@ -2,8 +2,12 @@ import mrautograd as mag
 from numpy import *
 from matplotlib.pyplot import *
 from numpy.linalg import norm
+import finufft as fn
+import slime
+import fars
 
 mag.setSolverMtg(0)
+enSim = 1
 gamma = 42.5756e6
 fov = 0.256
 nPix = 256
@@ -56,41 +60,55 @@ for arrK0, arrGrad in zip(lstArrK0, lstArrGrad):
     arrK += arrK0
     lstArrK.append(arrK)
 
-iArrK = len(lstArrK)*2//3
+# simulate phantom
+arrI = slime.genPhan(nAx, nPix)["M0"].squeeze()
+arrK = concatenate(lstArrK, axis=0)
 
-# k-space and g-space
-figure(figsize=(18,9), dpi=120)
+arrDcf = fars.calDcf(nPix, arrK[:,:nAx]).astype(complex64)
 
-subplot(221, projection="3d" if nAx==3 else None)
-plot(*lstArrK[iArrK].T, ".-")
-axis("equal")
-grid("on")
-title(f"kspace {1}/{len(lstArrGrad)}")
+arrOm = 2*pi*arrK; arrOm = arrOm.astype(float32)
 
-subplot(223, projection="3d" if nAx==3 else None)
-plot(*lstArrGrad[iArrK].T, ".-")
-axis("equal")
-grid("on")
-title("gspace")
+plan = fn.Plan(2, tuple(nPix for _ in range(nAx)), isign=-1, dtype="complex64")
+plan.setpts(*arrOm.T)
+arrS = plan.execute(arrI.astype(complex64))
 
-# gradient and slewrate
-subplot(222)
-for iAx in range(nAx):
-    plot(lstArrGrad[iArrK][:,iAx]/gamma*nPix/fov, ".-")
-grid("on")
-title(f"Gradient")
+plan = fn.Plan(1, tuple(nPix for _ in range(nAx)), isign=1, dtype="complex64")
+plan.setpts(*arrOm.T)
+arrI_Reco = plan.execute(arrS*arrDcf)
 
-subplot(224)
-plot(norm(lstArrSlew[iArrK],axis=-1)/gamma*nPix/fov, ".-", c="tab:blue")
-ylim(sLim/gamma*nPix/fov*0.9, sLim/gamma*nPix/fov*1.1)
-grid("on")
-
-twinx()
-plot(norm(lstArrGrad[iArrK],axis=-1)/gamma*nPix/fov*1e3, ".-", c="tab:orange")
-ylim(gLim/gamma*nPix/fov*0.9*1e3, gLim/gamma*nPix/fov*1.1*1e3)
-grid("on")
-title(f"Grad & Slew amp., max grad:{gMax*1e3:.3f}, max slew:{sMax:.3f}")
-
-subplots_adjust(0.05,0.1,0.95,0.9, 0.2, 0.2)
-
+if nAx==2:
+    figure(figsize=(9,5), dpi=120)
+    
+    subplot(121)
+    imshow(abs(arrI), cmap="gray")
+    colorbar()
+    
+    subplot(122)
+    imshow(abs(arrI_Reco), cmap="gray")
+    colorbar()
+    
+if nAx==3:
+    figure(figsize=(6,9), dpi=120)
+    
+    subplot(321)
+    imshow(abs(arrI[nPix//2,:,:]), cmap="gray")
+    colorbar()
+    subplot(322)
+    imshow(abs(arrI_Reco[nPix//2,:,:]), cmap="gray")
+    colorbar()
+    
+    subplot(323)
+    imshow(abs(arrI[:,nPix//2,:]), cmap="gray")
+    colorbar()
+    subplot(324)
+    imshow(abs(arrI_Reco[:,nPix//2,:]), cmap="gray")
+    colorbar()
+    
+    subplot(325)
+    imshow(abs(arrI[:,:,nPix//2]), cmap="gray")
+    colorbar()
+    subplot(326)
+    imshow(abs(arrI_Reco[:,:,nPix//2]), cmap="gray")
+    colorbar()
+    
 show()
