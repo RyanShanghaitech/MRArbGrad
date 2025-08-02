@@ -1,9 +1,0 @@
-test*.*
-temp*.*
-*.gif
-*.npy
-*.npz
-
-dist/
-.vscode/
-*.egg-info/

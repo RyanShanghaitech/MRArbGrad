@@ -1,9 +1,5 @@
 #pragma once
 
-// #ifdef __cplusplus
-// extern "C" {
-// #endif
-
 void minTimeGradientRIV(const double *Ci, int Cr, int Cc, double g0, double gfin, double gmax, double smax, double T, double ds,
         double **Cx, double **Cy, double **Cz, double **gx, double **gy, double **gz, double **p_of_t,
         double **sx, double **sy, double **sz, double **kx, double **ky, double **kz, double **sdot, double **sta, double **stb, double *time,
@@ -31,7 +27,3 @@ double seval (int n, double u,
               double x[], double y[],
               double b[], double c[], double d[],
               int *last);
-
-// #ifdef __cplusplus
-// }
-// #endif
