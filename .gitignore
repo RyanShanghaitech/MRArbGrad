@@ -1,0 +1,10 @@
+test*.*
+temp*.*
+*.gif
+*.npy
+*.npz
+
+dist/
+build/
+.vscode/
+*.egg-info/
