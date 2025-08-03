@@ -14,7 +14,7 @@ libraries = [] if sys.platform=="win32" else ['jemalloc'],
 ```
 
 ## Reproduce The Paper
-1. To reproduce the result in *A Graphical Method for Designing Time-Optimal Non-Cartesian Gradient Waveforms*, please run `benchmark.py`.
+1. To reproduce the result in [*A Graphical Method for Designing Time-Optimal Non-Cartesian Gradient Waveforms*](https://arxiv.org/abs/2507.21625), please run `benchmark.py`.
     ```
     $ python benchmark.py
     ```
@@ -46,3 +46,10 @@ libraries = [] if sys.platform=="win32" else ['jemalloc'],
 
 ## Examples
 Examples for generating gradient waveforms for either built-in trajectory or external trajectory (expressed by trajectory function or trajectory samples) can be found in `example` folder.
+
+## Citation
+If this project helps you, please cite [our paper](https://arxiv.org/abs/2507.21625):
+
+[1] R. Luo, H. Huang, Q. Miao, J. Xu, P. Hu, and H. Qi, “A Graphical Method for Designing Time-Optimal Non-Cartesian Gradient Waveforms,” July 29, 2025, arXiv preprint arXiv:2507.21625.
+
+
