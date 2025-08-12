@@ -5,14 +5,12 @@
 #include <string>
 #include <stdexcept>
 #include <ctime>
-#include "Spline.h"
+#include "../utility/SplineIntp.h"
+#include "../mtg/header.h"
 
-#ifdef MTG_EXIST
-    #include "../mtg/header.h"
-#endif
 
+bool g_bExGEnd_MrTraj = true; // whether keep inital/final value exactly as set
 bool g_bUseMtg_MrTraj = false; // use Lustig's MinTimeGrad solver
-int64_t g_lOsOw_MrTraj = -1; // oversample ratio, overwrite set value
 
 #define GOLDRAT ((1e0+std::sqrt(5e0))/2e0)
 #define GOLDANG ((3e0-std::sqrt(5e0))*M_PI)
@@ -42,7 +40,11 @@ public:
            vdZ[i] =  vv3K[i].m_dZ;
         }
 
-        m_intpX.fit(vdP, vdX);
+        m_intpX.m_eSearchMode = Intp::EUniform;
+        m_intpY.m_eSearchMode = Intp::EUniform;
+        m_intpZ.m_eSearchMode = Intp::EUniform;
+
+        m_intpX.fit(vdP, vdX); 
         m_intpY.fit(vdP, vdY);
         m_intpZ.fit(vdP, vdZ);
 
@@ -77,7 +79,7 @@ public:
         return true;
     }
 protected:
-    Spline m_intpX, m_intpY, m_intpZ;
+    SplineIntp m_intpX, m_intpY, m_intpZ;
 };
 
 /* 
@@ -269,34 +271,68 @@ protected:
     static bool calGRO_MAG(lv3* plv3G, ld* pldP, const TrajFunc& tf, const GradPara& sGradPara, int64_t lOs=8)
     {
         bool bRet = true;
+        const double& dP0 = tf.getP0();
+        const double& dP1 = tf.getP1();
         const double& dSLim = sGradPara.dSLim;
         const double& dGLim = sGradPara.dGLim;
         const double& dDt = sGradPara.dDt;
         const bool& bMaxG0 = sGradPara.bMaxG0;
         const bool& bMaxG1 = sGradPara.bMaxG1;
+        
+        double dGNorm0 = bMaxG0?1e15:0e0;
+        double dGNorm1 = bMaxG1?1e15:0e0;
 
-        GradGen gg(&tf, dSLim, dGLim, dDt, lOs, bMaxG0?1e15:0e0, bMaxG1?1e15:0e0);
+        GradGen gg(&tf, dSLim, dGLim, dDt, lOs, dGNorm0, dGNorm1);
+        TIC;
         bRet &= gg.compute(plv3G, pldP);
+        TOC;
+
+        if (g_bExGEnd_MrTraj)
+        {
+            v3 v3GFront = plv3G->front();
+            double dGNormFront = v3::norm(v3GFront);
+            v3 v3G0 = dGNormFront?v3GFront/dGNormFront:v3(0,0,0) * dGNorm0;
+
+            v3 v3GBack = plv3G->back();
+            double dGNormBack = v3::norm(v3GBack);
+            v3 v3G1 = dGNormBack?v3GBack/dGNormBack:v3(0,0,0) * dGNorm1;
+
+            // add ramp gradient to satisfy desired Gstart and Gfinal
+            lv3 lv3GRampFront; bRet &= GradGen::ramp_front(&lv3GRampFront, plv3G->front(), v3G0, dSLim, dDt);
+            lv3 lv3GRampBack; bRet &= GradGen::ramp_back(&lv3GRampBack, plv3G->back(), v3G1, dSLim, dDt);
+            
+            // corresponding parameter sequence
+            if (pldP)
+            {
+                for (int64_t i = 0; i < (int64_t)lv3GRampFront.size(); ++i) pldP->push_front(dP0);
+                for (int64_t i = 0; i < (int64_t)lv3GRampBack.size(); ++i) pldP->push_back(dP1);
+            }
+
+            // concate ramp gradient
+            plv3G->splice(plv3G->begin(), lv3GRampFront);
+            plv3G->splice(plv3G->end(), lv3GRampBack);
+        }
 
         return bRet;
     }
 
     static bool calGRO_MTG(lv3* plv3G, ld* pldP, const vd& vdC, const GradPara& sGradPara)
     {
-#ifdef MTG_EXIST
         bool bRet = true;
         const double& dSLim = sGradPara.dSLim;
         const double& dGLim = sGradPara.dGLim;
         const double& dDt = sGradPara.dDt;
         const bool& bMaxG0 = sGradPara.bMaxG0;
         const bool& bMaxG1 = sGradPara.bMaxG1;
+        double dGNorm0 = bMaxG0?1e15:0e0;
+        double dGNorm1 = bMaxG1?1e15:0e0;
+        if (pldP) pldP->clear();
 
         // Prepare arg. for Lustig's function
-        double g0 = bMaxG0?1e15:0e0, gfin = bMaxG1?1e15:0e0, gmax = dGLim, smax = dSLim, T = dDt, ds = -1;
+        double g0 = dGNorm0, gfin = dGNorm1, gmax = dGLim, smax = dSLim, T = dDt, ds = -1;
 
         double *p_Cx = nullptr, *p_Cy = nullptr, *p_Cz = nullptr;
         double *p_gx = nullptr, *p_gy = nullptr, *p_gz = nullptr;
-        double *p_p = nullptr;
         double *p_sx = nullptr, *p_sy = nullptr, *p_sz = nullptr;
         double *p_kx = nullptr, *p_ky = nullptr, *p_kz = nullptr;
         double *p_sdot = nullptr, *p_sta = nullptr, *p_stb = nullptr;
@@ -306,41 +342,54 @@ protected:
         int gfin_empty = 0, ds_empty = 1;
 
         // Call Lustig's function (assume it is linked in or compiled as C)
+        TIC;
         minTimeGradientRIV(
             vdC.data(), vdC.size()/3, 3, g0, gfin, gmax, smax, T, ds,
-            &p_Cx, &p_Cy, &p_Cz, &p_gx, &p_gy, &p_gz, &p_p,
+            &p_Cx, &p_Cy, &p_Cz, &p_gx, &p_gy, &p_gz,
             &p_sx, &p_sy, &p_sz, &p_kx, &p_ky, &p_kz, &p_sdot, &p_sta, &p_stb, &time,
             &size_interpolated, &size_sdot, &size_st, gfin_empty, ds_empty);
+        TOC;
 
         // Copy results to C++ outputs
         plv3G->clear();
-        for (int i = 0; i < size_interpolated; ++i)
+        for (int64_t i = 0; i < size_interpolated; ++i)
         {
             plv3G->push_back(v3(p_gx[i], p_gy[i], p_gz[i]));
-        }
-        if (pldP)
-        {
-            pldP->clear();
-            for (int i = 0; i < size_interpolated; ++i)
-            {
-                pldP->push_back(p_p[i]);
-            }
         }
         
         free(p_Cx);    free(p_Cy);    free(p_Cz);
         free(p_gx);    free(p_gy);    free(p_gz);
-        free(p_p);
         free(p_sx);    free(p_sy);    free(p_sz);
         free(p_kx);    free(p_ky);    free(p_kz);
         free(p_sdot);  free(p_sta);   free(p_stb);
 
+        if (g_bExGEnd_MrTraj)
+        {
+            v3 v3GFront = plv3G->front();
+            double dGNormFront = v3::norm(v3GFront);
+            v3 v3G0 = dGNormFront?v3GFront/dGNormFront:v3(0,0,0) * g0;
+
+            v3 v3GBack = plv3G->back();
+            double dGNormBack = v3::norm(v3GBack);
+            v3 v3G1 = dGNormBack?v3GBack/dGNormBack:v3(0,0,0) * gfin;
+
+            // add ramp gradient to satisfy desired Gstart and Gfinal
+            lv3 lv3GRampFront; bRet &= GradGen::ramp_front(&lv3GRampFront, plv3G->front(), v3G0, dSLim, dDt);
+            lv3 lv3GRampBack; bRet &= GradGen::ramp_back(&lv3GRampBack, plv3G->back(), v3G1, dSLim, dDt);
+            
+            // // corresponding parameter sequence
+            // if (pldP)
+            // {
+            //     for (int64_t i = 0; i < (int64_t)lv3GRampFront.size(); ++i) pldP->push_front(dP0);
+            //     for (int64_t i = 0; i < (int64_t)lv3GRampBack.size(); ++i) pldP->push_back(dP1);
+            // }
+
+            // concate ramp gradient
+            plv3G->splice(plv3G->begin(), lv3GRampFront);
+            plv3G->splice(plv3G->end(), lv3GRampBack);
+        }
+
         return bRet;
-#else
-        char sErrMsg[] = "[ERROR] MTG removed due to copyright.";
-        puts(sErrMsg);
-        throw std::runtime_error(sErrMsg);
-        return false;
-#endif
     }
 
     static bool calGRO(lv3* plv3G, ld* pldP, const TrajFunc& tf, const GradPara& sGradPara, int64_t lOs=8)
@@ -361,7 +410,7 @@ protected:
             // Sample the trajectory at N points
             double dP0 = tf.getP0();
             double dP1 = tf.getP1();
-            for (int i = 0; i < lNTrajSamp; ++i)
+            for (int64_t i = 0; i < lNTrajSamp; ++i)
             {
                 double dP = dP0 + (dP1-dP0)* (i)/double(lNTrajSamp-1);
                 v3 v3K; tf.getK(&v3K, dP);
@@ -394,7 +443,7 @@ protected:
             vd vdC(lNTrajSamp*3);
 
             // Sample the trajectory at N points
-            for (int i = 0; i < lNTrajSamp; ++i)
+            for (int64_t i = 0; i < lNTrajSamp; ++i)
             {
                 v3 v3K = vv3TrajSamp[i]*4.257; // k is defined by k*4.257 in Lustig's method
                 vdC[i] = v3K.m_dX;
@@ -416,7 +465,6 @@ protected:
         const double& dDt = sGradPara.dDt;
         double dTRampFront = sGradPara.bMaxG0 ? dGLim/dSLim : 0e0;
         double dTRampBack = sGradPara.bMaxG1 ? dGLim/dSLim : 0e0;
-        if (g_lOsOw_MrTraj>0) lOs = g_lOsOw_MrTraj;
         
         // calculate GRO with ramp-up and ramp-down
         calGRO(plv3GRO, pldP, tfBaseTraj, sGradPara, lOs);
@@ -447,7 +495,6 @@ protected:
         const double& dDt = sGradPara.dDt;
         double dTRampFront = sGradPara.bMaxG0 ? dGLim/dSLim : 0e0;
         double dTRampBack = sGradPara.bMaxG1 ? dGLim/dSLim : 0e0;
-        if (g_lOsOw_MrTraj>0) lOs = g_lOsOw_MrTraj;
         
         // calculate GRO with ramp-up and ramp-down
         calGRO(plv3GRO, pldP, vv3TrajSamp, sGradPara, lOs);

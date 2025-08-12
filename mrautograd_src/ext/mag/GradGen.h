@@ -5,8 +5,9 @@
 #include <tuple>
 #include <cmath>
 #include <stdexcept>
-#include "global.h"
-#include "v3.h"
+#include <algorithm>
+#include "../utility/global.h"
+#include "../utility/v3.h"
 #include "../traj/TrajFunc.h"
 
 class GradGen
@@ -53,6 +54,14 @@ private:
     const double m_dDt;
     const int64_t m_lOs;
     const double m_dG0Norm, m_dG1Norm;
+
+    // reserved vector for faster computation
+    vd m_vdP_Bac;
+    vv3 m_vv3G_Bac;
+    vd m_vdGNorm_Bac;
+
+    vd m_vdP_For;
+    vv3 m_vv3G_For;
 
     bool sovQDE(double* pdSol0, double* pdSol1, double dA, double dB, double dC);
     double getCurRad(double dP);

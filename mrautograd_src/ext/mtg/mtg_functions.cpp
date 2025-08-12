@@ -33,7 +33,7 @@ double RungeKutte_riv(double ds, double st, double k[], double smax) {
 }
 
 void minTimeGradientRIV(const double *Ci, int Cr, int Cc, double g0, double gfin, double gmax, double smax, double T, double ds,
-        double **Cx, double **Cy, double **Cz, double **gx, double **gy, double **gz, double **p_of_t,
+        double **Cx, double **Cy, double **Cz, double **gx, double **gy, double **gz,
         double **sx, double **sy, double **sz, double **kx, double **ky, double **kz, double **sdot, double **sta, double **stb, double *time,
         int *size_interpolated, int *size_sdot, int *size_st, int gfin_empty, int ds_empty) {
     
@@ -438,10 +438,11 @@ void minTimeGradientRIV(const double *Ci, int Cr, int Cc, double g0, double gfin
     
     spline(length_of_s, 0, 0, 1, 1, s, p_of_s, p1x, p2x, p3x, iflag);
     
-    p_of_t[0] = (double*)malloc(l_t*sizeof(double));
+    double *p_of_t;
+    p_of_t = (double*)malloc(l_t*sizeof(double));
     
     for (i=0; i < l_t; i++){
-        p_of_t[0][i] = seval(length_of_s, s_of_t[i], s, p_of_s, p1x, p2x, p3x, last);
+        p_of_t[i] = seval(length_of_s, s_of_t[i], s, p_of_s, p1x, p2x, p3x, last);
     }
     
     free(s);
@@ -456,13 +457,14 @@ void minTimeGradientRIV(const double *Ci, int Cr, int Cc, double g0, double gfin
     Cz[0] =  (double*)malloc(l_t * sizeof(double));
     
     for (i=0; i<l_t; i++) {
-        Cx[0][i] = seval(Lp, p_of_t[0][i], p, x, c1x, c2x, c3x, last);
-        Cy[0][i] = seval(Lp, p_of_t[0][i], p, y, c1y, c2y, c3y, last);
-        Cz[0][i] = seval(Lp, p_of_t[0][i], p, z, c1z, c2z, c3z, last);
+        Cx[0][i] = seval(Lp, p_of_t[i], p, x, c1x, c2x, c3x, last);
+        Cy[0][i] = seval(Lp, p_of_t[i], p, y, c1y, c2y, c3y, last);
+        Cz[0][i] = seval(Lp, p_of_t[i], p, z, c1z, c2z, c3z, last);
     }
     
     free(p);
     free(x);  free(y);  free(z);
+    free(p_of_t);
     free(c1x);    free(c2x);    free(c3x);
     free(c1y);    free(c2y);    free(c3y);
     free(c1z);    free(c2z);    free(c3z);

@@ -4,7 +4,7 @@ from matplotlib.pyplot import *
 from numpy.linalg import norm
 
 # select solver
-mag.setSolverMtg(0) # 0 for MAG solver, 1 for MTG solver
+mag.setSolverMtg(1) # 0 for MAG solver, 1 for MTG solver
 
 # arguments
 gamma = 42.5756e6
@@ -36,7 +36,7 @@ mag.setMaxG1(0) # don't maximize G1
 mag.setExGEnd(0) # don't ensure exact G0 and G1 for MAG, for fair comparison
 mag.setMagOs(8) # set temporal oversampling of MAG to 8
 
-for i in range(10):
+for i in range(1):
     lstArrK0, lstArrGrad = eval()
 
 # derive shape parameter

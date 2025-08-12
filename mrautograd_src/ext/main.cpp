@@ -14,7 +14,7 @@
 #include "traj/Yarnball.h"
 #include "traj/Seiffert.h"
 #include "traj/Cones.h"
-#include "traj/Spline.h"
+#include "utility/SplineIntp.h"
 
 bool g_bTrajRev_Main (0);
 bool g_bTrajGoldAng_Main (0);
@@ -273,9 +273,7 @@ public:
             dP1
         );
 
-        TIC;
         calGRO(&m_lv3Grad, NULL, *ptfTrajFunc, m_sGradPara, 8);
-        TOC;
     }
 
     ExTraj(const GeoPara& sGeoPara, const GradPara& sGradPara, const vv3& vv3K):
@@ -285,9 +283,7 @@ public:
         m_sGradPara = sGradPara;
         m_lNAcq = 1;
 
-        TIC;
         calGRO(&m_lv3Grad, NULL, vv3K, m_sGradPara, 8);
-        TOC;
     }
 
     ~ExTraj()
@@ -626,19 +622,37 @@ PyObject* setMaxG1(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 
 PyObject* setExGEnd(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 {
-    extern bool g_bExGEnd_MAG;
+    extern bool g_bExGEnd_MrTraj;
     
     checkNarg(narg, 1);
-    g_bExGEnd_MAG = PyLong_AsLong(args[0]);
+    g_bExGEnd_MrTraj = PyLong_AsLong(args[0]);
     Py_INCREF(Py_None);
     return Py_None;
 }
 
 PyObject* setMagOs(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 {
-    extern int64_t g_lOsOw_MrTraj;
+    extern int64_t g_lOsOw_Mag;
     checkNarg(narg, 1);
-    g_lOsOw_MrTraj = PyLong_AsLong(args[0]);
+    g_lOsOw_Mag = PyLong_AsLong(args[0]);
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+PyObject* setMagSFS(PyObject* self, PyObject* const* args, Py_ssize_t narg)
+{
+    extern bool g_bSFS_Mag;
+    checkNarg(narg, 1);
+    g_bSFS_Mag = PyLong_AsLong(args[0]);
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+PyObject* setMagGradRep(PyObject* self, PyObject* const* args, Py_ssize_t narg)
+{
+    extern bool g_bGradRep_Mag;
+    checkNarg(narg, 1);
+    g_bGradRep_Mag = PyLong_AsLong(args[0]);
     Py_INCREF(Py_None);
     return Py_None;
 }
@@ -671,6 +685,8 @@ static PyMethodDef aMeth[] =
     {"setExGEnd", (PyCFunction)setExGEnd, METH_FASTCALL, ""},
     {"getTestVal", (PyCFunction)getTestVal, METH_FASTCALL, ""},
     {"setMagOs", (PyCFunction)setMagOs, METH_FASTCALL, ""},
+    {"setMagSFS", (PyCFunction)setMagSFS, METH_FASTCALL, ""},
+    {"setMagGradRep", (PyCFunction)setMagGradRep, METH_FASTCALL, ""},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 

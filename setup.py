@@ -1,21 +1,15 @@
 from setuptools import setup, Extension
 import numpy
-import sys, os
-
-fMtgExist = os.path.exists('./mrautograd_src/ext/mtg')
+import sys
 
 _sources = \
 [
-    './mrautograd_src/ext/mag/v3.cpp',
+    './mrautograd_src/ext/utility/v3.cpp',
     './mrautograd_src/ext/mag/GradGen.cpp',
     './mrautograd_src/ext/main.cpp',
+    './mrautograd_src/ext/mtg/mtg_functions.cpp',
+    './mrautograd_src/ext/mtg/spline.cpp'
 ]
-if fMtgExist:
-    _sources += \
-    [
-        './mrautograd_src/ext/mtg/mtg_functions.cpp',
-        './mrautograd_src/ext/mtg/spline.cpp',
-    ]
 
 modExt = Extension\
 (
@@ -23,30 +17,27 @@ modExt = Extension\
     sources = _sources,
     libraries = [] if sys.platform=="win32" else ['jemalloc'],
     include_dirs = ["./mrautograd_src/ext/", numpy.get_include()],
-    language = 'c++',
-    define_macros = [("MTG_EXIST",None)] if fMtgExist else []
+    language = 'c++'
 )
 
 _packages = \
 [
     "mrautograd", 
     "mrautograd.ext", 
-    "mrautograd.ext.core", 
-    "mrautograd.ext.traj"
+    "mrautograd.ext.traj",
+    "mrautograd.ext.mag", 
+    "mrautograd.ext.mtg",
+    "mrautograd.ext.utility",
 ]
 _package_dir = \
 {
     "mrautograd":"./mrautograd_src/", 
     "mrautograd.ext":"./mrautograd_src/ext/", 
-    "mrautograd.ext.core":"./mrautograd_src/ext/mag/", 
-    "mrautograd.ext.traj":"./mrautograd_src/ext/traj/"
+    "mrautograd.ext.traj":"./mrautograd_src/ext/traj/",
+    "mrautograd.ext.mag":"./mrautograd_src/ext/mag/", 
+    "mrautograd.ext.mtg":"./mrautograd_src/ext/mtg/",
+    "mrautograd.ext.utility":"./mrautograd_src/ext/utility/"
 }
-if fMtgExist:
-    _packages += \
-    [
-        "mrautograd.ext.mtg"
-    ]
-    _package_dir["mrautograd.ext.mtg"] = "./mrautograd_src/ext/mtg/"
 
 setup\
 (
