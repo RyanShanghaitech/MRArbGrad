@@ -18,7 +18,7 @@ mag.setGoldAng(1)
 mag.setMaxG0(0)
 mag.setMaxG1(0)
 mag.setExGEnd(0)
-mag.setMagOs(8)
+mag.setMagOv(8)
 
 # calculate gradient
 # lstArrK0, lstArrGrad = mag.getG_Spiral(bIs3D=0, **argCom); nAx = 2

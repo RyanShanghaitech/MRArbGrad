@@ -15,6 +15,7 @@ minTimeGradientRV    -   Computes the rotationally variant solution
 #include "header.h"
 #include <time.h>
 #include <sys/types.h>
+#include "../utility/global.h"
 
 double beta(double k, double st, double smax) {
     /* calculates sqrt (gamma^2 * smax^2 - k^2 * st^4) used in RK4 method for rotationally invariant ODE solver */

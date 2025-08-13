@@ -61,17 +61,7 @@ public:
             m_vptfBaseTraj[i] = new Cones_TrajFun(dRhoPhi, dTht0);
             if(!m_vptfBaseTraj[i]) throw std::runtime_error("out of memory");
 
-            double dP0 = m_vptfBaseTraj[i]->getP0();
-            double dP1 = m_vptfBaseTraj[i]->getP1();
-            int64_t lNTrajSamp = 1000;
-            vv3 vv3TrajSamp(lNTrajSamp);
-            for (int64_t j = 0; j < lNTrajSamp; ++j)
-            {
-                double dP = dP0*(lNTrajSamp-1-j)/double(lNTrajSamp-1) + dP1*(j)/double(lNTrajSamp-1);
-                m_vptfBaseTraj[i]->getK(&vv3TrajSamp[j], dP);
-            }
-
-            calGrad(&m_vv3BaseM0PE[i], &m_vlv3BaseGRO[i], NULL, &m_vlNWait[i], &m_vlNSamp[i], vv3TrajSamp, m_sGradPara, bMaxG0&&bMaxG1?2:8);
+            calGrad(&m_vv3BaseM0PE[i], &m_vlv3BaseGRO[i], NULL, &m_vlNWait[i], &m_vlNSamp[i], *m_vptfBaseTraj[i], m_sGradPara, bMaxG0&&bMaxG1?2:8);
         }
         
         // list of `ISet` and `IRot`

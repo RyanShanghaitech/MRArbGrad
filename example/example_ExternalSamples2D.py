@@ -32,7 +32,7 @@ nAx = 2
 
 # derive slew-rate constrained trajectory
 for i in range(10):
-    arrG = mag.calGrad4ExSamp(False, fov, nPix, sLim, gLim, dtGrad, arrK)
+    arrG, _ = mag.calGrad4ExSamp(False, fov, nPix, sLim, gLim, dtGrad, arrK)
 nRO, _ = arrG.shape
 
 arrS = diff(arrG, axis=0)/dtGrad

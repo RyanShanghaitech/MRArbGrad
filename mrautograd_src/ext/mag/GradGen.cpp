@@ -4,10 +4,13 @@
 #include "../utility/global.h"
 #include "../utility/LinIntp.h"
 #include "GradGen.h"
+#include "../utility/SplineIntp.h"
 
-int64_t g_lOsOw_Mag = -1; // oversample ratio, overwrite set value
+int64_t g_lOv_Mag = -1; // oversample ratio, overwrite set value
 bool g_bSFS_Mag = false; // Single Forward Sweep flag
 bool g_bGradRep_Mag = true; // Gradient Reparameterization
+bool g_bTrajRep_Mag = true; // use trajectory reparameterization for MAG solver
+int64_t g_lNTrajSamp_Mag = 1000; // num. of samp. when doing Traj. Rep.
 
 GradGen::GradGen
     (
@@ -16,11 +19,56 @@ GradGen::GradGen
         double dDt, int64_t lOs, 
         double dG0Norm, double dG1Norm
     ):
-    m_ptTraj(ptTraj),
+    m_sptfTraj(),
+    m_ptfTraj(),
     m_dSLim(dSLim), 
     m_dGLim(dGLim), 
     m_dDt(dDt), 
-    m_lOs(g_lOsOw_Mag>0?g_lOsOw_Mag:lOs), 
+    m_lOs(g_lOv_Mag>0?g_lOv_Mag:lOs), 
+    m_dG0Norm(dG0Norm), 
+    m_dG1Norm(dG1Norm)
+{
+    int64_t lSizeReserve = int64_t(100e-3/m_dDt*m_lOs); // reserve for 100ms
+
+    m_vdP_Bac.reserve(lSizeReserve);
+    m_vv3G_Bac.reserve(lSizeReserve);
+    m_vdGNorm_Bac.reserve(lSizeReserve);
+
+    m_vdP_For.reserve(lSizeReserve);
+    m_vv3G_For.reserve(lSizeReserve);
+
+    if (g_bTrajRep_Mag)
+    {
+        vv3 vv3TrajSamp(g_lNTrajSamp_Mag);
+        double dP0 = ptTraj->getP0();
+        double dP1 = ptTraj->getP1();
+        for (int64_t i = 0; i < g_lNTrajSamp_Mag; ++i)
+        {
+            double dP = dP0 + (dP1-dP0) * (i)/double(g_lNTrajSamp_Mag-1);
+            ptTraj->getK(&vv3TrajSamp[i], dP);
+        }
+        m_sptfTraj = Spline_TrajFunc(vv3TrajSamp);
+        m_ptfTraj = &m_sptfTraj;
+    }
+    else
+    {
+        m_ptfTraj = ptTraj;
+    }
+}
+
+GradGen::GradGen
+    (
+        const vv3& vv3TrajSamp,
+        double dSLim, double dGLim,
+        double dDt, int64_t lOs, 
+        double dG0Norm, double dG1Norm
+    ):
+    m_sptfTraj(vv3TrajSamp),
+    m_ptfTraj(&m_sptfTraj),
+    m_dSLim(dSLim), 
+    m_dGLim(dGLim), 
+    m_dDt(dDt), 
+    m_lOs(g_lOv_Mag>0?g_lOv_Mag:lOs), 
     m_dG0Norm(dG0Norm), 
     m_dG1Norm(dG1Norm)
 {
@@ -49,8 +97,8 @@ bool GradGen::sovQDE(double* pdSol0, double* pdSol1, double dA, double dB, doubl
 
 double GradGen::getCurRad(double dP)
 {
-    v3 v3DkDp; m_ptTraj->getDkDp(&v3DkDp, dP);
-    v3 v3D2kDp2; m_ptTraj->getD2kDp2(&v3D2kDp2, dP);
+    v3 v3DkDp; m_ptfTraj->getDkDp(&v3DkDp, dP);
+    v3 v3D2kDp2; m_ptfTraj->getD2kDp2(&v3D2kDp2, dP);
     double dNume = pow(v3::norm(v3DkDp), 3e0);
     double dDeno = v3::norm(v3::cross(v3DkDp, v3D2kDp2));
     return dNume/dDeno;
@@ -63,14 +111,14 @@ double GradGen::getDp(const v3& v3G, double dDt, double dP, double dSignDp)
     // k1
     double dK1;
     {
-        v3 v3DkDp; m_ptTraj->getDkDp(&v3DkDp, dP);
+        v3 v3DkDp; m_ptfTraj->getDkDp(&v3DkDp, dP);
         double dDlDp = v3::norm(v3DkDp)*dSignDp;
         dK1 = 1e0/dDlDp;
     }
     // k2
     double dK2;
     {
-        v3 v3DkDp; m_ptTraj->getDkDp(&v3DkDp, dP+dK1*dDl);
+        v3 v3DkDp; m_ptfTraj->getDkDp(&v3DkDp, dP+dK1*dDl);
         double dDlDp = v3::norm(v3DkDp)*dSignDp;
         dK2 = 1e0/dDlDp;
     }
@@ -87,14 +135,14 @@ double GradGen::getDp(const v3& v3GPrev, const v3& v3GThis, double dDt, double d
     // k1
     double dK1;
     {
-        v3 v3DkDp; m_ptTraj->getDkDp(&v3DkDp, dPThis);
+        v3 v3DkDp; m_ptfTraj->getDkDp(&v3DkDp, dPThis);
         double dDlDp = v3::norm(v3DkDp)*dSignDp;
         dK1 = 1e0/dDlDp;
     }
     // k2
     double dK2;
     {
-        v3 v3DkDp; m_ptTraj->getDkDp(&v3DkDp, dPThis+dK1*dDl);
+        v3 v3DkDp; m_ptfTraj->getDkDp(&v3DkDp, dPThis+dK1*dDl);
         double dDlDp = v3::norm(v3DkDp)*dSignDp;
         dK2 = 1e0/dDlDp;
     }
@@ -108,8 +156,8 @@ double GradGen::getDp(const v3& v3GPrev, const v3& v3GThis, double dDt, double d
 {
     // solve `ΔP` by RK2
     double dDl = v3::norm(v3GThis)*dDt;
-    v3 v3DkDp0; m_ptTraj->getDkDp(&v3DkDp0, dPThis);
-    v3 v3DkDp1; m_ptTraj->getDkDp(&v3DkDp1, dPThis*2e0-dPPrev);
+    v3 v3DkDp0; m_ptfTraj->getDkDp(&v3DkDp0, dPThis);
+    v3 v3DkDp1; m_ptfTraj->getDkDp(&v3DkDp1, dPThis*2e0-dPPrev);
     double dDlDp0 = v3::norm(v3DkDp0)*dSignDp;
     double dDlDp1 = v3::norm(v3DkDp1)*dSignDp;
     return dDl*(1e0/dDlDp0 + 1e0/dDlDp1)/2e0;
@@ -120,7 +168,7 @@ double GradGen::getDp(const v3& v3GPrev, const v3& v3GThis, double dDt, double d
 bool GradGen::step(v3* pv3GUnit, double* pdGNormMin, double* pdGNormMax, double dP, double dSignDp, const v3& v3G, double dSLim, double dDt)
 {
     // current gradient direction
-    v3 v3DkDp; m_ptTraj->getDkDp(&v3DkDp, dP);
+    v3 v3DkDp; m_ptfTraj->getDkDp(&v3DkDp, dP);
     double dDlDp = v3::norm(v3DkDp)*dSignDp;
     if (pv3GUnit) *pv3GUnit = v3DkDp/dDlDp;
     
@@ -137,14 +185,14 @@ bool GradGen::step(v3* pv3GUnit, double* pdGNormMin, double* pdGNormMax, double 
 bool GradGen::compute(lv3* plv3G, ld* pldP)
 {
     bool bRet = true;
-    double dP0 = m_ptTraj->getP0();
-    double dP1 = m_ptTraj->getP1();
+    double dP0 = m_ptfTraj->getP0();
+    double dP1 = m_ptfTraj->getP1();
     ld ldP; if (!pldP) pldP = &ldP;
     bool bQDESucc = true;
     int64_t lNit = 0;
 
     // backward
-    v3 v3G1Unit; bRet &= m_ptTraj->getDkDp(&v3G1Unit, dP1);
+    v3 v3G1Unit; bRet &= m_ptfTraj->getDkDp(&v3G1Unit, dP1);
     v3G1Unit = v3G1Unit * (dP0>dP1?1e0:-1e0);
     v3G1Unit = v3G1Unit / v3::norm(v3G1Unit);
     double dG1Norm = m_dG1Norm;
@@ -195,7 +243,7 @@ bool GradGen::compute(lv3* plv3G, ld* pldP)
     lNit += m_vdP_Bac.size();
 
     // forward
-    v3 v3G0Unit; bRet &= m_ptTraj->getDkDp(&v3G0Unit, dP0);
+    v3 v3G0Unit; bRet &= m_ptfTraj->getDkDp(&v3G0Unit, dP0);
     v3G0Unit = v3G0Unit * (dP1>dP0?1e0:-1e0);
     v3G0Unit = v3G0Unit / v3::norm(v3G0Unit);
     double dG0Norm = m_dG0Norm;
@@ -265,8 +313,8 @@ bool GradGen::compute(lv3* plv3G, ld* pldP)
         int64_t n = pldP->size();
         for (int64_t i = 1; i < n; ++i)
         {
-            bRet &= m_ptTraj->getK(&v3K1, *ildP);
-            bRet &= m_ptTraj->getK(&v3K0, *std::prev(ildP));
+            bRet &= m_ptfTraj->getK(&v3K1, *ildP);
+            bRet &= m_ptfTraj->getK(&v3K0, *std::prev(ildP));
             plv3G->push_back((v3K1 - v3K0)/m_dDt);
             ++ildP;
         }

@@ -53,18 +53,8 @@ public:
         m_lNAcq = m_lNRot*m_lNStack;
 
         m_dRotAngInc = calRotAngInc(m_lNRot);
-
-        // calculate average ΔTE
-        double dP0 = m_ptfBaseTraj->getP0();
-        double dP1 = m_ptfBaseTraj->getP1();
-        int64_t lNTrajSamp = 1000;
-        vv3 vv3TrajSamp(lNTrajSamp);
-        for (int64_t i = 0; i < lNTrajSamp; ++i)
-        {
-            double dP = dP0*(lNTrajSamp-1-i)/double(lNTrajSamp-1) + dP1*(i)/double(lNTrajSamp-1);
-            m_ptfBaseTraj->getK(&vv3TrajSamp[i], dP);
-        }
-        calGrad(&m_v3BaseM0PE, &m_lv3BaseGRO, NULL, &m_lNWait, &m_lNSamp, vv3TrajSamp, m_sGradPara, bMaxG0&&bMaxG1?2:8);
+        
+        calGrad(&m_v3BaseM0PE, &m_lv3BaseGRO, NULL, &m_lNWait, &m_lNSamp, *m_ptfBaseTraj, m_sGradPara, bMaxG0&&bMaxG1?2:8);
     }
     
     virtual ~Rosette()

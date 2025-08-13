@@ -19,5 +19,5 @@ inline T round(T x)
 
 #define TOC \
     cTick = std::clock() - cTick;\
-    printf("Elapsed time: %.3f ms\n", (float)1e3*cTick/CLOCKS_PER_SEC); // test
+    printf("Elapsed time: %.3f ms\n", (float)1e3*cTick/CLOCKS_PER_SEC);
     

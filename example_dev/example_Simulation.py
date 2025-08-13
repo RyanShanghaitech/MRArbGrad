@@ -22,7 +22,7 @@ mag.setGoldAng(1)
 mag.setMaxG0(0)
 mag.setMaxG1(0)
 mag.setExGEnd(0)
-mag.setMagOs(8)
+mag.setMagOv(8)
 
 # calculate gradient
 # lstArrK0, lstArrGrad = mag.getG_Spiral(bIs3D=0, **argCom); nAx = 2
@@ -30,8 +30,8 @@ mag.setMagOs(8)
 # lstArrK0, lstArrGrad = mag.getG_Rosette(bIs3D=0, **argCom); nAx = 2
 # lstArrK0, lstArrGrad = mag.getG_Rosette_Trad(**argCom, dOm1=10*pi, dOm2=8*pi, dTmax=1, dTacq=2e-03); nAx = 2
 # lstArrK0, lstArrGrad = mag.getG_Shell3d(**argCom); nAx = 3
-lstArrK0, lstArrGrad = mag.getG_Yarnball(**argCom); nAx = 3
-# lstArrK0, lstArrGrad = mag.getG_Seiffert(**argCom); nAx = 3
+# lstArrK0, lstArrGrad = mag.getG_Yarnball(**argCom); nAx = 3
+lstArrK0, lstArrGrad = mag.getG_Seiffert(**argCom); nAx = 3
 # lstArrK0, lstArrGrad = mag.getG_Cones(**argCom); nAx = 3
 
 print(f"Intlea Num.: {len(lstArrGrad)}")
