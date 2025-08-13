@@ -7,8 +7,8 @@ mag.setSolverMtg(0)
 gamma = 42.5756e6
 fov = 0.256
 nPix = 256
-sLim = 100 * gamma * fov/nPix
-gLim = 120e-3 * gamma * fov/nPix
+sLim = 50 * gamma * fov/nPix
+gLim = 20e-3 * gamma * fov/nPix
 dtGrad = 10e-6
 dtADC = 2.5e-6
 
@@ -31,7 +31,7 @@ arrK = TrajFunc(arrP).T
 nAx = 2
 
 # derive slew-rate constrained trajectory
-for i in range(10):
+for i in range(1):
     arrG, _ = mag.calGrad4ExSamp(False, fov, nPix, sLim, gLim, dtGrad, arrK)
 nRO, _ = arrG.shape
 

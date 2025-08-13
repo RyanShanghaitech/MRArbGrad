@@ -231,7 +231,7 @@ protected:
         if (pldP) pldP->clear(); // does not supported
 
         // Prepare arg. for Lustig's function
-        double g0 = dGNorm0, gfin = dGNorm1, gmax = dGLim, smax = dSLim, T = dDt, ds = -1;
+        double g0 = dGNorm0, gfin = dGNorm1, gmax = dGLim, smax = dSLim, T = dDt, ds = -1; // ds = 35e-4 for const-Nstep comparison
 
         double *p_Cx = nullptr, *p_Cy = nullptr, *p_Cz = nullptr;
         double *p_gx = nullptr, *p_gy = nullptr, *p_gz = nullptr;
@@ -241,7 +241,7 @@ protected:
         
         double time = 0;
         int size_interpolated = 0, size_sdot = 0, size_st = 0;
-        int gfin_empty = 0, ds_empty = 1;
+        int gfin_empty = (gfin<0), ds_empty = (ds<0);
 
         // Call Lustig's function (assume it is linked in or compiled as C)
         minTimeGradientRIV(
