@@ -294,9 +294,9 @@ public:
             dP1
         );
 
-        TIC;
+        // TIC;
         calGRO(&m_lv3Grad, &m_ldP, *ptfTrajFunc, m_sGradPara, 8);
-        TOC;
+        // TOC;
     }
 
     ExTraj(const GeoPara& sGeoPara, const GradPara& sGradPara, const vv3& vv3K):
@@ -306,9 +306,9 @@ public:
         m_sGradPara = sGradPara;
         m_lNAcq = 1;
 
-        TIC;
+        // TIC;
         calGRO(&m_lv3Grad, &m_ldP, vv3K, m_sGradPara, 8);
-        TOC;
+        // TOC;
     }
 
     ~ExTraj()
