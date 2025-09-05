@@ -1,6 +1,9 @@
 from setuptools import setup, Extension
 import numpy
 import sys
+from ctypes.util import find_library
+
+useJemalloc = find_library("jemalloc")
 
 _sources = \
 [
@@ -15,7 +18,7 @@ modExt = Extension\
 (
     "mrautograd.ext", 
     sources = _sources,
-    libraries = [] if sys.platform=="win32" else ['jemalloc'],
+    libraries = ['jemalloc'] if useJemalloc else [],
     include_dirs = ["./mrautograd_src/ext/", numpy.get_include()],
     language = 'c++'
 )

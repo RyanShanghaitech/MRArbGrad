@@ -9,9 +9,9 @@ import fars
 mag.setSolverMtg(0)
 enSim = 1
 gamma = 42.5756e6
-fov = 0.256
-nPix = 256
-sLim = 50 * gamma * fov/nPix
+fov = 0.320 # 0.256
+nPix = 80 # 256
+sLim = 100 * gamma * fov/nPix
 gLim = 120e-3 * gamma * fov/nPix
 dtGrad = 10e-6
 dtADC = 2.5e-6
@@ -26,13 +26,13 @@ mag.setMagOv(8)
 
 # calculate gradient
 # lstArrK0, lstArrGrad = mag.getG_Spiral(bIs3D=0, **argCom); nAx = 2
-# lstArrK0, lstArrGrad = mag.getG_VarDenSpiral(bIs3D=0, **argCom); nAx = 2
+# lstArrK0, lstArrGrad = mag.getG_VarDenSpiral(bIs3D=0, **argCom, dRhoPhi0 = 0.5 / (256 * pi), dRhoPhi1 = 0.5 / (12 * pi)); nAx = 2
 # lstArrK0, lstArrGrad = mag.getG_Rosette(bIs3D=0, **argCom); nAx = 2
 # lstArrK0, lstArrGrad = mag.getG_Rosette_Trad(**argCom, dOm1=10*pi, dOm2=8*pi, dTmax=1, dTacq=2e-03); nAx = 2
-# lstArrK0, lstArrGrad = mag.getG_Shell3d(**argCom); nAx = 3
-# lstArrK0, lstArrGrad = mag.getG_Yarnball(**argCom); nAx = 3
-lstArrK0, lstArrGrad = mag.getG_Seiffert(**argCom); nAx = 3
-# lstArrK0, lstArrGrad = mag.getG_Cones(**argCom); nAx = 3
+# lstArrK0, lstArrGrad = mag.getG_Shell3d(**argCom, dRhoTht = 0.5 / (4 * pi)); nAx = 3
+# lstArrK0, lstArrGrad = mag.getG_Yarnball(**argCom, dRhoPhi = 0.5 / (4 * pi)); nAx = 3
+# lstArrK0, lstArrGrad = mag.getG_Seiffert(**argCom); nAx = 3
+lstArrK0, lstArrGrad = mag.getG_Cones(**argCom, dRhoPhi = 0.5 / (16 * pi)); nAx = 3
 
 print(f"Intlea Num.: {len(lstArrGrad)}")
 nRO_Max = amax([arrG.shape[0] for arrG in lstArrGrad])
@@ -41,6 +41,8 @@ tTR = (nRO_Max*dtGrad + 2e-3)
 print(f"TR: {tTR*1e3:.3f} ms")
 tScan = tTR*len(lstArrGrad)
 print(f"Tscan: {tScan:.3e} s")
+
+exit()
 
 # derive shape parameter
 if nAx==2:
@@ -61,6 +63,7 @@ for arrK0, arrGrad in zip(lstArrK0, lstArrGrad):
     lstArrK.append(arrK)
 
 # simulate phantom
+nPix = int(nPix*3) # test
 arrI = slime.genPhan(nAx, nPix)["M0"].squeeze()
 arrK = concatenate(lstArrK, axis=0)
 
