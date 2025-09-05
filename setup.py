@@ -45,7 +45,7 @@ _package_dir = \
 setup\
 (
     name = 'mrautograd',
-    install_requires = ["numpy", "matplotlib"],
+    # install_requires = ["numpy", "matplotlib"], # pip will automatically upgrade numpy if it see this, which might corrupt the environment
     ext_modules = [modExt],
     packages = _packages,
     package_dir = _package_dir,

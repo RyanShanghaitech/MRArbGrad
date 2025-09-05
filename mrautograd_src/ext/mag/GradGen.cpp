@@ -292,7 +292,11 @@ bool GradGen::compute(lv3* plv3G, ld* pldP)
         }
     }
     lNit += m_vdP_For.size();
-    printf("MAG Nit: %ld\n", (int64_t)lNit);
+    
+    // {
+    //     int64_t MAG_Nit = lNit;
+    //     PRINT(MAG_Nit);
+    // }
 
     // deoversamp the para. vec.
     {

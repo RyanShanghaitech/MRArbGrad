@@ -12,7 +12,9 @@ inline T round(T x)
 #undef M_PI
 #define M_PI (3.14159265358979323846)
 
-#define PRINT(X) printf("%s: %.3e\n", #X, (double)(X));
+#define PRINT(X) printf("%s: %ld\n", #X, (int64_t)(X));
+#define PRINT_F(X) printf("%s: %.3f\n", #X, (double)(X));
+#define PRINT_E(X) printf("%s: %.3e\n", #X, (double)(X));
 
 #define TIC \
     clock_t cTick = std::clock();\

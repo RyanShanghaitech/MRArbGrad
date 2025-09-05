@@ -182,7 +182,10 @@ void minTimeGradientRIV(const double *Ci, int Cr, int Cc, double g0, double gfin
     int length_of_s =  (int) floor(L/ds);
     int half_ls = (int) floor(L/(ds/2));
 
-    printf("MTG Nit: %ld\n", (int64_t)(length_of_s*2-2));
+    // {
+    //     int64_t MTG_Nit = length_of_s*2-2;
+    //     PRINT(MTG_Nit);
+    // }
 
     *size_sdot = half_ls;
     

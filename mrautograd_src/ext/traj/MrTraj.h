@@ -331,7 +331,7 @@ protected:
         return bRet;
     }
 
-    static bool calGrad(v3* pv3M0PE, lv3* plv3GRO, ld* pldP, int64_t* plNWait, int64_t* plNSamp, const TrajFunc& tfBaseTraj, const GradPara& sGradPara, int64_t lOs=8, bool bTime=false)
+    static bool calGrad(v3* pv3M0PE, lv3* plv3GRO, ld* pldP, int64_t* plNWait, int64_t* plNSamp, const TrajFunc& tfBaseTraj, const GradPara& sGradPara, int64_t lOs=8)
     {
         bool bRet = true;
         const double& dGLim = sGradPara.dGLim;
@@ -339,16 +339,9 @@ protected:
         const double& dDt = sGradPara.dDt;
         
         // calculate GRO
-        if (bTime)
-        {
-            TIC;
-            calGRO(plv3GRO, pldP, tfBaseTraj, sGradPara, lOs);
-            TOC;
-        }
-        else
-        {
-            calGRO(plv3GRO, pldP, tfBaseTraj, sGradPara, lOs);
-        }
+        // TIC;
+        calGRO(plv3GRO, pldP, tfBaseTraj, sGradPara, lOs);
+        // TOC;
 
         // if GEnd needs to be fixed
         if (g_bFixGEnd_MrTraj)
