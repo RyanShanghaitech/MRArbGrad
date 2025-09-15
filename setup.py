@@ -4,7 +4,7 @@ from os.path import exists
 from ctypes.util import find_library
 
 useMtg = exists("./mrautograd_src/ext/mtg/")
-useJemalloc = find_library("jemalloc")
+useJemalloc = find_library("jemalloc") is not None
 
 _sources = \
 [

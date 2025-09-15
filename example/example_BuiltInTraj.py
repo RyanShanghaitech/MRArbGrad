@@ -3,7 +3,6 @@ from numpy import *
 from matplotlib.pyplot import *
 from numpy.linalg import norm
 
-mag.setSolverMtg(0)
 gamma = 42.5756e6
 fov = 0.256
 nPix = 256
@@ -14,6 +13,7 @@ dtADC = 2.5e-6
 argCom = dict(dFov=fov, lNPix=nPix, dSLim=sLim, dGLim=gLim, dDt=dtGrad)
 
 mag.setTrajRev(0)
+mag.setSolverMtg(0)
 mag.setGoldAng(1)
 mag.setMaxG0(0)
 mag.setMaxG1(0)
