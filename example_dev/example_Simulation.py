@@ -19,10 +19,15 @@ argCom = dict(dFov=fov, lNPix=nPix, dSLim=sLim, dGLim=gLim, dDt=dtGrad)
 mag.setSolverMtg(0)
 mag.setTrajRev(0)
 mag.setGoldAng(1)
+mag.setShuf(0)
 mag.setMaxG0(0)
 mag.setMaxG1(0)
 mag.setExGEnd(0)
 mag.setMagOv(8)
+mag.setMagSFS(0)
+mag.setMagGradRep(1)
+mag.setMagTrajRep(1)
+mag.setDbgPrint(1)
 
 # calculate gradient
 # lstArrK0, lstArrGrad = mag.getG_Spiral(bIs3D=0, **argCom); nAx = 2
