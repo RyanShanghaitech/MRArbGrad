@@ -3,8 +3,10 @@ temp*.*
 *.gif
 *.npy
 *.npz
+*.so
 
 dist/
 build/
 .vscode/
 *.egg-info/
+__pycache__/
