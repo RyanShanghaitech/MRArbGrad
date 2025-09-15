@@ -1,8 +1,9 @@
 from setuptools import setup, Extension
 import numpy
-import sys
+from os.path import exists
 from ctypes.util import find_library
 
+useMtg = exists("./mrautograd_src/ext/mtg/")
 useJemalloc = find_library("jemalloc")
 
 _sources = \
@@ -13,6 +14,9 @@ _sources = \
     './mrautograd_src/ext/mtg/mtg_functions.cpp',
     './mrautograd_src/ext/mtg/spline.cpp'
 ]
+if not useMtg:
+    _sources.remove('./mrautograd_src/ext/mtg/mtg_functions.cpp')
+    _sources.remove('./mrautograd_src/ext/mtg/spline.cpp')
 
 modExt = Extension\
 (
@@ -20,6 +24,7 @@ modExt = Extension\
     sources = _sources,
     libraries = ['jemalloc'] if useJemalloc else [],
     include_dirs = ["./mrautograd_src/ext/", numpy.get_include()],
+    define_macros = [("USE_MTG", None)] if useMtg else None,
     language = 'c++'
 )
 
@@ -32,6 +37,9 @@ _packages = \
     "mrautograd.ext.mtg",
     "mrautograd.ext.utility",
 ]
+if not useMtg:
+    _packages.remove("mrautograd.ext.mtg")
+
 _package_dir = \
 {
     "mrautograd":"./mrautograd_src/", 

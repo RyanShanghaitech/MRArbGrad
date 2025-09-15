@@ -5,8 +5,12 @@
 #include <string>
 #include <stdexcept>
 #include <ctime>
+
+#ifdef USE_MTG
+
 #include "../mtg/header.h"
 
+#endif
 
 bool g_bFixGEnd_MrTraj = true; // whether keep inital/final value exactly as set
 bool g_bUseMtg_MrTraj = false; // use Lustig's MinTimeGrad solver
@@ -220,6 +224,7 @@ protected:
 
     static bool calGRO_MTG(lv3* plv3G, ld* pldP, const vd& vdC, const GradPara& sGradPara)
     {
+        #ifdef USE_MTG
         bool bRet = true;
         const double& dSLim = sGradPara.dSLim;
         const double& dGLim = sGradPara.dGLim;
@@ -264,6 +269,14 @@ protected:
         free(p_sdot);  free(p_sta);   free(p_stb);
 
         return bRet;
+        #else
+
+        char sErrMsg[] = "MTG not found";
+        puts(sErrMsg);
+        throw std::runtime_error(sErrMsg);
+        return false;
+
+        #endif
     }
 
     static bool calGRO(lv3* plv3G, ld* pldP, const TrajFunc& tf, const GradPara& sGradPara, int64_t lOs=8)
