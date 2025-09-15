@@ -6,9 +6,11 @@ This toolbox is a pip package with C++ backend. The pip package can be called vi
 ## Install
 To install the pip package of the proposed algorithm (including trajectory library built on it):
 ```
-$ pip install .
+$ bash install.bash
 ```
-for linux user, optionally, `jemalloc` can be installed for improved performance.
+
+For linux user, optionally, `jemalloc` can be installed for improved performance.
+`numpy` is needed as a dependency.
 
 ## Examples & Usages
 Examples for generating gradient waveforms for either built-in trajectory or external trajectory (expressed by trajectory function or trajectory samples) can be found in `example` folder.
@@ -16,6 +18,6 @@ Examples for generating gradient waveforms for either built-in trajectory or ext
 ## Citation
 If this project helps you, please cite [our paper](https://arxiv.org/abs/2507.21625):
 
-[1] R. Luo, H. Huang, Q. Miao, J. Xu, P. Hu, and H. Qi, “Real-Time Gradient Waveform Design for Arbitrary k-Space Trajectories,” July 29, 2025, arXiv preprint arXiv:2507.21625.
+[1] R. Luo, H. Huang, Q. Miao, J. Xu, P. Hu, and H. Qi, “Real-Time Gradient Waveform Design for Arbitrary k-Space Trajectories,” Sep 9, 2025, arXiv preprint arXiv:2507.21625.
 
 
