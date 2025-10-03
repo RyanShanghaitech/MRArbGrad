@@ -8,10 +8,10 @@ This toolbox is a pip package with C++ backend. The pip package can be called vi
 ```bash
 $ conda create -n magtest -y
 $ conda activate magtest
-$ conda install python==3.10
+$ conda install python==3.10 -y
 ```
 
-This package is not restricted to use `Python 3.10` or `numpy 1.26` (as specified in the `requirements.txt`).  Feel free to adjust at your convenience, just if the package works fine.
+This package is **NOT** restricted to use `Python 3.10` or `numpy 1.26` (as specified in the `requirements.txt`).  Feel free to adjust at your convenience, just if the package works.
 
 To install the pip package of the proposed algorithm (including the trajectory library built on it), and also the dependencies:
 ```bash
