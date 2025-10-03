@@ -5,11 +5,12 @@ from numpy.linalg import norm
 import finufft as fn
 import slime
 import fars
+from time import time
 
 enSim = 1
 gamma = 42.5756e6
 fov = 0.320 # 0.256
-nPix = 256
+nPix = 100
 sLim = 100 * gamma * fov/nPix
 gLim = 120e-3 * gamma * fov/nPix
 dtGrad = 10e-6
@@ -68,10 +69,13 @@ for arrK0, arrGrad in zip(lstArrK0, lstArrGrad):
     lstArrK.append(arrK)
 
 # simulate phantom
-print(0); arrI = slime.genPhan(nAx, nPix)["M0"].squeeze(); print(1) # test
+arrI = slime.genPhan(nAx, nPix)["M0"].squeeze()
 arrK = concatenate(lstArrK, axis=0)
 
+t = time()
 arrDcf = fars.calDcf(nPix, arrK[:,:nAx]).astype(complex64)
+t = time() - t
+print(t)
 
 arrOm = 2*pi*arrK; arrOm = arrOm.astype(float32)
 
