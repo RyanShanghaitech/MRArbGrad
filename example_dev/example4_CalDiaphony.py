@@ -2,7 +2,7 @@ from numpy import *
 from matplotlib.pyplot import *
 from numpy.random import uniform
 from scipy.stats.qmc import Sobol, Halton
-import mrautograd as mag
+import mrarbgrad as mag
 
 Npt = 1000
 

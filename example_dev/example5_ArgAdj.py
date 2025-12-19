@@ -1,7 +1,7 @@
 from numpy import *
 from matplotlib.pyplot import *
 from numpy.linalg import norm
-import mrautograd as mag
+import mrarbgrad as mag
 
 # adjust argument range of Seiffert Spiral, depends on desired acq. time
 uMax = 30

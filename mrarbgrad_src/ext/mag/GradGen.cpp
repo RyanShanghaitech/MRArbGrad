@@ -151,13 +151,17 @@ bool GradGen::step(v3* pv3GUnit, double* pdGNormMin, double* pdGNormMax, double 
     if (pv3GUnit) *pv3GUnit = v3DkDp/dDlDp;
     
     // current gradient magnitude
-    return sovQDE
+    bool bQDESucc = sovQDE
     (
         pdGNormMin, pdGNormMax,
         1e0,
         -2e0*v3::inner(v3G, *pv3GUnit),
         v3::inner(v3G, v3G) - std::pow(dSLim*dDt, 2e0)
     );
+    if (pdGNormMin) *pdGNormMin = fabs(*pdGNormMin);
+    if (pdGNormMax) *pdGNormMax = fabs(*pdGNormMax);
+
+    return bQDESucc;
 }
 
 bool GradGen::compute(lv3* plv3G, ld* pldP)
@@ -185,6 +189,7 @@ bool GradGen::compute(lv3* plv3G, ld* pldP)
     {
         double dP = m_vdP_Bac.back();
         v3 v3G = m_vv3G_Bac.back();
+        
         // update grad
         v3 v3GUnit;
         double dGNorm;
@@ -195,11 +200,11 @@ bool GradGen::compute(lv3* plv3G, ld* pldP)
 
         // update para
         dP += getDp(m_vv3G_Bac.back(), v3G, m_dDt/m_lOs, m_vdP_Bac.back(), dP, (dP0-dP1)/std::fabs(dP0-dP1));
-        // dP += getDp(v3G, m_dDt/m_lOs, dP, (dP0-dP1)/std::fabs(dP0-dP1));
 
         // stop or append
         if (std::fabs(m_vdP_Bac.back() - dP1) >= (1-1e-6)*std::fabs(dP0 - dP1))
         {
+            // printf("bac: dP/dP1 = %lf/%lf\n", dP, dP1); // test
             break;
         }
         else
@@ -214,9 +219,10 @@ bool GradGen::compute(lv3* plv3G, ld* pldP)
     std::reverse(m_vdP_Bac.begin(), m_vdP_Bac.end());
     std::reverse(m_vdGNorm_Bac.begin(), m_vdGNorm_Bac.end());
 
-    LinIntp lintp;
-    lintp.m_eSearchMode = Intp::ECached;
-    if (!g_bSFS_Mag) lintp.fit(m_vdP_Bac, m_vdGNorm_Bac);
+    LinIntp intp;
+    // SplineIntp intp;
+    intp.m_eSearchMode = Intp::ECached;
+    if (!g_bSFS_Mag) intp.fit(m_vdP_Bac, m_vdGNorm_Bac);
     
     lNit += m_vdP_Bac.size();
 
@@ -227,7 +233,7 @@ bool GradGen::compute(lv3* plv3G, ld* pldP)
     double dG0Norm = m_dG0Norm;
     dG0Norm = std::min(dG0Norm, m_dGLim);
     dG0Norm = std::min(dG0Norm, std::sqrt(m_dSLim*getCurRad(dP0)));
-    dG0Norm = std::min(dG0Norm, g_bSFS_Mag?1e15:lintp.eval(dP0));
+    dG0Norm = std::min(dG0Norm, g_bSFS_Mag?1e15:intp.eval(dP0));
     v3 v3G0 = v3G0Unit * dG0Norm;
 
     m_vdP_For.clear(); m_vdP_For.push_back(dP0);
@@ -239,27 +245,32 @@ bool GradGen::compute(lv3* plv3G, ld* pldP)
 
         // update grad
         v3 v3GUnit;
-        double dGNorm, dGNorm_Min;
-        bQDESucc = step(&v3GUnit, &dGNorm_Min, &dGNorm, dP, (dP1-dP0)/std::fabs(dP1-dP0), v3G, m_dSLim, m_dDt/m_lOs);
-        if (g_bSFS_Mag && !bQDESucc)
+        double dGNorm;
+        bQDESucc = step(&v3GUnit, NULL, &dGNorm, dP, (dP1-dP0)/std::fabs(dP1-dP0), v3G, m_dSLim, m_dDt/m_lOs);
+        if (g_bSFS_Mag)
         {
-            bRet = false;
-            break;
+            dGNorm = std::min(dGNorm, m_dGLim);
+            dGNorm = std::min(dGNorm, std::sqrt(m_dSLim*getCurRad(dP)));
         }
-        dGNorm = std::min(dGNorm, m_dGLim);
-        dGNorm = std::max(dGNorm, dGNorm_Min);
-
-        // interpolation
-        dGNorm = std::min(dGNorm, g_bSFS_Mag?1e15:lintp.eval(dP));
+        else
+        {
+            double dGNormBac = intp.eval(dP);
+            dGNorm = std::min(dGNorm, dGNormBac);
+            if (dGNormBac<=0)
+            {
+                dGNorm *= -1;
+                v3GUnit *= -1;
+            }
+        }
         v3G = v3GUnit*dGNorm;
 
         // update para
         dP += getDp(m_vv3G_For.back(), v3G, m_dDt/m_lOs, m_vdP_For.back(), dP, (dP1-dP0)/std::fabs(dP1-dP0));
-        // dP += getDp(v3G, m_dDt/m_lOs, dP, (dP1-dP0)/std::fabs(dP1-dP0));
 
         // stop or append
-        if (std::fabs(m_vdP_For.back() - dP0) >= (1-1e-6)*std::fabs(dP1 - dP0) || dGNorm <= 0)
+        if (std::fabs(m_vdP_For.back() - dP0) >= (1-1e-6)*std::fabs(dP1 - dP0)) // || dGNorm <= 0)
         {
+            // printf("for: dP/dP1 = %lf/%lf\n", dP, dP1); // test
             break;
         }
         else

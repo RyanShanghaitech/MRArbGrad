@@ -1,7 +1,8 @@
 from numpy import *
+from numpy.typing import *
 from matplotlib.pyplot import *
 
-def cvtGrad2Traj(arrG:ndarray, dtGrad:int|float, dtADC:int|float, nShift:int|float=1.0) -> tuple[ndarray, ndarray]:
+def cvtGrad2Traj(arrG:NDArray, dtGrad:int|float, dtADC:int|float, nShift:int|float=1.0) -> tuple[NDArray, NDArray]:
     """
     # description:
     interpolate gradient waveform and calculate trajectory
@@ -25,7 +26,7 @@ def cvtGrad2Traj(arrG:ndarray, dtGrad:int|float, dtADC:int|float, nShift:int|flo
     arrK = cumsum(arrDk,axis=0)
     return arrK, arrG_Resamp
 
-def delGrad(arrG:ndarray, tau:int|float) -> ndarray:
+def delGrad(arrG:NDArray, tau:int|float) -> NDArray:
     """
     # description:
     delay the input gradient waveform by time constant tau
@@ -86,7 +87,7 @@ def _walsh(b:float64, k:float64, x:float64) -> float64:
         
     return exp(2*pi*1j*inner(lstKai,lstX)/b)
 
-def calDiaphony(arrX:ndarray, b:float64=2) -> float64: # b-adic diaphony
+def calDiaphony(arrX:NDArray, b:float64=2) -> float64: # b-adic diaphony
     assert any(arrX>=0) and any(arrX<1)
     N, s = arrX.shape
     
@@ -111,7 +112,7 @@ def calDiaphony(arrX:ndarray, b:float64=2) -> float64: # b-adic diaphony
     diaphony = sqrt(nume/deno)
     return diaphony
 
-def rotate(arr:ndarray, ang:float64, axis:int64) -> ndarray:
+def rotate(arr:NDArray, ang:float64, axis:int64) -> NDArray:
     if axis==0: # x
         matRot = array([
             [1, 0, 0],
@@ -135,7 +136,7 @@ def rotate(arr:ndarray, ang:float64, axis:int64) -> ndarray:
     
     return arr@matRot.T
 
-def calSphFibPt(nF:int64=250) -> ndarray: # get spherical Fibonacci points
+def calSphFibPt(nF:int64=250) -> NDArray: # get spherical Fibonacci points
     lstPtFb = []
     for iIntlea in range(nF):
         k = iIntlea - nF/2
@@ -152,7 +153,7 @@ def calSphFibPt(nF:int64=250) -> ndarray: # get spherical Fibonacci points
         
     return array(lstPtFb)
 
-def calJacElip(arrU:ndarray, m:float64) -> tuple[ndarray, ndarray]: # calculate Jacobi elliptic functions sn(u,m) and cn(u,m) numerically
+def calJacElip(arrU:NDArray, m:float64) -> tuple[NDArray, NDArray]: # calculate Jacobi elliptic functions sn(u,m) and cn(u,m) numerically
     lstA = [1]
     lstB = [sqrt(1-m)]
     lstC = [0]
@@ -182,3 +183,54 @@ def calCompElipInt(m:float64) -> float64: # calculate complete Elliptical integr
         lstA.append(aNew)
         lstB.append(bNew)
     return pi/2/lstA[-1]
+
+from scipy.stats import qmc
+from python_tsp.heuristics import solve_tsp_local_search as solve_tsp
+
+def genTspTraj(nCity:int) -> NDArray:
+    # print("# 1. Generate random k-space points (the cities for the TSP)")
+    arrCity = empty([nCity,3], dtype=double)
+    arrCity[:,:2] = qmc.Halton(d=2).random(n=nCity)-0.5
+    arrCity[0,:] = 0
+    arrCity[:,-1] = 0
+
+    # print("# 2. Calculate the distance matrix between all points")
+    matDist = norm(arrCity[:,newaxis,:] - arrCity[newaxis,:,:], axis=-1)
+    matDist[:, 0] = 0
+
+    # print("# 3. Solve the TSP to get the optimal order (permutation)")
+    idxSort, _ = solve_tsp(matDist, 0)
+    return arrCity[idxSort]
+
+def rmCity(arrCity:NDArray, angMax:double=pi/6, distMin:double=1) -> NDArray:
+    print(arrCity.shape)
+    while 1:
+        nCity = arrCity.shape[0]
+        lstIdxRm = []
+        for iCity in range(1,nCity-1):
+            vec0 = arrCity[iCity-1,:] - arrCity[iCity,:]
+            vec0Norm = vec0/norm(vec0)
+            vec1 = arrCity[iCity+1,:] - arrCity[iCity,:]
+            vec1Norm = vec1/norm(vec1)
+            if inner(vec0Norm, vec1Norm)>cos(angMax) or norm(vec0)<distMin:
+                lstIdxRm.append(iCity)
+        if len(lstIdxRm)>0: arrCity = delete(arrCity, lstIdxRm, axis=0)
+        else: break
+    
+    return arrCity
+
+from numpy.linalg import norm
+
+def intpCity(arrCity:NDArray, nPix:int) -> NDArray:
+    arrCity_Intp = []
+    for i in range(len(arrCity) - 1):
+        k0 = arrCity[i]
+        k1 = arrCity[i+1]
+        
+        # Generate points along the segment from start_k to end_k
+        nIntpStep = int(nPix*norm(k1-k0))
+        for iStep in range(nIntpStep):
+            t = iStep / nIntpStep
+            cityIntp = (1 - t) * k0 + t * k1
+            arrCity_Intp.append(cityIntp)
+    return array(arrCity_Intp)

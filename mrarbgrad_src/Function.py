@@ -2,7 +2,7 @@ from numpy import *
 from matplotlib.pyplot import *
 from numpy.typing import NDArray
 from typing import Callable
-import mrautograd.ext as ext
+import mrarbgrad.ext as ext
 
 goldang = (3-sqrt(5))*pi
 
@@ -22,7 +22,11 @@ def calGrad4ExFunc\
     
     p0:float64 = 0e0, 
     p1:float64 = 1e0, 
-) -> NDArray:
+) -> tuple[NDArray, NDArray]:
+    '''
+    :return: gradient waveform, corresponding parameter
+    :rtype: tuple[NDArray, NDArray]
+    '''
     return ext.calGrad4ExFunc\
     (
         int64(bIs3D),
@@ -52,7 +56,11 @@ def calGrad4ExSamp\
     dDt: float64 = 10e-6,
     
     arrK: NDArray = np.empty((0,3)),
-) -> NDArray:
+) -> tuple[NDArray, NDArray]:
+    '''
+    :return: gradient waveform, corresponding parameter
+    :rtype: tuple[NDArray, NDArray]
+    '''
     return ext.calGrad4ExSamp\
     (
         int64(bIs3D),
@@ -78,6 +86,10 @@ def getG_Spiral\
     
     dRhoPhi: float64 = 0.5 / (4 * pi)
 ) -> tuple[list[NDArray], list[NDArray]]:
+    '''
+    :return: list of trajectory start, list of gradient waveforms
+    :rtype: tuple[list[NDArray], list[NDArray]]
+    '''
     return ext.getG_Spiral\
     (
         int64(bIs3D),
@@ -104,6 +116,10 @@ def getG_VarDenSpiral\
     dRhoPhi0: float64 = 0.5 / (8 * pi),
     dRhoPhi1: float64 = 0.5 / (2 * pi),
 ) -> tuple[list[NDArray], list[NDArray]]:
+    '''
+    :return: list of trajectory start, list of gradient waveforms
+    :rtype: tuple[list[NDArray], list[NDArray]]
+    '''
     return ext.getG_VarDenSpiral\
     (
         int64(bIs3D),
@@ -132,6 +148,10 @@ def getG_Rosette\
     dOm2: float64 = 3*pi, 
     dTmax: float64 = 1e0,
 ) -> tuple[list[NDArray], list[NDArray]]:
+    '''
+    :return: list of trajectory start, list of gradient waveforms
+    :rtype: tuple[list[NDArray], list[NDArray]]
+    '''
     return ext.getG_Rosette\
     (
         int64(bIs3D),
@@ -162,6 +182,10 @@ def getG_Rosette_Trad\
     dTmax: float64 = 1e0,
     dTacq: float64 = 2.523e-3,
 ) -> tuple[list[NDArray], list[NDArray]]:
+    '''
+    :return: list of trajectory start, list of gradient waveforms
+    :rtype: tuple[list[NDArray], list[NDArray]]
+    '''
     return ext.getG_Rosette_Trad\
     (
         int64(bIs3D),
@@ -190,6 +214,10 @@ def getG_Shell3d\
     
     dRhoTht: float64 = 0.5 / (2 * pi),
 ) -> tuple[list[NDArray], list[NDArray]]:
+    '''
+    :return: list of trajectory start, list of gradient waveforms
+    :rtype: tuple[list[NDArray], list[NDArray]]
+    '''
     return ext.getG_Shell3d\
     (
         int64(bIs3D),
@@ -215,6 +243,10 @@ def getG_Yarnball\
     
     dRhoPhi: float64 = 0.5 / (2 * pi),
 ) -> tuple[list[NDArray], list[NDArray]]:
+    '''
+    :return: list of trajectory start, list of gradient waveforms
+    :rtype: tuple[list[NDArray], list[NDArray]]
+    '''
     return ext.getG_Yarnball\
     (
         int64(bIs3D),
@@ -241,6 +273,10 @@ def getG_Seiffert\
     dM: float64 = 0.07, 
     dUMax: float64 = 20.0, 
 ) -> tuple[list[NDArray], list[NDArray]]:
+    '''
+    :return: list of trajectory start, list of gradient waveforms
+    :rtype: tuple[list[NDArray], list[NDArray]]
+    '''
     return ext.getG_Seiffert\
     (
         int64(bIs3D),
@@ -267,6 +303,10 @@ def getG_Cones\
     
     dRhoPhi: float64 = 0.5 / (4 * pi),
 ) -> tuple[list[NDArray], list[NDArray]]:
+    '''
+    :return: list of trajectory start, list of gradient waveforms
+    :rtype: tuple[list[NDArray], list[NDArray]]
+    '''
     return ext.getG_Cones\
     (
         int64(bIs3D),

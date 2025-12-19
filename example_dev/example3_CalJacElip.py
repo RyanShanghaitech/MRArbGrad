@@ -1,7 +1,7 @@
 from numpy import *
 from matplotlib.pyplot import *
 from scipy.special import ellipj
-import mrautograd as mag
+import mrarbgrad as mag
 
 arrU = linspace(0, 8*pi/2, 100002)[1:-1]
 m = 0.07

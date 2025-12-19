@@ -25,9 +25,10 @@ public:
         int64_t lNTrajSamp = vv3K.size();
 
         vd vdP(lNTrajSamp);
-        for (int64_t i = 0; i < lNTrajSamp; ++i)
+        vdP[0] = 0;
+        for (int64_t i = 1; i < lNTrajSamp; ++i)
         {
-            vdP[i] = i;
+            vdP[i] = vdP[i-1] + v3::norm(vv3K[i] - vv3K[i-1]);
         }
 
         vd vdX(lNTrajSamp), vdY(lNTrajSamp), vdZ(lNTrajSamp);
@@ -38,9 +39,9 @@ public:
            vdZ[i] =  vv3K[i].m_dZ;
         }
 
-        m_intpX.m_eSearchMode = Intp::EUniform;
-        m_intpY.m_eSearchMode = Intp::EUniform;
-        m_intpZ.m_eSearchMode = Intp::EUniform;
+        m_intpX.m_eSearchMode = Intp::ECached;
+        m_intpY.m_eSearchMode = Intp::ECached;
+        m_intpZ.m_eSearchMode = Intp::ECached;
 
         m_intpX.fit(vdP, vdX); 
         m_intpY.fit(vdP, vdY);
