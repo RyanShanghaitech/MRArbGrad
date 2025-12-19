@@ -1,4 +1,4 @@
-import mrautograd as mag
+import mrarbgrad as mag
 from numpy import *
 from matplotlib.pyplot import *
 from numpy.linalg import norm

@@ -1,7 +1,7 @@
 from numpy import *
 from numpy.linalg import norm
 from matplotlib.pyplot import *
-import mrautograd as mag
+import mrarbgrad as mag
 
 gamma = 42.5756e6
 fov = 0.256
