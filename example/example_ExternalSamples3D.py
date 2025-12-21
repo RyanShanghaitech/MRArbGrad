@@ -13,21 +13,10 @@ dtADC = 2.5e-6
 
 # Yarnball
 nAx = 3
-tht0 = 0
+
 kRhoPhi = 0.5/(2*pi)
-kPhiSqrtTht = sqrt(2)
-kRhoSqrtTht = sqrt(2)*kRhoPhi
-pLim = [0,1/(sqrt(8)*kRhoPhi)]
-def Yarnball(sqrtTht):
-    tht = sqrtTht*sqrtTht
-    rho = kRhoSqrtTht * sqrtTht
-    phi = kPhiSqrtTht * sqrtTht
-    return array\
-    ([
-        rho*sin(tht+tht0)*cos(phi),
-        rho*sin(tht+tht0)*sin(phi),
-        rho*cos(tht+tht0)
-    ])
+Yarnball = lambda sqrtTht: mag.trajfunc.Yarnball(sqrtTht, kRhoPhi)
+pLim = mag.trajfunc.prange_Yarnball(kRhoPhi)
     
 arrP = linspace(pLim[0], pLim[1], 1000)
 arrK = Yarnball(arrP).T
