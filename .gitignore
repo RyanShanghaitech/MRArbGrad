@@ -1,12 +1,13 @@
-test*.*
-temp*.*
-*.gif
 *.npy
 *.npz
 *.so
 
-dist/
-build/
-.vscode/
+test*
+temp*
+
 *.egg-info/
-__pycache__/
+build
+dist
+__pycache__
+
+.vscode

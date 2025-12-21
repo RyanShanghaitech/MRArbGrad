@@ -36,3 +36,12 @@ prange_Cones = lambda kRhoPhi: [0e0, 0.5/kRhoPhi]
 def Cones(phi:float64, kRhoPhi:float64=0.5/(4*pi), tht0:float64=pi/3e0, phi0:float64=0e0):
     rho = kRhoPhi*phi
     return array([rho*sin(tht0)*cos(phi+phi0), rho*sin(tht0)*sin(phi+phi0), rho*cos(tht0)])
+
+__all__ = \
+[
+    'Spiral', 'prange_Spiral',
+    'VDS', 'prange_VDS',
+    'Rosette', 'prange_Rosette',
+    'Yarnball', 'prange_Yarnball',
+    'Cones', 'prange_Cones'
+]
