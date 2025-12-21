@@ -8,10 +8,9 @@ goldang = (2*pi)/(1+goldrat)
 getGoldrat = lambda: goldrat
 getGoldang = lambda: goldang
 
-def rand2d(n) -> NDArray:
+def rand2d(i:int|NDArray) -> NDArray:
     ky = goldrat
     kx = sqrt(3)
-    i = arange(n)
     y = (i**1 * 1/(1+ky))%1
     x = (i**2 * 1/(1+kx))%1
     return vstack([y,x]).T
