@@ -2,6 +2,19 @@ from numpy import *
 from numpy.typing import *
 from matplotlib.pyplot import *
 
+goldrat = (1+sqrt(5))/2
+goldang = (2*pi)/(1+goldrat)
+
+getGoldrat = lambda: goldrat
+getGoldang = lambda: goldang
+
+def rand2d(i:int|NDArray) -> NDArray:
+    ky = goldrat
+    kx = sqrt(3)
+    y = (i**1 * 1/(1+ky))%1
+    x = (i**2 * 1/(1+kx))%1
+    return vstack([y,x]).T
+
 def cvtGrad2Traj(arrG:NDArray, dtGrad:int|float, dtADC:int|float, nShift:int|float=1.0) -> tuple[NDArray, NDArray]:
     """
     # description:
