@@ -8,7 +8,7 @@ goldang = (2*pi)/(1+goldrat)
 getGoldrat = lambda: goldrat
 getGoldang = lambda: goldang
 
-def rand2d(n) -> ndarray:
+def rand2d(n) -> NDArray:
     ky = goldrat
     kx = sqrt(3)
     i = arange(n)
