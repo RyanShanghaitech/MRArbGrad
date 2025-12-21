@@ -7,8 +7,8 @@ arrU = linspace(0, 8*pi/2, 100002)[1:-1]
 m = 0.07
 
 # AGM
-arrSn, arrCn = mag.calJacElip(arrU, m)
-period = 4*mag.calCompElipInt(m)
+arrSn, arrCn = mag._calJacElip(arrU, m)
+period = 4*mag._calCompElipInt(m)
 print(period)
 iPeriod = argmin(abs(arrU-period))
 print(abs(arrSn[iPeriod]-arrSn[0]))

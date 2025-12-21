@@ -18,7 +18,7 @@ dtGrad = 10e-6
 dtADC = 2.5e-6
 
 def getK(u:float64) -> ndarray:
-    sn, cn = mag.calJacElip(u, m)
+    sn, cn = mag._calJacElip(u, m)
     phi = sqrt(m)*u
     rho = 0.5*((u/uMax)**1)
     return rho*array([sn*cos(phi), sn*sin(phi), cn], dtype=float64).T
@@ -35,7 +35,7 @@ arrG_Ref = arrG.copy()
 arrK_Ref = arrK.copy()
 
 # generate Fibonacci points
-arrFib = mag.calSphFibPt(nInt)
+arrFib = mag._calSphFibPt(nInt)
 
 # generate other interleaves
 lstArrG = []

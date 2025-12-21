@@ -170,7 +170,7 @@ bool GradGen::compute(lv3* plv3G, ld* pldP)
     double dP0 = m_ptfTraj->getP0();
     double dP1 = m_ptfTraj->getP1();
     ld ldP; if (!pldP) pldP = &ldP;
-    bool bQDESucc = true;
+    bool bQDESucc = true; (void)bQDESucc;
     int64_t lNit = 0;
 
     // backward

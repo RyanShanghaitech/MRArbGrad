@@ -9,8 +9,8 @@ from time import time
 
 enSim = 1
 gamma = 42.5756e6
-fov = 0.320 # 0.256
-nPix = 100
+fov = 0.256 # 0.256
+nPix = 256
 sLim = 100 * gamma * fov/nPix
 gLim = 120e-3 * gamma * fov/nPix
 dtGrad = 10e-6

@@ -14,7 +14,7 @@ dt = 10e-6
 m = 0.07
 
 def getK(u:float64) -> ndarray:
-    sn, cn = mag.calJacElip(u, m)
+    sn, cn = mag._calJacElip(u, m)
     phi = sqrt(m)*u
     rho = 0.5*((u/uMax)**1)
     return rho*array([sn*cos(phi), sn*sin(phi), cn], dtype=float64).T
