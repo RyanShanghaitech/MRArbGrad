@@ -32,6 +32,7 @@ modExt = Extension\
 _packages = \
 [
     "mrarbgrad", 
+    "mrarbgrad.trajfunc", 
     "mrarbgrad.ext", 
     "mrarbgrad.ext.traj",
     "mrarbgrad.ext.mag", 
@@ -44,6 +45,7 @@ if not useMtg:
 _package_dir = \
 {
     "mrarbgrad":"./mrarbgrad_src/", 
+    "mrarbgrad.trajfunc":"./mrarbgrad_src/trajfunc/",
     "mrarbgrad.ext":"./mrarbgrad_src/ext/", 
     "mrarbgrad.ext.traj":"./mrarbgrad_src/ext/traj/",
     "mrarbgrad.ext.mag":"./mrarbgrad_src/ext/mag/", 
