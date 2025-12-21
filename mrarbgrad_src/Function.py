@@ -3,8 +3,9 @@ from matplotlib.pyplot import *
 from numpy.typing import NDArray
 from typing import Callable
 import mrarbgrad.ext as ext
+from .Utility import *
 
-goldang = (3-sqrt(5))*pi
+goldang = getGoldang()
 
 def calGrad4ExFunc\
 (
