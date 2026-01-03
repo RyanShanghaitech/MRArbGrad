@@ -6,46 +6,48 @@
 class Spiral_TrajFunc: public TrajFunc
 {
 public:
-    Spiral_TrajFunc(double dRhoPhi)
+    Spiral_TrajFunc(f64 kRhoPhi):
+        TrajFunc(0,0)
     {
-        m_dRhoPhi = dRhoPhi;
+        m_kRhoPhi = kRhoPhi;
 
-        m_dP0 = 0e0;
-        m_dP1 = 0.5e0/m_dRhoPhi;
+        m_p0 = 0e0;
+        m_p1 = 0.5e0/m_kRhoPhi;
     }
 
-    bool getK(v3* pv3K, double dP) const
+    bool getK(v3* k, f64 p)
     {
-        double& dPhi = dP;
-        double dRho = m_dRhoPhi*dPhi;
-        pv3K->m_dX = dRho * std::cos(dPhi);
-        pv3K->m_dY = dRho * std::sin(dPhi);
-        pv3K->m_dZ = 0e0;
+        if (k==NULL) return false;
+        
+        f64& phi = p;
+        f64 rho = m_kRhoPhi*phi;
+        k->x = rho * std::cos(phi);
+        k->y = rho * std::sin(phi);
+        k->z = 0e0;
 
         return true;
     }
+
 protected:
-    double m_dRhoPhi;
+    f64 m_kRhoPhi;
 };
 
 class Spiral: public MrTraj_2D
 {
 public:
-    Spiral(const GeoPara& sGeoPara, const GradPara& sGradPara, double dRhoPhi)
+    Spiral(const GeoPara& sGeoPara, const GradPara& sGradPara, f64 kRhoPhi):
+        MrTraj_2D(sGeoPara,sGradPara,0,0,0,0,v3(),vv3())
     {
-        m_sGeoPara = sGeoPara;
-        m_sGradPara = sGradPara;
-        const bool& bMaxG0 = m_sGradPara.bMaxG0;
-        const bool& bMaxG1 = m_sGradPara.bMaxG1;
-        m_lNRot = calNRot(dRhoPhi, m_sGeoPara.lNPix);
-        m_lNStack = m_sGeoPara.bIs3D ? m_sGeoPara.lNPix : 1;
-        m_lNAcq = m_lNRot*m_lNStack;
-
-        m_dRotAngInc = calRotAngInc(m_lNRot);
-        m_ptfBaseTraj = new Spiral_TrajFunc(dRhoPhi);
+        m_ptfBaseTraj = new Spiral_TrajFunc(kRhoPhi);
         if(!m_ptfBaseTraj) throw std::runtime_error("out of memory");
+        m_nStack = m_sGeoPara.is3D ? m_sGeoPara.nPix : 1;
 
-        calGrad(&m_v3BaseM0PE, &m_lv3BaseGRO, NULL, &m_lNWait, &m_lNSamp, *m_ptfBaseTraj, m_sGradPara, bMaxG0&&bMaxG1?2:8);
+        i64 nRot = calNRot(kRhoPhi, m_sGeoPara.nPix);
+        m_rotang = calRotAng(nRot);
+        m_nAcq = nRot*m_nStack;
+
+        calGrad(&m_v3BaseM0PE, &m_vv3BaseGRO, NULL, *m_ptfBaseTraj, m_sGradPara);
+        m_nSampMax = m_vv3BaseGRO.size();
     }
     
     virtual ~Spiral()

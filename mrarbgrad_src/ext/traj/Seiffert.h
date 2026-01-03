@@ -5,16 +5,14 @@
 #include <vector>
 #include <list>
 
-#define LOOKUP_TABLE (0)
-
-static bool cvtXyz2Ang(double* pdTht, double* pdPhi, const v3& v3Xyz)
+static bool cvtXyz2Ang(f64* ptht, f64* pphi, const v3& xyz)
 {
-    const double& dX = v3Xyz.m_dX;
-    const double& dY = v3Xyz.m_dY;
-    const double& dZ = v3Xyz.m_dZ;
-    double dXY = std::sqrt(dX*dX + dY*dY);
-    *pdTht = std::atan2(dXY, dZ);
-    *pdPhi = std::atan2(dY, dX);
+    const f64& x = xyz.x;
+    const f64& y = xyz.y;
+    const f64& z = xyz.z;
+    f64 xy = std::sqrt(x*x + y*y);
+    *ptht = std::atan2(xy, z);
+    *pphi = std::atan2(y, x);
 
     return true;
 }
@@ -22,268 +20,191 @@ static bool cvtXyz2Ang(double* pdTht, double* pdPhi, const v3& v3Xyz)
 class Seiffert_Trajfunc: public TrajFunc
 {
 public:
-    typedef std::vector<double> vd;
-    typedef std::list<double> ld;
+    typedef std::vector<f64> vf64;
+    typedef std::list<f64> lf64;
 
-    Seiffert_Trajfunc(double dM, double dUMax):
-        m_lNPhi(100000)
+    Seiffert_Trajfunc(f64 m, f64 uMax):
+        TrajFunc(0,0)
     {
-        m_dM = dM;
-        m_dUMax = dUMax;
+        m_m = m;
+        m_uMax = uMax;
 
-        initJacElip(m_dM);
+        initJacElip(m_m);
 
-        m_dP0 = 0e0;
-        m_dP1 = dUMax;
-        m_dThtBias = 0e0; m_dPhiBias = 0e0;
-        v3 v3EndPt; getK(&v3EndPt, dUMax);
-        cvtXyz2Ang(&m_dThtBias, &m_dPhiBias, v3EndPt);
+        m_p0 = 0e0;
+        m_p1 = uMax;
+        m_thtBias = 0e0; m_phiBias = 0e0;
+        v3 k1; getK(&k1, uMax);
+        cvtXyz2Ang(&m_thtBias, &m_phiBias, k1);
     }
     
-    bool getK(v3* pv3K, double dU) const
+    bool getK(v3* k, f64 u)
     {
-        double dSn, dCn;
-        calJacElip(&dSn, &dCn, dU);
+        if (k==NULL) return false;
+        
+        f64 sn, cn;
+        calJacElip(&sn, &cn, u);
 
-        double dRho = 0.5e0 * (dU/m_dUMax);
-        pv3K->m_dX = dRho * dSn * std::cos(dU*std::sqrt(m_dM));
-        pv3K->m_dY = dRho * dSn * std::sin(dU*std::sqrt(m_dM));
-        pv3K->m_dZ = dRho * dCn;
+        f64 rho = 0.5e0 * (u/m_uMax);
+        k->x = rho * sn * std::cos(u*std::sqrt(m_m));
+        k->y = rho * sn * std::sin(u*std::sqrt(m_m));
+        k->z = rho * cn;
 
-        v3::rotate(pv3K, 2, -m_dPhiBias, *pv3K);
-        v3::rotate(pv3K, 1, -m_dThtBias, *pv3K);
+        v3::rotate(k, 2, -m_phiBias, *k);
+        v3::rotate(k, 1, -m_thtBias, *k);
 
         return true;
     }
     
 protected:
-    double m_dM, m_dUMax;
+    f64 m_m, m_uMax;
 
     // precompute for AGM
-    ld m_ldA, m_ldB, m_ldC; 
-
-    // precompute lookup table for phi
-    const int64_t m_lNPhi; vd m_vdPhi;
-    double m_dUPeriod;
+    lf64 m_lf64a, m_lf64b, m_lf64c; 
     
-    double m_dThtBias, m_dPhiBias;
+    f64 m_thtBias, m_phiBias;
 
-    bool initJacElip(double dM)
+    bool initJacElip(f64 m)
     {
-        if (dM<0e0 || dM>1e0)
+        if (m<0e0 || m>1e0)
         {
-            printf("ArgError, dM=%lf\n", dM);
+            printf("ArgError, m=%lf\n", m);
             abort();
         }
 
         // calculate a, b, c value of AGM
-        m_ldA.clear(); m_ldA.push_back(1e0);
-        m_ldB.clear(); m_ldB.push_back(std::sqrt(1e0-dM));
-        m_ldC.clear(); m_ldC.push_back(0e0);
-        while (std::fabs(*m_ldB.rbegin() - *m_ldA.rbegin()) > 1e-8)
+        m_lf64a.clear(); m_lf64a.push_back(1e0);
+        m_lf64b.clear(); m_lf64b.push_back(std::sqrt(1e0-m));
+        m_lf64c.clear(); m_lf64c.push_back(0e0);
+        while (std::fabs(*m_lf64b.rbegin() - *m_lf64a.rbegin()) > 1e-8)
         {
-            const double& dA_Old = *std::prev(m_ldA.end());
-            const double& dB_Old = *std::prev(m_ldB.end());
-            m_ldA.push_back((dA_Old + dB_Old) / 2e0);
-            m_ldB.push_back(std::sqrt(dA_Old * dB_Old));
-            m_ldC.push_back((dA_Old - dB_Old) / 2e0);
+            const f64& a_Old = *std::prev(m_lf64a.end());
+            const f64& b_Old = *std::prev(m_lf64b.end());
+            m_lf64a.push_back((a_Old + b_Old) / 2e0);
+            m_lf64b.push_back(std::sqrt(a_Old * b_Old));
+            m_lf64c.push_back((a_Old - b_Old) / 2e0);
         }
-
-        #if LOOKUP_TABLE
-        // calculate corresponding phi of m
-        int64_t lN = m_ldA.size() - 1;
-
-        double dElipInt = calCompElipInt(dM);
-        m_dUPeriod = 4e0*dElipInt;
-        m_vdPhi.resize(m_lNPhi);
-        for (int64_t i = 0; i < m_lNPhi; ++i)
-        {
-            double dU = m_dUPeriod * i/(double)m_lNPhi;
-
-            // calculate phi with AGM
-            ld::const_reverse_iterator ildA = m_ldA.rbegin();
-            ld::const_reverse_iterator ildC = m_ldC.rbegin();
-            double dPhi = std::pow(2e0,double(lN)) * (*ildA) * dU;
-            for (int64_t j = 0; j < lN; ++j)
-            {
-                dPhi = (1e0/2e0)*(dPhi + std::asin((*ildC)/(*ildA)*std::sin(dPhi)));
-                ++ildA;
-                ++ildC;
-            }
-            m_vdPhi[i] = dPhi;
-        }
-        #endif
 
         return true;
     }
     
-    bool calJacElip(double* pdSn, double* pdCn, double dU) const
+    bool calJacElip(f64* psn, f64* pcn, f64 u) const
     {
-        #if LOOKUP_TABLE
-        double dIPhi = m_lNPhi * dU/m_dUPeriod;
-        double dIPhi0 = std::floor(dIPhi);
-        double dIPhi1 = std::ceil(dIPhi);
-        if (dIPhi1 == dIPhi0) // test
-        {
-            double dPhi = m_vdPhi[(int64_t)dIPhi%m_lNPhi];
-            *pdSn = std::sin(dPhi);
-            *pdCn = std::cos(dPhi);
-        }
-        else
-        {
-            double dPhi0 = m_vdPhi[int64_t(dIPhi0)%m_lNPhi];
-            double dPhi1 = m_vdPhi[int64_t(dIPhi1)%m_lNPhi];
-
-            *pdSn = std::sin(dPhi0)*(dIPhi1-dIPhi) + std::sin(dPhi1)*(dIPhi-dIPhi0);
-            *pdCn = std::cos(dPhi0)*(dIPhi1-dIPhi) + std::cos(dPhi1)*(dIPhi-dIPhi0);
-        }
-        #else
         // calculate phi with AGM
-        int64_t lN = m_ldA.size() - 1;
-        ld::const_reverse_iterator ildA = m_ldA.rbegin();
-        ld::const_reverse_iterator ildC = m_ldC.rbegin();
-        double dPhi = std::pow(2e0,double(lN)) * (*ildA) * dU;
-        for (int64_t j = 0; j < lN; ++j)
+        i64 n = m_lf64a.size() - 1;
+        lf64::const_reverse_iterator ilf64a = m_lf64a.rbegin();
+        lf64::const_reverse_iterator ilf64c = m_lf64c.rbegin();
+        f64 phi = std::pow(2e0,f64(n)) * (*ilf64a) * u;
+        for (i64 i = 0; i < n; ++i)
         {
-            dPhi = (1e0/2e0)*(dPhi + std::asin((*ildC)/(*ildA)*std::sin(dPhi)));
-            ++ildA;
-            ++ildC;
+            f64 _ = (*ilf64c)/(*ilf64a)*std::sin(phi);
+            _ = std::max(-1.0, std::min(1.0, _));
+            phi = (1e0/2e0)*(phi + std::asin(_));
+            ++ilf64a;
+            ++ilf64c;
         }
-        *pdSn = std::sin(dPhi);
-        *pdCn = std::cos(dPhi);
-        #endif
+        *psn = std::sin(phi);
+        *pcn = std::cos(phi);
         
         return true;
-    }
-
-    static double calCompElipInt(double dM)
-    {
-        ld ldA, ldB;
-        ldA.push_back(1e0);
-        ldB.push_back(std::sqrt(1e0 - dM));
-        while (std::fabs(ldB.back() - ldA.back()) > 1e-8)
-        {
-            double aNew = (ldA.back() + ldB.back()) / 2e0;
-            double bNew = std::sqrt(ldA.back() * ldB.back());
-            ldA.push_back(aNew);
-            ldB.push_back(bNew);
-        }
-        double dRes = M_PI / 2e0 / ldA.back();
-        return dRes;
     }
 };
 
 class Seiffert: public MrTraj
 {
 public:
-    Seiffert(const GeoPara& sGeoPara, const GradPara& sGradPara, double dM, double dUMax)
+    Seiffert(const GeoPara& sGeoPara, const GradPara& sGradPara, f64 dM, f64 dUMax):
+        MrTraj(sGeoPara,sGradPara,0,0)
     // m = 0.07 is optimized for diaphony
     // Umax = 20 can achieve similar readout time as original paper
     {
-        m_sGeoPara = sGeoPara;
-        m_sGradPara = sGradPara;
-        const int64_t& lNPix = m_sGeoPara.lNPix;
-        const bool& bMaxG0 = m_sGradPara.bMaxG0;
-        const bool& bMaxG1 = m_sGradPara.bMaxG1;
-        m_lNAcq = (int64_t)round(-2.53819233e-03*lNPix*lNPix + 8.53447761e+01*lNPix); // fitted
+        const i64& nPix = m_sGeoPara.nPix;
+        m_nAcq = (i64)round(-2.53819233e-03*nPix*nPix + 8.53447761e+01*nPix); // fitted
 
         m_ptfBaseTraj = new Seiffert_Trajfunc(dM, dUMax);
         if(!m_ptfBaseTraj) throw std::runtime_error("out of memory");
 
-        calGrad(&m_v3BaseM0PE, &m_lv3BaseGRO, NULL, &m_lNWait, &m_lNSamp, *m_ptfBaseTraj, m_sGradPara, bMaxG0&&bMaxG1?2:8);
+        calGrad(&m_v3BaseM0PE, &m_vv3BaseGRO, NULL, *m_ptfBaseTraj, m_sGradPara);
+        m_nSampMax = m_vv3BaseGRO.size();
     }
     
     virtual ~Seiffert()
     {
         delete m_ptfBaseTraj;
     }
-
-    bool getM0PE(v3* pv3M0PE, int64_t lIAcq) const
-    {
-        bool bRet = true;
-        vl vlAx; vd vdAng;
-        bRet &= getRotAng(&vlAx, &vdAng, lIAcq);
-        bRet &= appRotAng(pv3M0PE, m_v3BaseM0PE, vlAx, vdAng);
-
-        return bRet;
-    }
     
-    bool getGRO(lv3* plv3GRO, int64_t lIAcq) const
+    virtual bool getGRO(vv3* pvv3GRO, i64 iAcq)
     {
-        bool bRet = true;
-        vl vlAx; vd vdAng;
-        bRet &= getRotAng(&vlAx, &vdAng, lIAcq);
-        bRet &= appRotAng(plv3GRO, m_lv3BaseGRO, vlAx, vdAng);
+        bool ret = true;
+        vi64 vi64Ax; vf64 vf64Ang;
+        ret &= getRotAng(&vi64Ax, &vf64Ang, iAcq);
+        ret &= appRotAng(pvv3GRO, m_vv3BaseGRO, vi64Ax, vf64Ang);
 
-        return bRet;
+        return ret;
     }
 
-    int64_t getNWait(int64_t lIAcq) const
+    virtual bool getM0PE(v3* pv3M0PE, i64 iAcq)
     {
-        return m_lNWait;
-    }
+        bool ret = true;
+        vi64 vi64Ax; vf64 vf64Ang;
+        ret &= getRotAng(&vi64Ax, &vf64Ang, iAcq);
+        ret &= appRotAng(pv3M0PE, m_v3BaseM0PE, vi64Ax, vf64Ang);
 
-    int64_t getNSamp(int64_t lIAcq) const
-    {
-        return m_lNSamp;
+        return ret;
     }
     
 protected:
     TrajFunc* m_ptfBaseTraj;
+    vv3 m_vv3BaseGRO;
     v3 m_v3BaseM0PE;
-    lv3 m_lv3BaseGRO;
-    int64_t m_lNWait;
-    int64_t m_lNSamp;
 
-    bool getRotAng(vl* pvlAx, vd* pvdAng, int64_t lIAcq) const
+    bool getRotAng(vi64* pvi64Ax, vf64* pvf64Ang, i64 iAcq) const
     {
-        pvlAx->resize(3);
-        pvdAng->resize(3);
+        pvi64Ax->resize(3);
+        pvf64Ang->resize(3);
 
         // randomly rotate around z-axis
-        pvlAx->at(0) = 2;
-        pvdAng->at(0) = lIAcq*(lIAcq+1)*GOLDANG;
+        pvi64Ax->at(0) = 2;
+        pvf64Ang->at(0) = iAcq*(iAcq+1)*GOLDANG;
 
         // rotate endpoint to Fibonaci Points
         v3 v3FibPt;
         {
-            int64_t lNf = m_lNAcq;
-            double dK = double(lIAcq%m_lNAcq) - lNf/2;
+            i64 lNf = m_nAcq;
+            f64 dK = f64(iAcq%m_nAcq) - lNf/2;
 
-            double dSf = dK/(lNf/2);
-            double dCf = std::sqrt((lNf/2+dK)*(lNf/2-dK)) / (lNf/2);
-            double dPhi = (1e0+std::sqrt(5e0)) / 2e0;
-            double dTht = 2e0*M_PI*dK/dPhi;
+            f64 dSf = dK/(lNf/2);
+            f64 dCf = std::sqrt((lNf/2+dK)*(lNf/2-dK)) / (lNf/2);
+            f64 phi = (1e0+std::sqrt(5e0)) / 2e0;
+            f64 dTht = 2e0*M_PI*dK/phi;
 
-            v3FibPt.m_dX = dCf*std::sin(dTht);
-            v3FibPt.m_dY = dCf*std::cos(dTht);
-            v3FibPt.m_dZ = dSf;
+            v3FibPt.x = dCf*std::sin(dTht);
+            v3FibPt.y = dCf*std::cos(dTht);
+            v3FibPt.z = dSf;
         }
-        double dTht, dPhi; cvtXyz2Ang(&dTht, &dPhi, v3FibPt);
+        f64 tht, phi; cvtXyz2Ang(&tht, &phi, v3FibPt);
 
-        pvlAx->at(1) = 1;
-        pvdAng->at(1) = dTht;
-        pvlAx->at(2) = 2;
-        pvdAng->at(2) = dPhi;
+        pvi64Ax->at(1) = 1;
+        pvf64Ang->at(1) = tht;
+        pvi64Ax->at(2) = 2;
+        pvf64Ang->at(2) = phi;
 
         return true;
     }
 
     template<typename T>
-    bool appRotAng(T* ptDst, const T& tSrc, vl vlAx, vd vdAng) const
+    bool appRotAng(T* pdst, const T& src, vi64 vi64Ax, vf64 vf64Ang) const
     {
-        bool bRet = true;
+        bool ret = true;
 
-        if (vlAx.size() != vdAng.size()) throw std::invalid_argument("pllAx->size() != pldAng->size()");
+        if (vi64Ax.size() != vf64Ang.size()) throw std::invalid_argument("vi64Ax.size() != vf64Ang.size()");
 
-        *ptDst = tSrc;
-        for(int64_t i = 0; i < (int64_t)vlAx.size(); ++i)
+        *pdst = src;
+        for(i64 i = 0; i < (i64)vi64Ax.size(); ++i)
         {
-            bRet &= v3::rotate(ptDst, vlAx[i], vdAng[i], *ptDst);
+            ret &= v3::rotate(pdst, vi64Ax[i], vf64Ang[i], *pdst);
         }
 
-        return bRet;
+        return ret;
     }
 };
-
-#undef LOOKUP_TABLE

@@ -6,10 +6,11 @@ import mrarbgrad as mag
 gamma = 42.5756e6
 fov = 0.256
 nPix = 256
-sLim = 100 * gamma * fov/nPix
-gLim = 120e-3 * gamma * fov/nPix
 dtGrad = 10e-6
 dtADC = 2.5e-6
+sLim = 50 * gamma * fov/nPix
+gLim = 20e-3 * gamma * fov/nPix
+# gLim = 1/nPix/dtADC
 
 # Rosette
 nAx = 2

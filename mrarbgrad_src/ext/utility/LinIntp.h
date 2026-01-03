@@ -7,56 +7,56 @@ class LinIntp : public Intp
 public:
     LinIntp() {}
 
-    LinIntp(const vd& vdX, const vd& vdY)
+    LinIntp(const vf64& vf64X, const vf64& vf64Y)
     {
-        fit(vdX, vdY);
+        fit(vf64X, vf64Y);
     }
 
-    virtual bool fit(const vd& vdX, const vd& vdY)
+    virtual bool fit(const vf64& vf64X, const vf64& vf64Y)
     {
-        m_vdX = vdX;
-        m_vdY = vdY;
+        m_vf64X = vf64X;
+        m_vf64Y = vf64Y;
 
-        if (!validate(m_vdX, m_vdY))
+        if (!validate(m_vf64X, m_vf64Y))
         {
-            m_vdX.clear();
-            m_vdY.clear();
-            throw std::invalid_argument("validate(vdX, vdY)");
+            m_vf64X.clear();
+            m_vf64Y.clear();
+            throw std::invalid_argument("!validate(m_vf64X, m_vf64Y)");
         }
 
-        m_lIdxCache = 0;
+        m_idxCache = 0;
 
-        const int64_t lN = static_cast<int64_t>(m_vdX.size());
-        m_vdSlope.resize(lN - 1);
+        const i64 num = (i64)m_vf64X.size();
+        m_vf64Slope.resize(num - 1);
 
-        for (int64_t i = 0; i < lN - 1; ++i)
+        for (i64 i = 0; i < num - 1; ++i)
         {
-            const double dDX = m_vdX[i + 1] - m_vdX[i];
-            m_vdSlope[i] = (m_vdY[i + 1] - m_vdY[i]) / dDX;
+            const f64 dx = m_vf64X[i + 1] - m_vf64X[i];
+            m_vf64Slope[i] = (m_vf64Y[i + 1] - m_vf64Y[i]) / dx;
         }
 
         return true;
     }
 
-    virtual double eval(double dXEval, int64_t lOrder = 0) const
+    virtual f64 eval(f64 x, i64 ord = 0) const
     {
-        if (m_vdX.size() < 2) throw std::runtime_error("m_vdX.size()");
+        if (m_vf64X.size() < 2) throw std::runtime_error("m_vf64X.size()");
 
-        const int64_t lIdx = getIdx(dXEval);
-        const double dDX = dXEval - m_vdX[lIdx];
+        const i64 idx = getIdx(x);
+        const f64 dx = x - m_vf64X[idx];
 
-        if (lOrder == 0)
+        if (ord == 0)
         {
-            return m_vdY[lIdx] + m_vdSlope[lIdx] * dDX;
+            return m_vf64Y[idx] + m_vf64Slope[idx] * dx;
         }
-        if (lOrder == 1)
+        if (ord == 1)
         {
-            return m_vdSlope[lIdx];
+            return m_vf64Slope[idx];
         }
 
         return 0e0;
     }
 
 private:
-    vd m_vdSlope;
+    vf64 m_vf64Slope;
 };

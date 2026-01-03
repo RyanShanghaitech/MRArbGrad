@@ -1,1 +1,1 @@
-bool g_bDbgPrint = false;
+bool glob_enDbgPrint = false;

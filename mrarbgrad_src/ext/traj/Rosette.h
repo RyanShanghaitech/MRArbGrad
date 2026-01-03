@@ -6,55 +6,56 @@
 class Rosette_TrajFunc: public TrajFunc
 {
 public:
-    Rosette_TrajFunc(double dOm1, double dOm2, double dTmax=1e0)
+    Rosette_TrajFunc(f64 om1, f64 om2, f64 tMax=1e0):
+        TrajFunc(0,0)
     {
         /*
          * NOTE:
-         * When Tmax=1, Om1=Npi, Om2=(N-2)pi,
-         * there will be N petal because Om1
+         * When tMax=1, om1=Npi, om2=(N-2)pi,
+         * there will be N petal because om1
          * controls how fast the rho changes.
          */
-        m_dOm1 = dOm1;
-        m_dOm2 = dOm2;
-        m_dTmax = dTmax;
+        m_om1 = om1;
+        m_om2 = om2;
+        m_tMax = tMax;
 
-        m_dP0 = 0e0;
-        m_dP1 = m_dTmax;
+        m_p0 = 0e0;
+        m_p1 = m_tMax;
     }
 
-    bool getK(v3* pv3K, double dP) const
+    virtual bool getK(v3* k, f64 p)
     {
-        double& dT = dP;
-        double dRho = 0.5e0*std::sin(m_dOm1*dT);
-        pv3K->m_dX = dRho * std::cos(m_dOm2*dT);
-        pv3K->m_dY = dRho * std::sin(m_dOm2*dT);
-        pv3K->m_dZ = 0e0;
+        if (k==NULL) return false;
+        
+        f64& t = p;
+        f64 dRho = 0.5e0*std::sin(m_om1*t);
+        k->x = dRho * std::cos(m_om2*t);
+        k->y = dRho * std::sin(m_om2*t);
+        k->z = 0e0;
 
         return true;
     }
+
 protected:
-    double m_dOm1, m_dOm2, m_dTmax;
+    f64 m_om1, m_om2, m_tMax;
 };
 
 class Rosette: public MrTraj_2D
 {
 public:
-    Rosette(const GeoPara& sGeoPara, const GradPara& sGradPara, double dOm1, double dOm2, double dTmax)
+    Rosette(const GeoPara& sGeoPara, const GradPara& sGradPara, f64 om1, f64 om2, f64 tMax):
+        MrTraj_2D(sGeoPara,sGradPara,0,0,0,0,v3(),vv3())
     {
-        m_sGeoPara = sGeoPara;
-        m_sGradPara = sGradPara;
-        const bool& bMaxG0 = m_sGradPara.bMaxG0;
-        const bool& bMaxG1 = m_sGradPara.bMaxG1;
-
-        m_ptfBaseTraj = new Rosette_TrajFunc(dOm1, dOm2, dTmax);
+        m_ptfBaseTraj = new Rosette_TrajFunc(om1, om2, tMax);
         if(!m_ptfBaseTraj) throw std::runtime_error("out of memory");
-        m_lNRot = calNRot(m_ptfBaseTraj, 0e0, (M_PI/2e0)/dOm1, m_sGeoPara.lNPix);
-        m_lNStack = m_sGeoPara.bIs3D ? m_sGeoPara.lNPix : 1;
-        m_lNAcq = m_lNRot*m_lNStack;
+        m_nStack = m_sGeoPara.is3D ? m_sGeoPara.nPix : 1;
 
-        m_dRotAngInc = calRotAngInc(m_lNRot);
+        i64 nRot = calNRot(m_ptfBaseTraj, 0e0, (M_PI/2e0)/om1, m_sGeoPara.nPix);
+        m_rotang = calRotAng(nRot);
+        m_nAcq = nRot*m_nStack;
         
-        calGrad(&m_v3BaseM0PE, &m_lv3BaseGRO, NULL, &m_lNWait, &m_lNSamp, *m_ptfBaseTraj, m_sGradPara, bMaxG0&&bMaxG1?2:8);
+        calGrad(&m_v3BaseM0PE, &m_vv3BaseGRO, NULL, *m_ptfBaseTraj, m_sGradPara);
+        m_nSampMax = m_vv3BaseGRO.size();
     }
     
     virtual ~Rosette()
@@ -69,42 +70,32 @@ protected:
 class Rosette_Trad: public MrTraj_2D
 {
 public:
-    Rosette_Trad(const GeoPara& sGeoPara, const GradPara& sGradPara, double dOm1, double dOm2, double dTmax, double dDTE)
+    Rosette_Trad(const GeoPara& sGeoPara, const GradPara& sGradPara, f64 om1, f64 om2, f64 tMax, f64 dTE):
+        MrTraj_2D(sGeoPara,sGradPara,0,0,0,0,v3(),vv3())
     {
         m_sGeoPara = sGeoPara;
         m_sGradPara = sGradPara;
 
-        m_ptfBaseTraj = new Rosette_TrajFunc(dOm1, dOm2, dTmax);
+        m_ptfBaseTraj = new Rosette_TrajFunc(om1, om2, tMax);
         if(!m_ptfBaseTraj) throw std::runtime_error("out of memory");
-        m_lNRot = calNRot(m_ptfBaseTraj, 0e0, (M_PI/2e0)/dOm1, m_sGeoPara.lNPix);
-        m_lNStack = m_sGeoPara.bIs3D ? m_sGeoPara.lNPix : 1;
-        m_lNAcq = m_lNRot*m_lNStack;
-
-        m_dRotAngInc = calRotAngInc(m_lNRot);
+        m_nStack = m_sGeoPara.is3D ? m_sGeoPara.nPix : 1;
+        i64 nRot = calNRot(m_ptfBaseTraj, 0e0, (M_PI/2e0)/om1, m_sGeoPara.nPix);
+        m_nAcq = nRot*m_nStack;
+        m_rotang = calRotAng(nRot);
 
         // readout
-        double dTacq = dDTE*dOm1/M_PI;
-        int64_t lNSamp = dTacq/m_sGradPara.dDt;
-        for(int64_t i = 0; i < lNSamp; ++i)
+        f64 tAcq = dTE*om1/M_PI;
+        m_nSampMax = tAcq/m_sGradPara.dt;
+        m_vv3BaseGRO.reserve(m_nSampMax);
+        for(i64 i = 0; i < m_nSampMax; ++i)
         {
-            m_lv3BaseGRO.push_back(v3());
-            m_ptfBaseTraj->getDkDp(&*m_lv3BaseGRO.rbegin(), dTmax*i/(double)lNSamp); // derivative to p
-            *m_lv3BaseGRO.rbegin() *= dTmax/dTacq; // derivative to t
+            m_vv3BaseGRO.push_back(v3());
+            m_ptfBaseTraj->getDkDp(&*m_vv3BaseGRO.rbegin(), tMax*i/(f64)m_nSampMax); // derivative to p
+            *m_vv3BaseGRO.rbegin() *= tMax/tAcq; // derivative to t
         }
-        lv3 lv3GRampFront; GradGen::ramp_front(&lv3GRampFront, *m_lv3BaseGRO.begin(), v3(0,0,0), m_sGradPara.dSLim, m_sGradPara.dDt);
-        lv3 lv3GRampBack; GradGen::ramp_back(&lv3GRampBack, *m_lv3BaseGRO.rbegin(), v3(0,0,0), m_sGradPara.dSLim, m_sGradPara.dDt);
-
-        m_lNWait = lv3GRampFront.size();
-        m_lNSamp = m_lv3BaseGRO.size();
 
         // calculate M0 of PE
         m_ptfBaseTraj->getK0(&m_v3BaseM0PE);
-        v3 v3M0Ramp; GradGen::calM0(&v3M0Ramp, lv3GRampFront, m_sGradPara.dDt, v3(0,0,0), *m_lv3BaseGRO.begin());
-        m_v3BaseM0PE -= v3M0Ramp;
-        
-        // concate ramp gradient
-        m_lv3BaseGRO.splice(m_lv3BaseGRO.begin(), lv3GRampFront);
-        m_lv3BaseGRO.splice(m_lv3BaseGRO.end(), lv3GRampBack);
     }
     
     virtual ~Rosette_Trad()

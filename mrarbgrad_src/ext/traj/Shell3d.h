@@ -6,119 +6,109 @@
 class Shell3d_TrajFunc: public TrajFunc
 {
 public:
-    Shell3d_TrajFunc(double dRhoTht, double dTht0)
+    Shell3d_TrajFunc(f64 kRhoTht, f64 tht0, f64 phi0=0e0):
+        TrajFunc(0,0)
     {
-        m_dThtSqrtPhi = std::sqrt(2e0);
-        m_dRhoSqrtPhi = std::sqrt(2e0)*dRhoTht;
-        m_dTht0 = dTht0;
+        m_kThtSqrtPhi = std::sqrt(2e0);
+        m_kRhoSqrtPhi = std::sqrt(2e0)*kRhoTht;
+        m_tht0 = tht0;
+        m_phi0 = phi0;
 
-        m_dP0 = 0e0;
-        m_dP1 = 1e0/(std::sqrt(8e0)*dRhoTht);
+        m_p0 = 0e0;
+        m_p1 = 1e0/(std::sqrt(8e0)*kRhoTht);
     }
 
     ~Shell3d_TrajFunc()
     {}
 
-    bool getK(v3* pv3K, double dP) const
+    bool getK(v3* k, f64 p)
     {
-        const double& dSqrtPhi = dP;
-        double dPhi = dSqrtPhi*dSqrtPhi * (dSqrtPhi>=0?1e0:-1e0);
-        double dRho = m_dRhoSqrtPhi * dSqrtPhi;
-        double dTht = m_dThtSqrtPhi * dSqrtPhi;
+        if (k==NULL) return false;
+        
+        const f64& f64SqrtPhi = p;
+        f64 phi = f64SqrtPhi*f64SqrtPhi * (f64SqrtPhi>=0?1e0:-1e0);
+        f64 rho = m_kRhoSqrtPhi * f64SqrtPhi;
+        f64 tht = m_kThtSqrtPhi * f64SqrtPhi;
 
-        pv3K->m_dX = dRho * std::sin(dTht+m_dTht0) * std::cos(dPhi);
-        pv3K->m_dY = dRho * std::sin(dTht+m_dTht0) * std::sin(dPhi);
-        pv3K->m_dZ = dRho * std::cos(dTht+m_dTht0);
+        k->x = rho * std::sin(tht+m_tht0) * std::cos(phi+m_phi0);
+        k->y = rho * std::sin(tht+m_tht0) * std::sin(phi+m_phi0);
+        k->z = rho * std::cos(tht+m_tht0);
 
         return true;
     }
+
 protected:
-    double m_dThtSqrtPhi, m_dRhoSqrtPhi;
-    double m_dTht0;
+    f64 m_kThtSqrtPhi, m_kRhoSqrtPhi;
+    f64 m_tht0, m_phi0;
 };
 
 class Shell3d: public MrTraj
 {
 public:
-    Shell3d(const GeoPara& sGeoPara, const GradPara& sGradPara, double dRhoTht)
+    Shell3d(const GeoPara& sGeoPara, const GradPara& sGradPara, f64 kRhoTht):
+        MrTraj(sGeoPara,sGradPara,0,0)
     {
         m_sGeoPara = sGeoPara;
         m_sGradPara = sGradPara;
-        const bool& bMaxG0 = m_sGradPara.bMaxG0;
-        const bool& bMaxG1 = m_sGradPara.bMaxG1;
-        m_lNRot = calNRot(dRhoTht, m_sGeoPara.lNPix);
-        m_dRotInc = calRotAngInc(m_lNRot);
-        m_lNAcq = m_lNRot*m_lNRot;
+        m_nRot = calNRot(kRhoTht, m_sGeoPara.nPix);
+        m_rotang = calRotAng(m_nRot);
+        m_nAcq = m_nRot*m_nRot;
         
-        m_vptfBaseTraj.resize(m_lNRot);
-        m_vv3BaseM0PE.resize(m_lNRot);
-        m_vlv3BaseGRO.resize(m_lNRot);
-        m_vlNWait.resize(m_lNRot);
-        m_vlNSamp.resize(m_lNRot);
+        m_vptfBaseTraj.resize(m_nRot);
+        m_vvv3BaseGRO.resize(m_nRot);
+        m_vv3BaseM0PE.resize(m_nRot);
 
-        for(int64_t i = 0; i < m_lNRot; ++i)
+        m_nSampMax = 0;
+        for(i64 i = 0; i < m_nRot; ++i)
         {
-            double dTht0 = i*m_dRotInc;
-            m_vptfBaseTraj[i] = new Shell3d_TrajFunc(dRhoTht, dTht0);
+            f64 tht0 = i*m_rotang;
+            m_vptfBaseTraj[i] = new Shell3d_TrajFunc(kRhoTht, tht0);
             if(!m_vptfBaseTraj[i]) throw std::runtime_error("out of memory");
 
-            calGrad(&m_vv3BaseM0PE[i], &m_vlv3BaseGRO[i], NULL, &m_vlNWait[i], &m_vlNSamp[i], *m_vptfBaseTraj[i], m_sGradPara, bMaxG0&&bMaxG1?2:8);
+            calGrad(&m_vv3BaseM0PE[i], &m_vvv3BaseGRO[i], NULL, *m_vptfBaseTraj[i], m_sGradPara);
+            m_nSampMax = std::max(m_nSampMax, (i64)m_vvv3BaseGRO[i].size());
         }
     }
     
     virtual ~Shell3d()
     {
-        for(int64_t i = 0; i < (int64_t)m_vptfBaseTraj.size(); ++i)
+        for(i64 i = 0; i < (i64)m_vptfBaseTraj.size(); ++i)
         {
             delete m_vptfBaseTraj[i];
         }
     }
 
-    bool getM0PE(v3* pv3M0PE, int64_t lIAcq) const
+    virtual bool getGRO(vv3* pvv3GRO, i64 iAcq)
     {
-        bool bRet = true;
-        const double& dPhiInc = m_dRotInc;
-        int64_t lISet = lIAcq%m_lNRot;
-        int64_t lIRot = lIAcq/m_lNRot;
+        bool ret = true;
+        const f64& rotang = m_rotang;
+        i64 iSet = iAcq%m_nRot;
+        i64 iRot = iAcq/m_nRot;
 
-        *pv3M0PE = m_vv3BaseM0PE[lISet];
-        bRet &= v3::rotate(pv3M0PE, 2, dPhiInc*lIRot, *pv3M0PE);
-
-        return bRet;
-    }
-
-    bool getGRO(lv3* plv3GRO, int64_t lIAcq) const
-    {
-        bool bRet = true;
-        const double& dPhiInc = m_dRotInc;
-        int64_t lISet = lIAcq%m_lNRot;
-        int64_t lIRot = lIAcq/m_lNRot;
-
-        *plv3GRO = m_vlv3BaseGRO[lISet];
-        bRet &= v3::rotate(plv3GRO, 2, dPhiInc*lIRot, *plv3GRO);
+        *pvv3GRO = m_vvv3BaseGRO[iSet];
+        ret &= v3::rotate(pvv3GRO, 2, rotang*iRot, *pvv3GRO);
         
-        return bRet;
+        return ret;
     }
 
-    int64_t getNWait(int64_t lIAcq) const
+    virtual bool getM0PE(v3* pv3M0PE, i64 iAcq)
     {
-        int64_t lISet = lIAcq%m_lNRot;
-        return m_vlNWait[lISet];
-    }
+        bool ret = true;
+        const f64& rotang = m_rotang;
+        i64 iSet = iAcq%m_nRot;
+        i64 iRot = iAcq/m_nRot;
 
-    int64_t getNSamp(int64_t lIAcq) const
-    {
-        int64_t lISet = lIAcq%m_lNRot;
-        return m_vlNSamp[lISet];
+        *pv3M0PE = m_vv3BaseM0PE[iSet];
+        ret &= v3::rotate(pv3M0PE, 2, rotang*iRot, *pv3M0PE);
+
+        return ret;
     }
     
 protected:
-    int64_t m_lNRot;
-    double m_dRotInc;
+    i64 m_nRot;
+    f64 m_rotang;
 
     vptf m_vptfBaseTraj;
     vv3 m_vv3BaseM0PE;
-    vlv3 m_vlv3BaseGRO;
-    vl m_vlNWait;
-    vl m_vlNSamp;
+    vvv3 m_vvv3BaseGRO;
 };

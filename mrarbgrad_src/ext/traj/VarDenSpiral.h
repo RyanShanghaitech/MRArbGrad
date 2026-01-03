@@ -6,50 +6,54 @@
 class VarDenSpiral_TrajFunc: public TrajFunc
 {
 public:
-    VarDenSpiral_TrajFunc(double dRhoPhi0, double dRhoPhi1)
+    VarDenSpiral_TrajFunc(f64 kRhoPhi0, f64 kRhoPhi1, f64 phi0=0e0):
+        TrajFunc(0,0)
     {
-        m_dRhoPhi0 = dRhoPhi0;
-        m_dRhoPhi1 = dRhoPhi1;
+        m_kRhoPhi0 = kRhoPhi0;
+        m_kRhoPhi1 = kRhoPhi1;
+        m_phi0 = phi0;
 
-        m_dP0 = 0e0;
-        m_dP1 = (std::log(m_dRhoPhi1)-std::log(m_dRhoPhi0)) / (2e0*(m_dRhoPhi1-m_dRhoPhi0));
+        m_p0 = 0e0;
+        m_p1 = (std::log(m_kRhoPhi1)-std::log(m_kRhoPhi0)) / (2e0*(m_kRhoPhi1-m_kRhoPhi0));
     }
 
-    bool getK(v3* pv3K, double dP) const
+    virtual bool getK(v3* k, f64 p)
     {
-        double& dPhi = dP;
-        double dRho = m_dRhoPhi0*(std::exp(2e0*(m_dRhoPhi1 - m_dRhoPhi0)*dPhi) - 1e0) / (2e0*(m_dRhoPhi1 - m_dRhoPhi0));
-        pv3K->m_dX = dRho * std::cos(dPhi);
-        pv3K->m_dY = dRho * std::sin(dPhi);
-        pv3K->m_dZ = 0e0;
+        if (k==NULL) return false;
+        
+        f64& phi = p;
+        f64 rho = m_kRhoPhi0*(std::exp(2e0*(m_kRhoPhi1 - m_kRhoPhi0)*phi) - 1e0) / (2e0*(m_kRhoPhi1 - m_kRhoPhi0));
+        k->x = rho * std::cos(phi + m_phi0);
+        k->y = rho * std::sin(phi + m_phi0);
+        k->z = 0e0;
 
         return true;
     }
+
 protected:
-    double m_dRhoPhi0;
-    double m_dRhoPhi1;
+    f64 m_kRhoPhi0;
+    f64 m_kRhoPhi1;
+    f64 m_phi0;
 };
 
 class VarDenSpiral: public MrTraj_2D
 {
 public:
-    VarDenSpiral(const GeoPara& sGeoPara, const GradPara& sGradPara, double dRhoPhi0, double dRhoPhi1)
+    VarDenSpiral(const GeoPara& sGeoPara, const GradPara& sGradPara, f64 kRhoPhi0, f64 dRhoPhi1):
+        MrTraj_2D(sGeoPara,sGradPara,0,0,0,0,v3(),vv3())
     {
-        if (dRhoPhi0==dRhoPhi1) throw std::invalid_argument("dRhoPhi0==dRhoPhi1");
+        if (kRhoPhi0==dRhoPhi1) throw std::invalid_argument("kRhoPhi0==dRhoPhi1");
 
-        m_sGeoPara = sGeoPara;
-        m_sGradPara = sGradPara;
-        const bool& bMaxG0 = m_sGradPara.bMaxG0;
-        const bool& bMaxG1 = m_sGradPara.bMaxG1;
-        m_lNRot = calNRot(std::max(dRhoPhi0, dRhoPhi1), m_sGeoPara.lNPix);
-        m_lNStack = m_sGeoPara.bIs3D ? m_sGeoPara.lNPix : 1;
-        m_lNAcq = m_lNRot*m_lNStack;
-
-        m_dRotAngInc = calRotAngInc(m_lNRot);
-        m_ptfBaseTraj = new VarDenSpiral_TrajFunc(dRhoPhi0, dRhoPhi1);
+        m_ptfBaseTraj = new VarDenSpiral_TrajFunc(kRhoPhi0, dRhoPhi1);
         if(!m_ptfBaseTraj) throw std::runtime_error("out of memory");
-        
-        calGrad(&m_v3BaseM0PE, &m_lv3BaseGRO, NULL, &m_lNWait, &m_lNSamp, *m_ptfBaseTraj, m_sGradPara, bMaxG0&&bMaxG1?2:8);
+        m_nStack = m_sGeoPara.is3D ? m_sGeoPara.nPix : 1;
+
+        i64 nRot = calNRot(std::max(kRhoPhi0, dRhoPhi1), m_sGeoPara.nPix);
+        m_rotang = calRotAng(nRot);
+        m_nAcq = nRot*m_nStack;
+
+        calGrad(&m_v3BaseM0PE, &m_vv3BaseGRO, NULL, *m_ptfBaseTraj, m_sGradPara);
+        m_nSampMax = m_vv3BaseGRO.size();
     }
     
     virtual ~VarDenSpiral()
@@ -59,4 +63,70 @@ public:
 
 protected:
     TrajFunc* m_ptfBaseTraj;
+};
+
+class VarDenSpiral_RT: public MrTraj
+{
+    // TODO: Goldang sampling is incomplete, shuffled sampling is incomplete.
+public:
+    VarDenSpiral_RT(const GeoPara& sGeoPara, const GradPara& sGradPara, f64 kRhoPhi0, f64 dRhoPhi1, f64 nAcq):
+        MrTraj(sGeoPara,sGradPara,0,0)
+    {
+        m_nAcq = nAcq;
+
+        m_dRhoPhi0 = kRhoPhi0;
+        m_dRhoPhi1 = dRhoPhi1;
+
+        m_vv3M0PE.resize(nAcq); std::fill(m_vv3M0PE.begin(), m_vv3M0PE.end(), v3(0));
+    }
+
+    virtual ~VarDenSpiral_RT()
+    {}
+
+    virtual bool getGRO(vv3* pvv3GRO, i64 iAcq)
+    {
+        bool ret = true;
+        TrajFunc* ptfTraj = new VarDenSpiral_TrajFunc(m_dRhoPhi0, m_dRhoPhi1, iAcq*GOLDANG);
+        if (!ptfTraj) throw std::runtime_error("out of memory");
+        if (iAcq>=m_nAcq) throw std::runtime_error("iAcq>=m_nAcq");
+        ret &= calGrad(&m_vv3M0PE[iAcq], pvv3GRO, NULL, *ptfTraj, m_sGradPara, 4);
+        delete ptfTraj;
+        return ret;
+    }
+
+    virtual bool getM0PE(v3* pv3M0PE, i64 iAcq)
+    {
+        if (iAcq>=m_nAcq)
+        {
+            throw std::runtime_error("iAcq>=m_nAcq");
+        }
+        *pv3M0PE = m_vv3M0PE[iAcq];
+        return true;
+    }
+
+    virtual i64 getNWait(i64 iAcq)
+    {
+        if (iAcq>=m_nAcq)
+        {
+            throw std::runtime_error("iAcq>=m_nAcq");
+        }
+        return m_vlNWait[iAcq];
+    }
+
+    virtual i64 getNSamp(i64 iAcq)
+    {
+        if (iAcq>=m_nAcq)
+        {
+            throw std::runtime_error("iAcq>=m_nAcq");
+        }
+        return m_vlNSamp[iAcq];
+    }
+
+protected:
+    f64 m_dRhoPhi0;
+    f64 m_dRhoPhi1;
+
+    vv3 m_vv3M0PE;
+    vi64 m_vlNWait;
+    vi64 m_vlNSamp;
 };

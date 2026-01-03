@@ -8,12 +8,13 @@ goldang = (2*pi)/(1+goldrat)
 getGoldrat = lambda: goldrat
 getGoldang = lambda: goldang
 
-def rand2d(i:int|NDArray) -> NDArray:
-    ky = goldrat
-    kx = sqrt(3)
-    y = (i**1 * 1/(1+ky))%1
-    x = (i**2 * 1/(1+kx))%1
-    return vstack([y,x]).T
+def rand3d(i:int|NDArray, nAx:int=3, kx=sqrt(2), ky=sqrt(3), kz=sqrt(7)) -> NDArray:
+    return (hstack if size(i)==1 else vstack)\
+    ([
+        (i**1 * 1/(1+kx))%1,
+        (i**2 * 1/(1+ky))%1,
+        (i**3 * 1/(1+kz))%1
+    ][:nAx]).T
 
 def cvtGrad2Traj(arrG:NDArray, dtGrad:int|float, dtADC:int|float, nShift:int|float=1.0) -> tuple[NDArray, NDArray]:
     """

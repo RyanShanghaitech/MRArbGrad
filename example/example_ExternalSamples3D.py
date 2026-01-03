@@ -6,10 +6,11 @@ import mrarbgrad as mag
 gamma = 42.5756e6
 fov = 0.256
 nPix = 256
-sLim = 100 * gamma * fov/nPix
-gLim = 120e-3 * gamma * fov/nPix
 dtGrad = 10e-6
 dtADC = 2.5e-6
+sLim = 50 * gamma * fov/nPix
+gLim = 20e-3 * gamma * fov/nPix
+# gLim = 1/nPix/dtADC
 
 # Yarnball
 nAx = 3
@@ -19,9 +20,10 @@ Yarnball = lambda sqrtTht: mag.trajfunc.Yarnball(sqrtTht, kRhoPhi)
 pLim = mag.trajfunc.prange_Yarnball(kRhoPhi)
     
 arrP = linspace(pLim[0], pLim[1], 1000)
-arrK = Yarnball(arrP).T
+arrK = Yarnball(arrP)
 
 # derive slew-rate constrained trajectory
+mag.setDbgPrint(1)
 arrG, _ = mag.calGrad4ExSamp(True, fov, nPix, sLim, gLim, dtGrad, arrK)
 nRO, _ = arrG.shape
 
@@ -32,16 +34,14 @@ arrK, _ = mag.cvtGrad2Traj(arrG, dtGrad, dtADC, 0.5)
 
 # derive reference trajectory
 arrP_Ref = linspace(pLim[0], pLim[1], int(1e4))
-arrK_Ref = Yarnball(arrP_Ref).T
+arrK_Ref = Yarnball(arrP_Ref)
 
 # plot
 figure(figsize=(20,10), dpi=120)
 
-subplot(221, projection=None if nAx==2 else "3d")
-if nAx==2: plot(arrK_Ref[:,0], arrK_Ref[:,1], "--", label="K_Ref")
-if nAx==3: plot(arrK_Ref[:,0], arrK_Ref[:,1], arrK_Ref[:,2], "--", label="K_Ref")
-if nAx==2: plot(arrK[:,0], arrK[:,1], ".-", label="K_Imp")
-if nAx==3: plot(arrK[:,0], arrK[:,1], arrK[:,2], ".-", label="K_Imp")
+subplot(221, projection="3d")
+plot(arrK_Ref[:,0], arrK_Ref[:,1], arrK_Ref[:,2], "--", label="K_Ref")
+plot(arrK[:,0], arrK[:,1], arrK[:,2], ".-", label="K_Imp")
 xlim(-0.5,0.5)
 ylim(-0.5,0.5)
 axis("equal")
