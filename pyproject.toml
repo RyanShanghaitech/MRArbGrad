@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "MRArbGrad"
-version = "2.0.1"
+version = "2.1.0"
 dependencies = ["numpy"]
 
 description = "Gradient waveform design tool for arbitrary k-space trajectories."

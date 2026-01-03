@@ -1,3 +1,6 @@
+2.1.0 (Jan 4, 2026)
+add a helper function `gradClip()`.
+
 2.0.0 (Jan 3, 2026)
 We do not support `getNWait()` and `getNSamp()` in the C++ layer anymore, which previously accounted for the samples to wait before the ADC window and the length of the ADC window in samples, as sometimes gradient waveform may contain ramp-up and ramp-down. We decide to leave ramping in sequence design stage outside of this package's scope. So that we can make this package concise.
 

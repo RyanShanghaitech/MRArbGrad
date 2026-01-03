@@ -2,7 +2,7 @@
 
 #include "../utility/global.h"
 #include "../utility/v3.h"
-// #include "../mag/MagSolver.h" // VS2010 reports error on this
+// #include "../mag/Mag.h" // VS2010 reports error on this
 
 /* 
  * Single trajectory define by a parameterized function getK()

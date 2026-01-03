@@ -1,12 +1,52 @@
 from numpy import *
+from numpy.linalg import norm
 from numpy.typing import *
-from matplotlib.pyplot import *
 
 goldrat = (1+sqrt(5))/2
 goldang = (2*pi)/(1+goldrat)
 
 getGoldrat = lambda: goldrat
 getGoldang = lambda: goldang
+
+def gradClip(lstArrGrad:list[NDArray]|NDArray, dt:float, sLim:float, gLim:float) -> list[NDArray]|NDArray:
+    """
+    Clip the slewrate and gradient amlitude of a list of gradient waveforms
+
+    Args:
+        lstArrGrad: list of gradient waveforms
+        sLim: slewrate amplitude limit
+        gLim: gradient amplitude limit
+
+    Returns:
+        Clipped gradient waveforms
+    """
+    if isinstance(lstArrGrad, ndarray): _lstArrGrad = [lstArrGrad.copy()]
+    else: _lstArrGrad = lstArrGrad.copy()
+    nPE = len(_lstArrGrad)
+    for iPE in range(nPE):
+        # slew-rate clipping
+        arrGrad = _lstArrGrad[iPE]
+        arrSlew = diff(arrGrad, 1, 0)/dt
+        arrSlewNorm = norm(arrSlew, axis=-1)
+        arrSlewNorm[where(arrSlewNorm==0)] += 1e-6
+        arrSlewUnit = arrSlew/arrSlewNorm[:,newaxis]
+        clip(arrSlewNorm, None, sLim, out=arrSlewNorm)
+        arrSlew = arrSlewUnit*arrSlewNorm[:,newaxis]
+        # gradient clipping
+        arrGrad[:,:] = arrGrad[0,:]
+        arrGrad[1:,:] += cumsum(arrSlew*dt, axis=0)
+        arrGradNorm = norm(arrGrad, axis=-1)
+        arrGradNorm[where(arrGradNorm==0)] += 1e-6
+        arrGradUnit = arrGrad/arrGradNorm[:,newaxis]
+        clip(arrGradNorm, None, gLim, out=arrGradNorm)
+        arrGrad = arrGradUnit*arrGradNorm[:,newaxis]
+        # 
+        _lstArrGrad[iPE] = arrGrad
+        
+    if isinstance(lstArrGrad, ndarray):
+        return _lstArrGrad[0]
+    else:
+        return _lstArrGrad
 
 def rand3d(i:int|NDArray, nAx:int=3, kx=sqrt(2), ky=sqrt(3), kz=sqrt(7)) -> NDArray:
     return (hstack if size(i)==1 else vstack)\

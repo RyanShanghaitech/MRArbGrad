@@ -23,7 +23,7 @@ mag.setGoldAng(0)
 mag.setShuf(0)
 mag.setMaxG0(0)
 mag.setMaxG1(0)
-mag.setMagOverSamp(8)
+mag.setMagOverSamp(2)
 mag.setMagSFS(0)
 mag.setMagGradRep(1)
 mag.setMagTrajRep(1)
@@ -33,12 +33,14 @@ mag.setDbgPrint(1)
 # lstArrK0, lstArrGrad = mag.getG_Spiral(is3D=0, **argCom); nAx = 2
 # lstArrK0, lstArrGrad = mag.getG_VarDenSpiral(is3D=0, **argCom); nAx = 2
 # lstArrK0, lstArrGrad = mag.getG_VarDenSpiral_RT(is3D=0, **argCom); nAx = 2
-lstArrK0, lstArrGrad = mag.getG_Rosette(is3D=0, **argCom); nAx = 2
+# lstArrK0, lstArrGrad = mag.getG_Rosette(is3D=0, **argCom); nAx = 2
 # lstArrK0, lstArrGrad = mag.getG_Rosette_Trad(**argCom, om1=10*pi, om2=8*pi, tMax=1, tAcq=2e-03); nAx = 2
 # lstArrK0, lstArrGrad = mag.getG_Shell3d(**argCom, kRhoTht = 0.5 / (4 * pi)); nAx = 3
-# lstArrK0, lstArrGrad = mag.getG_Yarnball(**argCom, kRhoPhi = 0.5 / (3 * pi)); nAx = 3
+lstArrK0, lstArrGrad = mag.getG_Yarnball(**argCom, kRhoPhi = 0.5 / (3 * pi)); nAx = 3
 # lstArrK0, lstArrGrad = mag.getG_Seiffert(**argCom); nAx = 3
 # lstArrK0, lstArrGrad = mag.getG_Cones(**argCom, kRhoPhi = 0.5 / (16 * pi)); nAx = 3
+
+lstArrGrad = mag.gradClip(lstArrGrad, dtGrad, sLim, gLim)
 
 print(f"Intlea Num.: {len(lstArrGrad)}")
 nRO_Max = amax([arrG.shape[0] for arrG in lstArrGrad])
@@ -76,8 +78,9 @@ arrK = concatenate(lstArrK, axis=0)
 
 mad.setNumStep(2)
 t = time()
-arrDcf = mad.sovDcf(nPix, lstArrK, sWind="cos", pShape=1.0).astype(complex64)
+lstArrDcf = mad.sovDcf(nPix, lstArrK, sWind="cos", pShape=1.0)
 t = time() - t
+arrDcf = hstack(lstArrDcf).astype(complex64)
 print(f"sovDcf: {t:.2f} s")
 
 arr2PiKT = asarray(2*pi*arrK.T, dtype=float32, order="C")
