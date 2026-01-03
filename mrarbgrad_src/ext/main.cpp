@@ -410,7 +410,7 @@ bool getG(MrTraj* pmt, vv3* pvv3M0PE, vvv3* pvvv3GRO)
         v3 v3M0PE; ret &= pmt->getM0PE(&v3M0PE, _i);
 
         // reverse gradient if needed
-        if (gMain_enTrajRev) ret &= MagSolver::revGrad(&v3M0PE, &vv3GRO, v3M0PE, vv3GRO, dt);
+        if (gMain_enTrajRev) ret &= Mag::revGrad(&v3M0PE, &vv3GRO, v3M0PE, vv3GRO, dt);
 
         pvv3M0PE->at(i) = v3M0PE;
         pvvv3GRO->at(i) = vv3GRO;

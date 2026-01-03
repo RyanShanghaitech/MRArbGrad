@@ -84,7 +84,7 @@ protected:
     SplineIntp m_intpX, m_intpY, m_intpZ;
 };
 
-class MagSolver
+class Mag
 {
 public:
     typedef std::vector<i64> vi64;
@@ -97,7 +97,7 @@ public:
     typedef std::list<v3> lv3;
     typedef std::list<vv3> lvv3;
 
-    MagSolver();
+    Mag();
     bool setup
     (
         TrajFunc* ptTraj,
@@ -112,8 +112,8 @@ public:
         f64 dt=10e-6, i64 oversamp=10, 
         f64 dG0Norm=0e0, f64 dG1Norm=0e0
     );
-    ~MagSolver();
-    bool compute(vv3* plv3G, vf64* pvf64P=NULL);
+    ~Mag();
+    bool solve(vv3* plv3G, vf64* pvf64P=NULL);
     template <typename dtype, typename cv3>
     static bool decomp
     (
@@ -154,7 +154,7 @@ private:
 
 // definition must be in `.h` file (compiler limitation)
 template <typename dtype, typename cv3>
-bool MagSolver::decomp
+bool Mag::decomp
 (
     std::vector<dtype>* pvfGx,
     std::vector<dtype>* pvfGy,

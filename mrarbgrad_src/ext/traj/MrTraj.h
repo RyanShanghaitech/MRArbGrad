@@ -58,7 +58,7 @@ public:
         m_sGradPara(m_sGradPara),
         m_nAcq(m_nAcq),
         m_nSampMax(m_nSampMax)
-    { solver = MagSolver(); }
+    { mag = Mag(); }
     
     virtual ~MrTraj()
     {}
@@ -122,13 +122,13 @@ public:
         { vi64SeqIdx.push_back(i); }
         
         // decide step size, make step size and num of idx coprime
-        i64 step = (i64)(num*(GOLDRAT-1));
-        while (gcd(step, num)!=1)
-        { ++step; }
+        i64 inc = (i64)(num*(GOLDRAT-1));
+        while (gcd(inc, num)!=1)
+        { ++inc; }
 
         // generate random index
         for(i64 i = 0; i < num; ++i)
-        { pvi64Idx->push_back(i*step%num); }
+        { pvi64Idx->push_back(i*inc%num); }
 
         return true;
     }
@@ -167,7 +167,7 @@ protected:
     i64 m_nSampMax;
 
     // solver settings
-    MagSolver solver;
+    Mag mag;
     
     // calculate required num. of rot. to satisfy Nyquist sampling (for spiral only)
     static i64 calNRot(f64 kRhoPhi, i64 nPix)
@@ -232,8 +232,8 @@ protected:
         const f64& gLim = sGradPara.gLim;
         const f64& dt = sGradPara.dt;
 
-        solver.setup(&tf, sLim, gLim, dt, oversamp, gMrTraj_g0Norm, gMrTraj_g1Norm);
-        ret &= solver.compute(pvv3G, pvf64P);
+        mag.setup(&tf, sLim, gLim, dt, oversamp, gMrTraj_g0Norm, gMrTraj_g1Norm);
+        ret &= mag.solve(pvv3G, pvf64P);
 
         return ret;
     }
@@ -245,8 +245,8 @@ protected:
         const f64& gLim = sGradPara.gLim;
         const f64& dt = sGradPara.dt;
 
-        solver.setup(vv3TrajSamp, sLim, gLim, dt, oversamp, gMrTraj_g0Norm, gMrTraj_g1Norm);
-        ret &= solver.compute(pvv3G, pvf64P);
+        mag.setup(vv3TrajSamp, sLim, gLim, dt, oversamp, gMrTraj_g0Norm, gMrTraj_g1Norm);
+        ret &= mag.solve(pvv3G, pvf64P);
 
         return ret;
     }
@@ -384,7 +384,7 @@ protected:
         {
             // add ramp gradient to satisfy desired Gstart and Gfinal
             vv3 vv3GRampFront;
-            ret &= MagSolver::ramp_front(&vv3GRampFront, pvv3GRO->front(), v3(), sLim, dt);
+            ret &= Mag::ramp_front(&vv3GRampFront, pvv3GRO->front(), v3(), sLim, dt);
             pvv3GRO->insert(pvv3GRO->begin(), vv3GRampFront.begin(), vv3GRampFront.end());
             
             // corresponding parameter sequence
@@ -398,7 +398,7 @@ protected:
         {
             // add ramp gradient to satisfy desired Gstart and Gfinal
             vv3 vv3GRampBack;
-            ret &= MagSolver::ramp_back(&vv3GRampBack, pvv3GRO->back(), v3(), sLim, dt);
+            ret &= Mag::ramp_back(&vv3GRampBack, pvv3GRO->back(), v3(), sLim, dt);
             pvv3GRO->insert(pvv3GRO->end(), vv3GRampBack.begin(), vv3GRampBack.end());
             
             // corresponding parameter sequence

@@ -12,7 +12,7 @@ bool gMag_enGradRep = true; // Gradient Reparameterization
 bool gMag_enTrajRep = true; // use trajectory reparameterization for MAG solver
 i64 gMag_nTrajSamp = 1000; // num. of samp. when doing Traj. Rep.
 
-MagSolver::MagSolver()
+Mag::Mag()
 {
     m_dt = 10e-6; m_oversamp = 8;
     i64 nSampReserve = i64(100e-3/m_dt*m_oversamp); // reserve for 100ms
@@ -25,7 +25,7 @@ MagSolver::MagSolver()
     m_vv3G_For.reserve(nSampReserve);
 }
 
-bool MagSolver::setup
+bool Mag::setup
     (
         TrajFunc* ptTraj,
         f64 sLim, f64 gLim,
@@ -61,7 +61,7 @@ bool MagSolver::setup
     return true;
 }
 
-bool MagSolver::setup
+bool Mag::setup
     (
         const vv3& vv3TrajSamp,
         f64 sLim, f64 gLim,
@@ -81,10 +81,10 @@ bool MagSolver::setup
     return true;
 }
 
-MagSolver::~MagSolver()
+Mag::~Mag()
 {}
 
-bool MagSolver::sovQDE(f64* psol0, f64* psol1, f64 a, f64 b, f64 c)
+bool Mag::sovQDE(f64* psol0, f64* psol1, f64 a, f64 b, f64 c)
 {
     f64 delta = b*b - 4e0*a*c;
     if (psol0) *psol0 = (-b-(delta<0?0:std::sqrt(delta)))/(2*a);
@@ -92,7 +92,7 @@ bool MagSolver::sovQDE(f64* psol0, f64* psol1, f64 a, f64 b, f64 c)
     return delta>=0;
 }
 
-f64 MagSolver::getCurRad(f64 p)
+f64 Mag::getCurRad(f64 p)
 {
     v3 dkdp; m_ptfTraj->getDkDp(&dkdp, p);
     v3 d2kdp2; m_ptfTraj->getD2kDp2(&d2kdp2, p);
@@ -103,7 +103,7 @@ f64 MagSolver::getCurRad(f64 p)
 
 #if 1
 
-f64 MagSolver::getDp(const v3& v3GPrev, const v3& v3GThis, f64 dt, f64 pPrev, f64 pThis, f64 signDp)
+f64 Mag::getDp(const v3& v3GPrev, const v3& v3GThis, f64 dt, f64 pPrev, f64 pThis, f64 signDp)
 {
     // solve `ΔP` by RK2
     f64 l = v3::norm(v3GThis)*dt;
@@ -127,7 +127,7 @@ f64 MagSolver::getDp(const v3& v3GPrev, const v3& v3GThis, f64 dt, f64 pPrev, f6
 
 #else // less accurate due to estimation of PNext
 
-f64 MagSolver::getDp(const v3& v3GPrev, const v3& v3GThis, f64 dt, f64 pPrev, f64 pThis, f64 signDp)
+f64 Mag::getDp(const v3& v3GPrev, const v3& v3GThis, f64 dt, f64 pPrev, f64 pThis, f64 signDp)
 {
     // solve `ΔP` by RK2
     f64 l = v3::norm(v3GThis)*dt;
@@ -140,7 +140,7 @@ f64 MagSolver::getDp(const v3& v3GPrev, const v3& v3GThis, f64 dt, f64 pPrev, f6
 
 #endif
 
-bool MagSolver::step(v3* gUnit, f64* gNormMin, f64* gNormMax, f64 p, f64 signDp, const v3& g, f64 sLim, f64 dt)
+bool Mag::step(v3* gUnit, f64* gNormMin, f64* gNormMax, f64 p, f64 signDp, const v3& g, f64 sLim, f64 dt)
 {
     // current gradient direction
     v3 dkdp; m_ptfTraj->getDkDp(&dkdp, p);
@@ -161,7 +161,7 @@ bool MagSolver::step(v3* gUnit, f64* gNormMin, f64* gNormMax, f64 p, f64 signDp,
     return isQDESucc;
 }
 
-bool MagSolver::compute(vv3* pvv3G, vf64* pvf64P)
+bool Mag::solve(vv3* pvv3G, vf64* pvf64P)
 {
     bool ret = true;
     f64 p0 = m_ptfTraj->getP0();
@@ -327,7 +327,7 @@ bool MagSolver::compute(vv3* pvv3G, vf64* pvf64P)
     return ret;
 }
 
-bool MagSolver::ramp_front(vv3* pvv3GRamp, const v3& g0, const v3& g0Des, f64 sLim, f64 dt)
+bool Mag::ramp_front(vv3* pvv3GRamp, const v3& g0, const v3& g0Des, f64 sLim, f64 dt)
 {
     v3 dg = g0Des - g0;
     v3 dgUnit = v3::norm(dg)!=0 ? dg/v3::norm(dg) : v3(0,0,0);
@@ -347,7 +347,7 @@ bool MagSolver::ramp_front(vv3* pvv3GRamp, const v3& g0, const v3& g0Des, f64 sL
     return true;
 }
 
-f64 MagSolver::ramp_front(vv3* pvv3GRamp, const v3& g0, const v3& g0Des, i64 nSamp, f64 dt)
+f64 Mag::ramp_front(vv3* pvv3GRamp, const v3& g0, const v3& g0Des, i64 nSamp, f64 dt)
 {
     v3 dg = g0Des - g0;
     v3 dgUnit = v3::norm(dg)!=0 ? dg/v3::norm(dg) : v3(0,0,0);
@@ -367,7 +367,7 @@ f64 MagSolver::ramp_front(vv3* pvv3GRamp, const v3& g0, const v3& g0Des, i64 nSa
     return sLim;
 }
 
-bool MagSolver::ramp_back(vv3* pvv3GRamp, const v3& g1, const v3& g1Des, f64 sLim, f64 dt)
+bool Mag::ramp_back(vv3* pvv3GRamp, const v3& g1, const v3& g1Des, f64 sLim, f64 dt)
 {
     v3 dg = g1Des - g1;
     v3 dgUnit = v3::norm(dg)!=0 ? dg/v3::norm(dg) : v3(0,0,0);
@@ -387,7 +387,7 @@ bool MagSolver::ramp_back(vv3* pvv3GRamp, const v3& g1, const v3& g1Des, f64 sLi
     return true;
 }
 
-f64 MagSolver::ramp_back(vv3* pvv3GRamp, const v3& g1, const v3& g1Des, i64 nSamp, f64 dt)
+f64 Mag::ramp_back(vv3* pvv3GRamp, const v3& g1, const v3& g1Des, i64 nSamp, f64 dt)
 {
     v3 dg = g1Des - g1;
     v3 dgUnit = v3::norm(dg)!=0 ? dg/v3::norm(dg) : v3(0,0,0);
@@ -407,7 +407,7 @@ f64 MagSolver::ramp_back(vv3* pvv3GRamp, const v3& g1, const v3& g1Des, i64 nSam
     return sLim;
 }
 
-bool MagSolver::revGrad(v3* pv3M0Dst, vv3* pvv3Dst, const v3& v3M0Src, const vv3& vv3Src, f64 dt)
+bool Mag::revGrad(v3* pv3M0Dst, vv3* pvv3Dst, const v3& v3M0Src, const vv3& vv3Src, f64 dt)
 {
     bool ret = true;
 
@@ -426,7 +426,7 @@ bool MagSolver::revGrad(v3* pv3M0Dst, vv3* pvv3Dst, const v3& v3M0Src, const vv3
     return ret;
 }
 
-v3 MagSolver::calM0(const vv3& vv3G, f64 dt)
+v3 Mag::calM0(const vv3& vv3G, f64 dt)
 {
     v3 M0 = v3(0,0,0);
     for (int64_t i = 1; i < (i64)vv3G.size(); ++i)
