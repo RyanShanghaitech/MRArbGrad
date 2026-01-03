@@ -1,0 +1,5442 @@
+from numpy import *
+from numpy.typing import *
+
+# Spiral
+prange_Spiral = lambda kRhoPhi: [0e0, 0.5/kRhoPhi]
+
+def Spiral(phi:float64, kRhoPhi:float64=0.5/(4*pi), phi0:float64=0e0):
+    rho = kRhoPhi*phi
+    return array([rho*cos(phi+phi0), rho*sin(phi+phi0), zeros_like(phi)])
+
+# VDS
+prange_VDS = lambda kRhoPhi0, kRhoPhi1: [0e0, (log(kRhoPhi1)-log(kRhoPhi0))/(2e0*(kRhoPhi1-kRhoPhi0))]
+
+def VDS(phi:float64, kRhoPhi0:float64=0.5/(8*pi), kRhoPhi1:float64=0.5/(2*pi), phi0:float64=0e0):
+    rho = kRhoPhi0*(exp(2e0*(kRhoPhi1-kRhoPhi0)*phi)-1e0)/(2e0*(kRhoPhi1-kRhoPhi0))
+    return array([rho*cos(phi+phi0), rho*sin(phi+phi0), zeros_like(phi)])
+
+# Rosette
+prange_Rosette = [0e0, 1e0]
+
+def Rosette(t:float64, om1:float64=5e0*pi, om2:float64=3e0*pi, phi0:float64=0e0):
+    rho = 0.5*sin(om1*t)
+    return array([rho*cos(om2*t+phi0), rho*sin(om2*t+phi0), zeros_like(t)])
+
+# Yarnball
+prange_Yarnball = lambda kRhoPhi: [0e0, 1e0/(sqrt(8e0)*kRhoPhi)]
+
+def Yarnball(sqrtTht:float64, kRhoPhi:float64=0.5/(2e0*pi), tht0:float64=pi/3e0, phi0:float64=0e0):
+    kPhiSqrtTht, kRhoSqrtTht = sqrt(2e0), sqrt(2e0)*kRhoPhi
+    tht, rho, phi = sqrtTht**2e0*sign(sqrtTht), kRhoSqrtTht*sqrtTht, kPhiSqrtTht*sqrtTht
+    return array([rho*sin(tht+tht0)*cos(phi+phi0), rho*sin(tht+tht0)*sin(phi+phi0), rho*cos(tht+tht0)])
+
+# Cones
+prange_Cones = lambda kRhoPhi: [0e0, 0.5/kRhoPhi]
+
+def Cones(phi:float64, kRhoPhi:float64=0.5/(4*pi), tht0:float64=pi/3e0, phi0:float64=0e0):
+    rho = kRhoPhi*phi
+    return array([rho*sin(tht0)*cos(phi+phi0), rho*sin(tht0)*sin(phi+phi0), rho*cos(tht0)])
+
+__all__ = \
+[
+    'Spiral', 'prange_Spiral',
+    'VDS', 'prange_VDS',
+    'Rosette', 'prange_Rosette',
+    'Yarnball', 'prange_Yarnball',
+    'Cones', 'prange_Cones'
+]from numpy import *
+from matplotlib.pyplot import *
+from numpy.typing import NDArray
+from typing import Callable
+import mrarbgrad.ext as ext
+from .Utility import *
+
+goldang = getGoldang()
+
+def calGrad4ExFunc\
+(
+    is3D: bool = False,
+    fov: float64 = 0.256,
+    nPix: int64 = 256,
+    
+    sLim: float64 = 50 * 42.5756e6 * 0.256 / 256,
+    gLim: float64 = 50e-3 * 42.5756e6 * 0.256 / 256,
+    dt: float64 = 10e-6,
+    
+    getK: Callable|None = None,
+    getDkDp: Callable|None = None,
+    getD2kDp2: Callable|None = None,
+    
+    p0:float64 = 0e0, 
+    p1:float64 = 1e0, 
+) -> tuple[NDArray, NDArray]:
+    '''
+    :return: gradient waveform, corresponding parameter
+    :rtype: tuple[NDArray, NDArray]
+    '''
+    return ext.calGrad4ExFunc\
+    (
+        int64(is3D),
+        float64(fov),
+        int64(nPix),
+        
+        float64(sLim), 
+        float64(gLim), 
+        float64(dt), 
+        
+        getK,
+        getDkDp,
+        getD2kDp2,
+        
+        float64(p0),
+        float64(p1), 
+    )
+
+def calGrad4ExSamp\
+(
+    is3D: bool = False,
+    fov: float64 = 0.256,
+    nPix: int64 = 256,
+    
+    sLim: float64 = 50 * 42.5756e6 * 0.256 / 256,
+    gLim: float64 = 50e-3 * 42.5756e6 * 0.256 / 256,
+    dt: float64 = 10e-6,
+    
+    arrK: NDArray = np.empty((0,3)),
+) -> tuple[NDArray, NDArray]:
+    '''
+    :return: gradient waveform, corresponding parameter
+    :rtype: tuple[NDArray, NDArray]
+    '''
+    return ext.calGrad4ExSamp\
+    (
+        int64(is3D),
+        float64(fov),
+        int64(nPix),
+        
+        float64(sLim), 
+        float64(gLim), 
+        float64(dt), 
+        
+        arrK
+    )
+    
+def getG_Spiral\
+(
+    is3D: bool = False,
+    fov: float64 = 0.256,
+    nPix: int64 = 256,
+    
+    sLim: float64 = 50 * 42.5756e6 * 0.256 / 256,
+    gLim: float64 = 50e-3 * 42.5756e6 * 0.256 / 256,
+    dt: float64 = 10e-6,
+    
+    kRhoPhi: float64 = 0.5 / (4 * pi)
+) -> tuple[list[NDArray], list[NDArray]]:
+    '''
+    :return: list of trajectory start, list of gradient waveforms
+    :rtype: tuple[list[NDArray], list[NDArray]]
+    '''
+    return ext.getG_Spiral\
+    (
+        int64(is3D),
+        float64(fov),
+        int64(nPix),
+        
+        float64(sLim),
+        float64(gLim),
+        float64(dt),
+        
+        float64(kRhoPhi)
+    )
+
+def getG_VarDenSpiral\
+(
+    is3D: bool = False,
+    fov: float64 = 0.256,
+    nPix: int64 = 256,
+    
+    sLim: float64 = 50 * 42.5756e6 * 0.256 / 256,
+    gLim: float64 = 50e-3 * 42.5756e6 * 0.256 / 256,
+    dt: float64 = 10e-6,
+    
+    kRhoPhi0: float64 = 0.5 / (8 * pi),
+    kRhoPhi1: float64 = 0.5 / (2 * pi),
+) -> tuple[list[NDArray], list[NDArray]]:
+    '''
+    :return: list of trajectory start, list of gradient waveforms
+    :rtype: tuple[list[NDArray], list[NDArray]]
+    '''
+    return ext.getG_VarDenSpiral\
+    (
+        int64(is3D),
+        float64(fov),
+        int64(nPix),
+        
+        float64(sLim),
+        float64(gLim),
+        float64(dt),
+        
+        float64(kRhoPhi0),
+        float64(kRhoPhi1)
+    )
+
+def getG_VarDenSpiral_RT\
+(
+    is3D: bool = False,
+    fov: float64 = 0.256,
+    nPix: int64 = 256,
+    
+    sLim: float64 = 50 * 42.5756e6 * 0.256 / 256,
+    gLim: float64 = 50e-3 * 42.5756e6 * 0.256 / 256,
+    dt: float64 = 10e-6,
+    
+    kRhoPhi0: float64 = 0.5 / (8 * pi),
+    kRhoPhi1: float64 = 0.5 / (2 * pi),
+    nAcq: int64 = 1000,
+) -> tuple[list[NDArray], list[NDArray]]:
+    '''
+    :return: list of trajectory start, list of gradient waveforms
+    :rtype: tuple[list[NDArray], list[NDArray]]
+    '''
+    return ext.getG_VarDenSpiral_RT\
+    (
+        int64(is3D),
+        float64(fov),
+        int64(nPix),
+        
+        float64(sLim),
+        float64(gLim),
+        float64(dt),
+        
+        float64(kRhoPhi0),
+        float64(kRhoPhi1),
+        
+        int64(nAcq)
+    )
+
+def getG_Rosette\
+(
+    is3D: bool = False,
+    fov: float64 = 0.256,
+    nPix: int64 = 256,
+    
+    sLim: float64 = 50 * 42.5756e6 * 0.256 / 256,
+    gLim: float64 = 50e-3 * 42.5756e6 * 0.256 / 256,
+    dt: float64 = 10e-6,
+    
+    om1: float64 = 5*pi, 
+    om2: float64 = 3*pi, 
+    tMax: float64 = 1e0,
+) -> tuple[list[NDArray], list[NDArray]]:
+    '''
+    :return: list of trajectory start, list of gradient waveforms
+    :rtype: tuple[list[NDArray], list[NDArray]]
+    '''
+    return ext.getG_Rosette\
+    (
+        int64(is3D),
+        float64(fov),
+        int64(nPix),
+        
+        float64(sLim),
+        float64(gLim),
+        float64(dt),
+        
+        float64(om1),
+        float64(om2),
+        float64(tMax)
+    )
+
+def getG_Rosette_Trad\
+(
+    is3D: bool = False,
+    fov: float64 = 0.256,
+    nPix: int64 = 256,
+    
+    sLim: float64 = 50 * 42.5756e6 * 0.256 / 256,
+    gLim: float64 = 50e-3 * 42.5756e6 * 0.256 / 256,
+    dt: float64 = 10e-6,
+    
+    om1: float64 = 5*pi, 
+    om2: float64 = 3*pi, 
+    tMax: float64 = 1e0,
+    tAcq: float64 = 2.523e-3,
+) -> tuple[list[NDArray], list[NDArray]]:
+    '''
+    :return: list of trajectory start, list of gradient waveforms
+    :rtype: tuple[list[NDArray], list[NDArray]]
+    '''
+    return ext.getG_Rosette_Trad\
+    (
+        int64(is3D),
+        float64(fov),
+        int64(nPix),
+        
+        float64(sLim),
+        float64(gLim),
+        float64(dt),
+        
+        float64(om1),
+        float64(om2),
+        float64(tMax),
+        float64(tAcq)
+    )
+
+def getG_Shell3d\
+(
+    is3D: bool = False,
+    fov: float64 = 0.256,
+    nPix: int64 = 256,
+    
+    sLim: float64 = 50 * 42.5756e6 * 0.256 / 256,
+    gLim: float64 = 50e-3 * 42.5756e6 * 0.256 / 256,
+    dt: float64 = 10e-6,
+    
+    kRhoTht: float64 = 0.5 / (2 * pi),
+) -> tuple[list[NDArray], list[NDArray]]:
+    '''
+    :return: list of trajectory start, list of gradient waveforms
+    :rtype: tuple[list[NDArray], list[NDArray]]
+    '''
+    return ext.getG_Shell3d\
+    (
+        int64(is3D),
+        float64(fov),
+        int64(nPix),
+        
+        float64(sLim),
+        float64(gLim),
+        float64(dt),
+        
+        float64(kRhoTht),
+    )
+
+def getG_Yarnball\
+(
+    is3D: bool = False,
+    fov: float64 = 0.256,
+    nPix: int64 = 256,
+    
+    sLim: float64 = 50 * 42.5756e6 * 0.256 / 256,
+    gLim: float64 = 50e-3 * 42.5756e6 * 0.256 / 256,
+    dt: float64 = 10e-6,
+    
+    kRhoPhi: float64 = 0.5 / (2 * pi),
+) -> tuple[list[NDArray], list[NDArray]]:
+    '''
+    :return: list of trajectory start, list of gradient waveforms
+    :rtype: tuple[list[NDArray], list[NDArray]]
+    '''
+    return ext.getG_Yarnball\
+    (
+        int64(is3D),
+        float64(fov),
+        int64(nPix),
+        
+        float64(sLim),
+        float64(gLim),
+        float64(dt),
+        
+        float64(kRhoPhi),
+    )
+
+def getG_Seiffert\
+(
+    is3D: bool = False,
+    fov: float64 = 0.256,
+    nPix: int64 = 256,
+    
+    sLim: float64 = 50 * 42.5756e6 * 0.256 / 256,
+    gLim: float64 = 50e-3 * 42.5756e6 * 0.256 / 256,
+    dt: float64 = 10e-6,
+    
+    m: float64 = 0.07, 
+    uMax: float64 = 20.0, 
+) -> tuple[list[NDArray], list[NDArray]]:
+    '''
+    :return: list of trajectory start, list of gradient waveforms
+    :rtype: tuple[list[NDArray], list[NDArray]]
+    '''
+    return ext.getG_Seiffert\
+    (
+        int64(is3D),
+        float64(fov),
+        int64(nPix),
+        
+        float64(sLim),
+        float64(gLim),
+        float64(dt),
+        
+        float64(m),
+        float64(uMax),
+    )
+
+def getG_Cones\
+(
+    is3D: bool = False,
+    fov: float64 = 0.256,
+    nPix: int64 = 256,
+    
+    sLim: float64 = 50 * 42.5756e6 * 0.256 / 256,
+    gLim: float64 = 50e-3 * 42.5756e6 * 0.256 / 256,
+    dt: float64 = 10e-6,
+    
+    kRhoPhi: float64 = 0.5 / (4 * pi),
+) -> tuple[list[NDArray], list[NDArray]]:
+    '''
+    :return: list of trajectory start, list of gradient waveforms
+    :rtype: tuple[list[NDArray], list[NDArray]]
+    '''
+    return ext.getG_Cones\
+    (
+        int64(is3D),
+        float64(fov),
+        int64(nPix),
+        
+        float64(sLim),
+        float64(gLim),
+        float64(dt),
+        
+        float64(kRhoPhi),
+    )
+
+def setSolverMtg(x): ext.setSolverMtg(x)
+def setTrajRev(x): ext.setTrajRev(x)
+def setGoldAng(x): ext.setGoldAng(x)
+def setShuf(x): ext.setShuf(x)
+def setMaxG0(x): ext.setMaxG0(x)
+def setMaxG1(x): ext.setMaxG1(x)
+def setExGEnd(x): ext.setExGEnd(x)
+def setMagOverSamp(x): ext.setMagOverSamp(x)
+def setMagSFS(x): ext.setMagSFS(x)
+def setMagGradRep(x): ext.setMagGradRep(x)
+def setMagTrajRep(x): ext.setMagTrajRep(x)
+def setDbgPrint(x): ext.setDbgPrint(x)
+from numpy import *
+from numpy.typing import *
+
+# Spiral
+prange_Spiral = lambda kRhoPhi: [0e0, 0.5/kRhoPhi]
+
+def Spiral(phi:float64, kRhoPhi:float64=0.5/(4*pi), phi0:float64=0e0):
+    rho = kRhoPhi*phi
+    return array([rho*cos(phi+phi0), rho*sin(phi+phi0), zeros_like(phi)]).T
+
+# VDS
+prange_VDS = lambda kRhoPhi0, kRhoPhi1: [0e0, (log(kRhoPhi1)-log(kRhoPhi0))/(2e0*(kRhoPhi1-kRhoPhi0))]
+
+def VDS(phi:float64, kRhoPhi0:float64=0.5/(8*pi), kRhoPhi1:float64=0.5/(2*pi), phi0:float64=0e0):
+    rho = kRhoPhi0*(exp(2e0*(kRhoPhi1-kRhoPhi0)*phi)-1e0)/(2e0*(kRhoPhi1-kRhoPhi0))
+    return array([rho*cos(phi+phi0), rho*sin(phi+phi0), zeros_like(phi)]).T
+
+# Rosette
+prange_Rosette = [0e0, 1e0]
+
+def Rosette(t:float64, om1:float64=5e0*pi, om2:float64=3e0*pi, phi0:float64=0e0):
+    rho = 0.5*sin(om1*t)
+    return array([rho*cos(om2*t+phi0), rho*sin(om2*t+phi0), zeros_like(t)]).T
+
+# Yarnball
+prange_Yarnball = lambda kRhoPhi: [0e0, 1e0/(sqrt(8e0)*kRhoPhi)]
+
+def Yarnball(sqrtTht:float64, kRhoPhi:float64=0.5/(2e0*pi), tht0:float64=0e0, phi0:float64=0e0):
+    kPhiSqrtTht, kRhoSqrtTht = sqrt(2e0), sqrt(2e0)*kRhoPhi
+    tht, rho, phi = sqrtTht**2e0*sign(sqrtTht), kRhoSqrtTht*sqrtTht, kPhiSqrtTht*sqrtTht
+    return array([rho*sin(tht+tht0)*cos(phi+phi0), rho*sin(tht+tht0)*sin(phi+phi0), rho*cos(tht+tht0)]).T
+
+# Cones
+prange_Cones = lambda kRhoPhi: [0e0, 0.5/kRhoPhi]
+
+def Cones(phi:float64, kRhoPhi:float64=0.5/(4*pi), tht0:float64=pi/3e0, phi0:float64=0e0):
+    rho = kRhoPhi*phi
+    return array([rho*sin(tht0)*cos(phi+phi0), rho*sin(tht0)*sin(phi+phi0), rho*cos(tht0)]).T
+from .main import Spiral, prange_Spiral, VDS, prange_VDS, Rosette, prange_Rosette, Yarnball, prange_Yarnball, Cones, prange_Conesfrom .Function import calGrad4ExFunc, calGrad4ExSamp
+from .Function import getG_Cones, getG_Rosette, getG_Rosette_Trad, getG_Seiffert, getG_Shell3d, getG_Spiral, getG_VarDenSpiral, getG_VarDenSpiral_RT, getG_Yarnball
+from .Function import setSolverMtg, setTrajRev, setGoldAng, setShuf, setMaxG0, setMaxG1, setExGEnd, setMagOverSamp, setMagSFS, setMagGradRep, setMagTrajRep, setDbgPrint
+from .Utility import _calDiaphony, rotate, _calJacElip, _calCompElipInt, _calSphFibPt, cvtGrad2Traj, getGoldang, getGoldrat, rand3d
+
+from . import trajfunc#pragma once
+
+#include <vector>
+#include <list>
+#include <tuple>
+#include <cmath>
+#include <stdexcept>
+#include <algorithm>
+#include "../utility/global.h"
+#include "../utility/v3.h"
+#include "../traj/TrajFunc.h"
+#include "../utility/SplineIntp.h"
+
+// virtual TrajFunc, take in discrete samples and construct a Segmentied Cubic Polynomial function
+class Spline_TrajFunc: public TrajFunc
+{
+public:
+    typedef std::vector<v3> vv3;
+    typedef std::vector<f64> vf64;
+
+    Spline_TrajFunc():
+        TrajFunc(0,0)
+    {}
+
+    Spline_TrajFunc(const vv3& vv3K):
+        TrajFunc(0,0)
+    {
+        i64 lNTrajSamp = vv3K.size();
+
+        vf64 vdP(lNTrajSamp);
+        vdP[0] = 0;
+        for (i64 i = 1; i < lNTrajSamp; ++i)
+        {
+            vdP[i] = vdP[i-1] + v3::norm(vv3K[i] - vv3K[i-1]);
+        }
+
+        vf64 vdX(lNTrajSamp), vdY(lNTrajSamp), vdZ(lNTrajSamp);
+        for (i64 i = 0; i < lNTrajSamp; ++i)
+        {
+           vdX[i] =  vv3K[i].x;
+           vdY[i] =  vv3K[i].y;
+           vdZ[i] =  vv3K[i].z;
+        }
+
+        m_intpX.m_eSearchMode = Intp::ECached;
+        m_intpY.m_eSearchMode = Intp::ECached;
+        m_intpZ.m_eSearchMode = Intp::ECached;
+
+        m_intpX.fit(vdP, vdX); 
+        m_intpY.fit(vdP, vdY);
+        m_intpZ.fit(vdP, vdZ);
+
+        m_p0 = *vdP.begin();
+        m_p1 = *vdP.rbegin();
+    }
+    
+    bool getK(v3* k, f64 p)
+    {
+        k->x = m_intpX.eval(p);
+        k->y = m_intpY.eval(p);
+        k->z = m_intpZ.eval(p);
+
+        return true;
+    }
+
+    bool getDkDp(v3* pv3K, f64 p) const
+    {
+        pv3K->x = m_intpX.eval(p, 1);
+        pv3K->y = m_intpY.eval(p, 1);
+        pv3K->z = m_intpZ.eval(p, 1);
+
+        return true;
+    }
+
+    bool getD2kDp2(v3* pv3K, f64 p) const
+    {
+        pv3K->x = m_intpX.eval(p, 2);
+        pv3K->y = m_intpY.eval(p, 2);
+        pv3K->z = m_intpZ.eval(p, 2);
+
+        return true;
+    }
+protected:
+    SplineIntp m_intpX, m_intpY, m_intpZ;
+};
+
+class MagSolver
+{
+public:
+    typedef std::vector<i64> vi64;
+    typedef std::vector<f64> vf64;
+    typedef std::list<i64> ll;
+    typedef std::list<f64> lf64;
+
+    typedef std::vector<v3> vv3;
+    typedef std::vector<vv3> vvv3;
+    typedef std::list<v3> lv3;
+    typedef std::list<vv3> lvv3;
+
+    MagSolver();
+    bool setup
+    (
+        TrajFunc* ptTraj,
+        f64 sLim, f64 gLim,
+        f64 dt=10e-6, i64 oversamp=10, 
+        f64 dG0Norm=0e0, f64 dG1Norm=0e0
+    );
+    bool setup
+    (
+        const vv3& vv3TrajSamp,
+        f64 sLim, f64 gLim,
+        f64 dt=10e-6, i64 oversamp=10, 
+        f64 dG0Norm=0e0, f64 dG1Norm=0e0
+    );
+    ~MagSolver();
+    bool compute(vv3* plv3G, vf64* pvf64P=NULL);
+    template <typename dtype, typename cv3>
+    static bool decomp
+    (
+        std::vector<dtype>* pvfGx,
+        std::vector<dtype>* pvfGy,
+        std::vector<dtype>* pvfGz,
+        const cv3& cv3G,
+        bool bResize = false,
+        bool bFillZero = true
+    );
+    static bool ramp_front(vv3* pvv3GRamp, const v3& v3G0, const v3& v3G0Des, f64 sLim, f64 dt);
+    static f64 ramp_front(vv3* pvv3GRamp, const v3& v3G0, const v3& v3G0Des, i64 lNSamp, f64 dt);
+    static bool ramp_back(vv3* pvv3GRamp, const v3& v3G1, const v3& v3G1Des, f64 sLim, f64 dt);
+    static f64 ramp_back(vv3* pvv3GRamp, const v3& v3G1, const v3& v3G1Des, i64 lNSamp, f64 dt);
+    static bool revGrad(v3* pv3M0Dst, vv3* pvv3Dst, const v3& v3M0Src, const vv3& vv3Src, f64 dt);
+    static v3 calM0(const vv3& vv3G, f64 dt);
+private:
+    Spline_TrajFunc m_sptfTraj;
+    TrajFunc* m_ptfTraj;
+    f64 m_sLim, m_gLim;
+    f64 m_dt;
+    i64 m_oversamp;
+    f64 m_g0Norm, m_g1Norm;
+
+    // reserved vector for faster computation
+    vf64 m_vf64P_Bac;
+    vv3 m_vv3G_Bac;
+    vf64 m_vf64GNorm_Bac;
+
+    vf64 m_vf64P_For;
+    vv3 m_vv3G_For;
+
+    bool sovQDE(f64* psol0, f64* psol1, f64 a, f64 b, f64 c);
+    f64 getCurRad(f64 p);
+    f64 getDp(const v3& v3GPrev, const v3& v3GThis, f64 dt, f64 pPrev, f64 pThis, f64 signDp);
+    bool step(v3* pv3GUnit, f64* gNormMin, f64* gNormMax, f64 p, f64 signDp, const v3& v3G, f64 sLim, f64 dt);
+};
+
+// definition must be in `.h` file (compiler limitation)
+template <typename dtype, typename cv3>
+bool MagSolver::decomp
+(
+    std::vector<dtype>* pvfGx,
+    std::vector<dtype>* pvfGy,
+    std::vector<dtype>* pvfGz,
+    const cv3& cv3G,
+    bool bResize,
+    bool bFillZero
+)
+{
+    if (bResize)
+    {
+        pvfGx->resize(cv3G.size());
+        pvfGy->resize(cv3G.size());
+        pvfGz->resize(cv3G.size());
+    }
+    if (bFillZero)
+    {
+        std::fill(pvfGx->begin(), pvfGx->end(), (dtype)0);
+        std::fill(pvfGy->begin(), pvfGy->end(), (dtype)0);
+        std::fill(pvfGz->begin(), pvfGz->end(), (dtype)0);
+    }
+    typename std::vector<dtype>::iterator ivfGx = pvfGx->begin();
+    typename std::vector<dtype>::iterator ivfGy = pvfGy->begin();
+    typename std::vector<dtype>::iterator ivfGz = pvfGz->begin();
+    typename cv3::const_iterator icv3G = cv3G.begin();
+    while (icv3G != cv3G.end())
+    {
+        *ivfGx = dtype(icv3G->x);
+        *ivfGy = dtype(icv3G->y);
+        *ivfGz = dtype(icv3G->z);
+        ++ivfGx;
+        ++ivfGy;
+        ++ivfGz;
+        ++icv3G;
+    }
+    return true;
+}#include <cassert>
+#include <algorithm>
+#include <cstdio>
+#include "../utility/global.h"
+#include "../utility/LinIntp.h"
+#include "Mag.h"
+#include "../utility/SplineIntp.h"
+
+i64 gMag_oversamp = -1; // oversample ratio, overwrite the set value
+bool gMag_enSFS = false; // Single Forward Sweep flag
+bool gMag_enGradRep = true; // Gradient Reparameterization
+bool gMag_enTrajRep = true; // use trajectory reparameterization for MAG solver
+i64 gMag_nTrajSamp = 1000; // num. of samp. when doing Traj. Rep.
+
+MagSolver::MagSolver()
+{
+    i64 nSampReserve = i64(100e-3/m_dt*m_oversamp); // reserve for 100ms
+
+    m_vf64P_Bac.reserve(nSampReserve);
+    m_vv3G_Bac.reserve(nSampReserve);
+    m_vf64GNorm_Bac.reserve(nSampReserve);
+
+    m_vf64P_For.reserve(nSampReserve);
+    m_vv3G_For.reserve(nSampReserve);
+}
+
+bool MagSolver::setup
+    (
+        TrajFunc* ptTraj,
+        f64 sLim, f64 gLim,
+        f64 dt, i64 oversamp, 
+        f64 g0Norm, f64 g1Norm
+    )
+{
+    m_sLim = sLim;
+    m_gLim = gLim;
+    m_dt = dt;
+    m_oversamp = gMag_oversamp>0?gMag_oversamp:oversamp;
+    m_g0Norm = g0Norm;
+    m_g1Norm = g1Norm;
+
+    if (gMag_enTrajRep)
+    {
+        vv3 vv3TrajSamp(gMag_nTrajSamp);
+        f64 p0 = ptTraj->getP0();
+        f64 p1 = ptTraj->getP1();
+        for (i64 i = 0; i < gMag_nTrajSamp; ++i)
+        {
+            f64 p = p0 + (p1-p0) * (i)/f64(gMag_nTrajSamp-1);
+            ptTraj->getK(&vv3TrajSamp[i], p);
+        }
+        m_sptfTraj = Spline_TrajFunc(vv3TrajSamp);
+        m_ptfTraj = &m_sptfTraj;
+    }
+    else
+    {
+        m_ptfTraj = ptTraj;
+    }
+
+    return true;
+}
+
+bool MagSolver::setup
+    (
+        const vv3& vv3TrajSamp,
+        f64 sLim, f64 gLim,
+        f64 dt, i64 oversamp, 
+        f64 g0Norm, f64 g1Norm
+    )
+{
+    m_sptfTraj = Spline_TrajFunc(vv3TrajSamp);
+    m_ptfTraj = &m_sptfTraj;
+    m_sLim = sLim;
+    m_gLim = gLim;
+    m_dt = dt;
+    m_oversamp = gMag_oversamp>0?gMag_oversamp:oversamp;
+    m_g0Norm = g0Norm;
+    m_g1Norm = g1Norm;
+
+    return true;
+}
+
+MagSolver::~MagSolver()
+{}
+
+bool MagSolver::sovQDE(f64* psol0, f64* psol1, f64 a, f64 b, f64 c)
+{
+    f64 delta = b*b - 4e0*a*c;
+    if (psol0) *psol0 = (-b-(delta<0?0:std::sqrt(delta)))/(2*a);
+    if (psol1) *psol1 = (-b+(delta<0?0:std::sqrt(delta)))/(2*a);
+    return delta>=0;
+}
+
+f64 MagSolver::getCurRad(f64 p)
+{
+    v3 dkdp; m_ptfTraj->getDkDp(&dkdp, p);
+    v3 d2kdp2; m_ptfTraj->getD2kDp2(&d2kdp2, p);
+    f64 nume = pow(v3::norm(dkdp), 3e0);
+    f64 deno = v3::norm(v3::cross(dkdp, d2kdp2));
+    return nume/deno;
+}
+
+#if 1
+
+f64 MagSolver::getDp(const v3& v3GPrev, const v3& v3GThis, f64 dt, f64 pPrev, f64 pThis, f64 signDp)
+{
+    // solve `ΔP` by RK2
+    f64 l = v3::norm(v3GThis)*dt;
+    // k1
+    f64 k1;
+    {
+        v3 dkdp; m_ptfTraj->getDkDp(&dkdp, pThis);
+        f64 dldp = v3::norm(dkdp)*signDp;
+        k1 = 1e0/dldp;
+    }
+    // k2
+    f64 k2;
+    {
+        v3 dkdp; m_ptfTraj->getDkDp(&dkdp, pThis+k1*l);
+        f64 dldp = v3::norm(dkdp)*signDp;
+        k2 = 1e0/dldp;
+    }
+    f64 dp = l*(0.5*k1 + 0.5*k2);
+    return dp;
+}
+
+#else // less accurate due to estimation of PNext
+
+f64 MagSolver::getDp(const v3& v3GPrev, const v3& v3GThis, f64 dt, f64 pPrev, f64 pThis, f64 signDp)
+{
+    // solve `ΔP` by RK2
+    f64 l = v3::norm(v3GThis)*dt;
+    v3 dkdp0; m_ptfTraj->getDkDp(&dkdp0, pThis);
+    v3 dkdp1; m_ptfTraj->getDkDp(&dkdp1, pThis*2e0-pPrev);
+    f64 dldp0 = v3::norm(dkdp0)*signDp;
+    f64 dldp1 = v3::norm(dkdp1)*signDp;
+    return l*(1e0/dldp0 + 1e0/dldp1)/2e0;
+}
+
+#endif
+
+bool MagSolver::step(v3* gUnit, f64* gNormMin, f64* gNormMax, f64 p, f64 signDp, const v3& g, f64 sLim, f64 dt)
+{
+    // current gradient direction
+    v3 dkdp; m_ptfTraj->getDkDp(&dkdp, p);
+    f64 dldp = v3::norm(dkdp)*signDp;
+    if (gUnit) *gUnit = dkdp/dldp;
+    
+    // current gradient magnitude
+    bool isQDESucc = sovQDE
+    (
+        gNormMin, gNormMax,
+        1e0,
+        -2e0*v3::inner(g, *gUnit),
+        v3::inner(g, g) - std::pow(sLim*dt, 2e0)
+    );
+    if (gNormMin) *gNormMin = fabs(*gNormMin);
+    if (gNormMax) *gNormMax = fabs(*gNormMax);
+
+    return isQDESucc;
+}
+
+bool MagSolver::compute(vv3* pvv3G, vf64* pvf64P)
+{
+    bool ret = true;
+    f64 p0 = m_ptfTraj->getP0();
+    f64 p1 = m_ptfTraj->getP1();
+    vv3 vv3G; if (!pvv3G) pvv3G = &vv3G;
+    vf64 vf64P; if (!pvf64P) pvf64P = &vf64P;
+    bool isQDESucc = true; (void)isQDESucc;
+    i64 nIter = 0;
+
+    // backward
+    v3 g1Unit; ret &= m_ptfTraj->getDkDp(&g1Unit, p1);
+    g1Unit = g1Unit * (p0>p1?1e0:-1e0);
+    g1Unit = g1Unit / v3::norm(g1Unit);
+    f64 g1Norm = m_g1Norm;
+    g1Norm = std::min(g1Norm, m_gLim);
+    g1Norm = std::min(g1Norm, std::sqrt(m_sLim*getCurRad(p1)));
+    v3 g1 = g1Unit * g1Norm;
+
+    m_vf64P_Bac.clear(); m_vf64P_Bac.push_back(p1);
+    m_vv3G_Bac.clear(); m_vv3G_Bac.push_back(g1);
+    m_vf64GNorm_Bac.clear(); m_vf64GNorm_Bac.push_back(v3::norm(g1));
+    while (!gMag_enSFS)
+    {
+        f64 p = m_vf64P_Bac.back();
+        v3 g = m_vv3G_Bac.back();
+        
+        // update grad
+        v3 gUnit;
+        f64 gNorm;
+        isQDESucc = step(&gUnit, NULL, &gNorm, p, (p0-p1)/std::fabs(p0-p1), g, m_sLim, m_dt/m_oversamp);
+        gNorm = std::min(gNorm, m_gLim);
+        gNorm = std::min(gNorm, std::sqrt(m_sLim*getCurRad(p)));
+        g = gUnit*gNorm;
+
+        // update para
+        p += getDp(m_vv3G_Bac.back(), g, m_dt/m_oversamp, m_vf64P_Bac.back(), p, (p0-p1)/std::fabs(p0-p1));
+
+        // stop or append
+        if (std::fabs(m_vf64P_Bac.back() - p1) >= (1-1e-6)*std::fabs(p0 - p1))
+        {
+            // printf("bac: dP/dP1 = %lf/%lf\n", dP, dP1); // test
+            break;
+        }
+        else
+        {
+            // printf("bac: dP = %lf\n", dP); // test
+            m_vf64P_Bac.push_back(p);
+            m_vv3G_Bac.push_back(g);
+            m_vf64GNorm_Bac.push_back(v3::norm(g));
+        }
+    }
+
+    std::reverse(m_vf64P_Bac.begin(), m_vf64P_Bac.end());
+    std::reverse(m_vf64GNorm_Bac.begin(), m_vf64GNorm_Bac.end());
+
+    LinIntp intp;
+    // SplineIntp intp;
+    intp.m_eSearchMode = Intp::ECached;
+    if (!gMag_enSFS) intp.fit(m_vf64P_Bac, m_vf64GNorm_Bac);
+    
+    nIter += m_vf64P_Bac.size();
+
+    // forward
+    v3 g0Unit; ret &= m_ptfTraj->getDkDp(&g0Unit, p0);
+    g0Unit = g0Unit * (p1>p0?1e0:-1e0);
+    g0Unit = g0Unit / v3::norm(g0Unit);
+    f64 g0Norm = m_g0Norm;
+    g0Norm = std::min(g0Norm, m_gLim);
+    g0Norm = std::min(g0Norm, std::sqrt(m_sLim*getCurRad(p0)));
+    g0Norm = std::min(g0Norm, gMag_enSFS?1e15:intp.eval(p0));
+    v3 g0 = g0Unit * g0Norm;
+
+    m_vf64P_For.clear(); m_vf64P_For.push_back(p0);
+    m_vv3G_For.clear(); m_vv3G_For.push_back(g0);
+    while (1)
+    {
+        f64 p = m_vf64P_For.back();
+        v3 g = m_vv3G_For.back();
+
+        // update grad
+        v3 gUnit;
+        f64 gNorm;
+        isQDESucc = step(&gUnit, NULL, &gNorm, p, (p1-p0)/std::fabs(p1-p0), g, m_sLim, m_dt/m_oversamp);
+        if (gMag_enSFS)
+        {
+            gNorm = std::min(gNorm, m_gLim);
+            // dGNorm = std::min(dGNorm, std::sqrt(m_sLim*getCurRad(dP)));
+        }
+        else
+        {
+            f64 gNormBac = intp.eval(p);
+            gNorm = std::min(gNorm, gNormBac);
+            if (gNormBac<=0)
+            {
+                gNorm *= -1;
+                gUnit *= -1;
+            }
+        }
+        g = gUnit*gNorm;
+
+        // update para
+        p += getDp(m_vv3G_For.back(), g, m_dt/m_oversamp, m_vf64P_For.back(), p, (p1-p0)/std::fabs(p1-p0));
+
+        // stop or append
+        if (std::fabs(m_vf64P_For.back() - p0) >= (1-1e-6)*std::fabs(p1 - p0)) // || dGNorm <= 0)
+        {
+            // printf("for: dP/dP1 = %lf/%lf\n", dP, dP1); // test
+            break;
+        }
+        else
+        {
+            // printf("for: dP = %lf\n", dP); // test
+            m_vf64P_For.push_back(p);
+            m_vv3G_For.push_back(g);
+        }
+    }
+    nIter += m_vf64P_For.size();
+    
+    if (glob_enDbgPrint)
+    {
+        i64 MAG_Nit = nIter;
+        PRINT(MAG_Nit);
+    }
+
+    // deoversamp the para. vec.
+    {
+        pvf64P->clear();
+        i64 n = m_vf64P_For.size();
+        for (i64 i = 0; i < n; ++i)
+        {
+            if (i%m_oversamp==m_oversamp/2) pvf64P->push_back(m_vf64P_For[i]);
+        }
+    }
+
+    // derive gradient
+    if (gMag_enGradRep)
+    {
+        v3 v3K1, v3K0; 
+        vf64::iterator ivf64P = std::next(pvf64P->begin());
+        i64 n = pvf64P->size();
+        pvv3G->clear();
+        pvv3G->reserve(n-1);
+        for (i64 i = 1; i < n; ++i)
+        {
+            ret &= m_ptfTraj->getK(&v3K1, *ivf64P);
+            ret &= m_ptfTraj->getK(&v3K0, *std::prev(ivf64P));
+            pvv3G->push_back((v3K1 - v3K0)/m_dt);
+            ++ivf64P;
+        }
+    }
+    else
+    {
+        i64 n = m_vv3G_For.size();
+        pvv3G->clear();
+        pvv3G->reserve(n);
+        for (i64 i = 0; i < n; ++i)
+        {
+            if(i%m_oversamp==0) pvv3G->push_back(m_vv3G_For[i]);
+        }
+    }
+
+    // [WARN] `p` sequence has 1 more element than `g` sequence
+    return ret;
+}
+
+bool MagSolver::ramp_front(vv3* pvv3GRamp, const v3& g0, const v3& g0Des, f64 sLim, f64 dt)
+{
+    v3 dg = g0Des - g0;
+    v3 dgUnit = v3::norm(dg)!=0 ? dg/v3::norm(dg) : v3(0,0,0);
+    i64 nSamp = (i64)std::ceil(v3::norm(dg)/(sLim*dt));
+
+    // derive ramp gradient
+    pvv3GRamp->clear();
+    if (nSamp==0) return true;
+
+    pvv3GRamp->reserve(nSamp);
+    pvv3GRamp->push_back(g0Des);
+    for (i64 i = nSamp-1; i > 0; --i)
+    {
+        pvv3GRamp->push_back(g0 + dgUnit * sLim * (dt*i));
+    }
+    
+    return true;
+}
+
+f64 MagSolver::ramp_front(vv3* pvv3GRamp, const v3& g0, const v3& g0Des, i64 nSamp, f64 dt)
+{
+    v3 dg = g0Des - g0;
+    v3 dgUnit = v3::norm(dg)!=0 ? dg/v3::norm(dg) : v3(0,0,0);
+    f64 sLim = v3::norm(dg)/(nSamp*dt);
+
+    // derive ramp gradient
+    pvv3GRamp->clear();
+    if (nSamp==0) return true;
+
+    pvv3GRamp->reserve(nSamp);
+    pvv3GRamp->push_back(g0Des);
+    for (i64 i = nSamp-1; i > 0; --i)
+    {
+        pvv3GRamp->push_back(g0 + dgUnit * sLim * (dt*i));
+    }
+
+    return sLim;
+}
+
+bool MagSolver::ramp_back(vv3* pvv3GRamp, const v3& g1, const v3& g1Des, f64 sLim, f64 dt)
+{
+    v3 dg = g1Des - g1;
+    v3 dgUnit = v3::norm(dg)!=0 ? dg/v3::norm(dg) : v3(0,0,0);
+    i64 nSamp = (i64)std::ceil(v3::norm(dg)/(sLim*dt));
+
+    // derive ramp gradient
+    pvv3GRamp->clear();
+    if (nSamp==0) return true;
+
+    pvv3GRamp->reserve(nSamp);
+    for (i64 i = 1; i < nSamp; ++i)
+    {
+        pvv3GRamp->push_back(g1 + dgUnit * sLim * (dt*i));
+    }
+    pvv3GRamp->push_back(g1Des);
+    
+    return true;
+}
+
+f64 MagSolver::ramp_back(vv3* pvv3GRamp, const v3& g1, const v3& g1Des, i64 nSamp, f64 dt)
+{
+    v3 dg = g1Des - g1;
+    v3 dgUnit = v3::norm(dg)!=0 ? dg/v3::norm(dg) : v3(0,0,0);
+    f64 sLim = v3::norm(dg)/(nSamp*dt);
+
+    // derive ramp gradient
+    pvv3GRamp->clear();
+    if (nSamp==0) return true;
+
+    pvv3GRamp->reserve(nSamp);
+    for (i64 i = 1; i < nSamp; ++i)
+    {
+        pvv3GRamp->push_back(g1 + dgUnit * sLim * (dt*i));
+    }
+    pvv3GRamp->push_back(g1Des);
+    
+    return sLim;
+}
+
+bool MagSolver::revGrad(v3* pv3M0Dst, vv3* pvv3Dst, const v3& v3M0Src, const vv3& vv3Src, f64 dt)
+{
+    bool ret = true;
+
+    if(vv3Src.size() <= 1) ret = false;
+
+    // derive Total M0
+    *pv3M0Dst = v3M0Src + calM0(vv3Src, dt);
+    
+    // reverse gradient
+    *pvv3Dst = vv3(vv3Src.rbegin(), vv3Src.rend());
+    for (int64_t i = 0; i < (i64)pvv3Dst->size(); ++i)
+    {
+        (*pvv3Dst)[i] *= -1;
+    }
+
+    return ret;
+}
+
+v3 MagSolver::calM0(const vv3& vv3G, f64 dt)
+{
+    v3 M0 = v3(0,0,0);
+    for (int64_t i = 1; i < (i64)vv3G.size(); ++i)
+    {
+        M0 += (vv3G[i] + vv3G[i-1])*dt/2e0;
+    }
+
+    return M0;
+}/* spline.c
+ Cubic interpolating spline. */
+
+/************************************************/
+/*                                              */
+/*  CMATH.  Copyright (c) 1989 Design Software  */
+/*                                              */
+/************************************************/
+
+// #include "cmath.h"
+#include <math.h>
+
+/*-----------------------------------------------------------------*/
+
+/* Purpose ...
+ -------
+ Evaluate the coefficients b[i], c[i], d[i], i = 0, 1, .. n-1 for
+ a cubic interpolating spline
+ 
+ S(xx) = Y[i] + b[i] * w + c[i] * w**2 + d[i] * w**3
+ where w = xx - x[i]
+ and   x[i] <= xx <= x[i+1]
+ 
+ The n supplied data points are x[i], y[i], i = 0 ... n-1.
+ 
+ Input :
+ -------
+ n       : The number of data points or knots (n >= 2)
+ end1,
+ end2    : = 1 to specify the slopes at the end points
+ = 0 to obtain the default conditions
+ slope1,
+ slope2  : the slopes at the end points x[0] and x[n-1]
+ respectively
+ x[]     : the abscissas of the knots in strictly
+ increasing order
+ y[]     : the ordinates of the knots
+ 
+ Output :
+ --------
+ b, c, d : arrays of spline coefficients as defined above
+ (See note 2 for a definition.)
+ iflag   : status flag
+ = 0 normal return
+ = 1 less than two data points; cannot interpolate
+ = 2 x[] are not in ascending order
+ 
+ This C code written by ...  Peter & Nigel,
+ ----------------------      Design Software,
+ 42 Gubberley St,
+ Kenmore, 4069,
+ Australia.
+ 
+ Version ... 1.1, 30 September 1987
+ -------     2.0, 6 April 1989    (start with zero subscript)
+ remove ndim from parameter list
+ 2.1, 28 April 1989   (check on x[])
+ 2.2, 10 Oct   1989   change number order of matrix
+ 
+ Notes ...
+ -----
+ (1) The accompanying function seval() may be used to evaluate the
+ spline while deriv will provide the first derivative.
+ (2) Using p to denote differentiation
+ y[i] = S(X[i])
+ b[i] = Sp(X[i])
+ c[i] = Spp(X[i])/2
+ d[i] = Sppp(X[i])/6  ( Derivative from the right )
+ (3) Since the zero elements of the arrays ARE NOW used here,
+ all arrays to be passed from the main program should be
+ dimensioned at least [n].  These routines will use elements
+ [0 .. n-1].
+ (4) Adapted from the text
+ Forsythe, G.E., Malcolm, M.A. and Moler, C.B. (1977)
+ "Computer Methods for Mathematical Computations"
+ Prentice Hall
+ (5) Note that although there are only n-1 polynomial segments,
+ n elements are requird in b, c, d.  The elements b[n-1],
+ c[n-1] and d[n-1] are set to continue the last segment
+ past x[n-1].
+ */
+
+/*----------------------------------------------------------------*/
+
+int spline (int n, int end1, int end2,
+            double slope1, double slope2,
+            double x[], double y[],
+            double b[], double c[], double d[],
+            int *iflag)
+{  /* begin procedure spline() */
+	
+	int    nm1, ib, i;
+	double t;
+	int    ascend;
+	
+	nm1    = n - 1;
+	*iflag = 0;
+	
+	if (n < 2)
+	{  /* no possible interpolation */
+		*iflag = 1;
+		goto LeaveSpline;
+	}
+	
+	ascend = 1;
+	for (i = 1; i < n; ++i) if (x[i] <= x[i-1]) ascend = 0;
+		if (!ascend)
+		{
+			*iflag = 2;
+			goto LeaveSpline;
+		}
+	
+	if (n >= 3)
+	{    /* ---- At least quadratic ---- */
+		
+		/* ---- Set up the symmetric tri-diagonal system
+		 b = diagonal
+		 d = offdiagonal
+		 c = right-hand-side  */
+		d[0] = x[1] - x[0];
+		c[1] = (y[1] - y[0]) / d[0];
+		for (i = 1; i < nm1; ++i)
+		{
+			d[i]   = x[i+1] - x[i];
+			b[i]   = 2.0 * (d[i-1] + d[i]);
+			c[i+1] = (y[i+1] - y[i]) / d[i];
+			c[i]   = c[i+1] - c[i];
+		}
+		
+		/* ---- Default End conditions
+		 Third derivatives at x[0] and x[n-1] obtained
+		 from divided differences  */
+		b[0]   = -d[0];
+		b[nm1] = -d[n-2];
+		c[0]   = 0.0;
+		c[nm1] = 0.0;
+		if (n != 3)
+		{
+			c[0]   = c[2] / (x[3] - x[1]) - c[1] / (x[2] - x[0]);
+			c[nm1] = c[n-2] / (x[nm1] - x[n-3]) - c[n-3] / (x[n-2] - x[n-4]);
+			c[0]   = c[0] * d[0] * d[0] / (x[3] - x[0]);
+			c[nm1] = -c[nm1] * d[n-2] * d[n-2] / (x[nm1] - x[n-4]);
+		}
+		
+		/* Alternative end conditions -- known slopes */
+		if (end1 == 1)
+		{
+			b[0] = 2.0 * (x[1] - x[0]);
+			c[0] = (y[1] - y[0]) / (x[1] - x[0]) - slope1;
+		}
+		if (end2 == 1)
+		{
+			b[nm1] = 2.0 * (x[nm1] - x[n-2]);
+			c[nm1] = slope2 - (y[nm1] - y[n-2]) / (x[nm1] - x[n-2]);
+		}
+		
+		/* Forward elimination */
+		for (i = 1; i < n; ++i)
+		{
+			t    = d[i-1] / b[i-1];
+			b[i] = b[i] - t * d[i-1];
+			c[i] = c[i] - t * c[i-1];
+		}
+		
+		/* Back substitution */
+		c[nm1] = c[nm1] / b[nm1];
+		for (ib = 0; ib < nm1; ++ib)
+		{
+			i    = n - ib - 2;
+			c[i] = (c[i] - d[i] * c[i+1]) / b[i];
+		}
+		
+		/* c[i] is now the sigma[i] of the text */
+		
+		/* Compute the polynomial coefficients */
+		b[nm1] = (y[nm1] - y[n-2]) / d[n-2] + d[n-2] * (c[n-2] + 2.0 * c[nm1]);
+		for (i = 0; i < nm1; ++i)
+		{
+			b[i] = (y[i+1] - y[i]) / d[i] - d[i] * (c[i+1] + 2.0 * c[i]);
+			d[i] = (c[i+1] - c[i]) / d[i];
+			c[i] = 3.0 * c[i];
+		}
+		c[nm1] = 3.0 * c[nm1];
+		d[nm1] = d[n-2];
+		
+	}  /* at least quadratic */
+	
+	else  /* if n >= 3 */
+	{  /* linear segment only  */
+		b[0] = (y[1] - y[0]) / (x[1] - x[0]);
+		c[0] = 0.0;
+		d[0] = 0.0;
+		b[1] = b[0];
+		c[1] = 0.0;
+		d[1] = 0.0;
+	}
+	
+LeaveSpline:
+	return 0;
+}  /* end of spline() */
+/*-------------------------------------------------------------------*/
+
+/*Purpose ...
+ -------
+ Evaluate the cubic spline function
+ 
+ S(xx) = y[i] + b[i] * w + c[i] * w**2 + d[i] * w**3
+ where w = u - x[i]
+ and   x[i] <= u <= x[i+1]
+ Note that Horner's rule is used.
+ If u < x[0]   then i = 0 is used.
+ If u > x[n-1] then i = n-1 is used.
+ 
+ Input :
+ -------
+ n       : The number of data points or knots (n >= 2)
+ u       : the abscissa at which the spline is to be evaluated
+ Last    : the segment that was last used to evaluate U
+ x[]     : the abscissas of the knots in strictly increasing order
+ y[]     : the ordinates of the knots
+ b, c, d : arrays of spline coefficients computed by spline().
+ 
+ Output :
+ --------
+ seval   : the value of the spline function at u
+ Last    : the segment in which u lies
+ 
+ Notes ...
+ -----
+ (1) If u is not in the same interval as the previous call then a
+ binary search is performed to determine the proper interval.
+ 
+ */
+/*-------------------------------------------------------------------*/
+
+double seval (int n, double u,
+              double x[], double y[],
+              double b[], double c[], double d[],
+              int *last)
+{  /* begin function seval() */
+	
+	int    i, j, k;
+	double w;
+	
+	i = *last;
+	if (i >= n-1) i = 0;
+		if (i < 0)  i = 0;
+			
+			if ((x[i] > u) || (x[i+1] < u))
+			{  /* ---- perform a binary search ---- */
+				i = 0;
+				j = n;
+				do
+				{
+					k = (i + j) / 2;         /* split the domain to search */
+					if (u < x[k])  j = k;    /* move the upper bound */
+					if (u >= x[k]) i = k;    /* move the lower bound */
+				}                        /* there are no more segments to search */
+				while (j > i+1);
+			}
+	*last = i;
+	
+	/* ---- Evaluate the spline ---- */
+	w = u - x[i];
+	w = y[i] + w * (b[i] + w * (c[i] + w * d[i]));
+	return (w);
+}
+/*-------------------------------------------------------------------*/
+
+/* Purpose ...
+ -------
+ Evaluate the derivative of the cubic spline function
+ 
+ S(x) = B[i] + 2.0 * C[i] * w + 3.0 * D[i] * w**2
+ where w = u - X[i]
+ and   X[i] <= u <= X[i+1]
+ Note that Horner's rule is used.
+ If U < X[0] then i = 0 is used.
+ If U > X[n-1] then i = n-1 is used.
+ 
+ Input :
+ -------
+ n       : The number of data points or knots (n >= 2)
+ u       : the abscissa at which the derivative is to be evaluated
+ last    : the segment that was last used
+ x       : the abscissas of the knots in strictly increasing order
+ b, c, d : arrays of spline coefficients computed by spline()
+ 
+ Output :
+ --------
+ deriv : the value of the derivative of the spline
+ function at u
+ last  : the segment in which u lies
+ 
+ Notes ...
+ -----
+ (1) If u is not in the same interval as the previous call then a
+ binary search is performed to determine the proper interval.
+ 
+ */
+/*-------------------------------------------------------------------*/
+
+double deriv (int n, double u,
+              double x[],
+              double b[], double c[], double d[],
+              int *last)
+{  /* begin function deriv() */
+	
+	int    i, j, k;
+	double w;
+	
+	i = *last;
+	if (i >= n-1) i = 0;
+		if (i < 0) i = 0;
+			
+			if ((x[i] > u) || (x[i+1] < u))
+			{  /* ---- perform a binary search ---- */
+				i = 0;
+				j = n;
+				do
+				{
+					k = (i + j) / 2;          /* split the domain to search */
+					if (u < x[k])  j = k;     /* move the upper bound */
+					if (u >= x[k]) i = k;     /* move the lower bound */
+				}                         /* there are no more segments to search */
+				while (j > i+1);
+			}
+	*last = i;
+	
+	/* ---- Evaluate the derivative ---- */
+	w = u - x[i];
+	w = b[i] + w * (2.0 * c[i] + w * 3.0 * d[i]);
+	return (w);
+	
+} /* end of deriv() */
+
+/*-------------------------------------------------------------------*/
+
+/*Purpose ...
+ -------
+ Integrate the cubic spline function
+ 
+ S(xx) = y[i] + b[i] * w + c[i] * w**2 + d[i] * w**3
+ where w = u - x[i]
+ and   x[i] <= u <= x[i+1]
+ 
+ The integral is zero at u = x[0].
+ 
+ If u < x[0]   then i = 0 segment is extrapolated.
+ If u > x[n-1] then i = n-1 segment is extrapolated.
+ 
+ Input :
+ -------
+ n       : The number of data points or knots (n >= 2)
+ u       : the abscissa at which the spline is to be evaluated
+ Last    : the segment that was last used to evaluate U
+ x[]     : the abscissas of the knots in strictly increasing order
+ y[]     : the ordinates of the knots
+ b, c, d : arrays of spline coefficients computed by spline().
+ 
+ Output :
+ --------
+ sinteg  : the value of the spline function at u
+ Last    : the segment in which u lies
+ 
+ Notes ...
+ -----
+ (1) If u is not in the same interval as the previous call then a
+ binary search is performed to determine the proper interval.
+ 
+ */
+/*-------------------------------------------------------------------*/
+
+double sinteg (int n, double u,
+			   double x[], double y[],
+			   double b[], double c[], double d[],
+			   int *last)
+{  /* begin function sinteg() */
+	
+	int    i, j, k;
+	double sum, dx;
+	
+	i = *last;
+	if (i >= n-1) i = 0;
+		if (i < 0)  i = 0;
+			
+			if ((x[i] > u) || (x[i+1] < u))
+			{  /* ---- perform a binary search ---- */
+				i = 0;
+				j = n;
+				do
+				{
+					k = (i + j) / 2;         /* split the domain to search */
+					if (u < x[k])  j = k;    /* move the upper bound */
+					if (u >= x[k]) i = k;    /* move the lower bound */
+				}                        /* there are no more segments to search */
+				while (j > i+1);
+			}
+	*last = i;
+	
+	sum = 0.0;
+	/* ---- Evaluate the integral for segments x < u ---- */
+	for (j = 0; j < i; ++j)
+	{
+		dx = x[j+1] - x[j];
+		sum += dx *
+		(y[j] + dx *
+		 (0.5 * b[j] + dx *
+          (c[j] / 3.0 + dx * 0.25 * d[j])));
+	}
+	
+	/* ---- Evaluate the integral fot this segment ---- */
+	dx = u - x[i];
+	sum += dx *
+	(y[i] + dx *
+	 (0.5 * b[i] + dx *
+	  (c[i] / 3.0 + dx * 0.25 * d[i])));
+	
+	return (sum);
+}
+/*-------------------------------------------------------------------*/
+
+/* Purpose ...
+ -------
+ Evaluate the 2nd derivative of the cubic spline function
+ 
+ S(x) =  2.0 * C[i]+ 6.0 * D[i] * w
+ where w = u - X[i]
+ and   X[i] <= u <= X[i+1]
+ Note that Horner's rule is used.
+ If U < X[0] then i = 0 is used.
+ If U > X[n-1] then i = n-1 is used.
+ 
+ Input :
+ -------
+ n       : The number of data points or knots (n >= 2)
+ u       : the abscissa at which the derivative is to be evaluated
+ last    : the segment that was last used
+ x       : the abscissas of the knots in strictly increasing order
+ b, c, d : arrays of spline coefficients computed by spline()
+ 
+ Output :
+ --------
+ deriv : the value of the derivative of the spline
+ function at u
+ last  : the segment in which u lies
+ 
+ Notes ...
+ -----
+ (1) If u is not in the same interval as the previous call then a
+ binary search is performed to determine the proper interval.
+ 
+ */
+/*-------------------------------------------------------------------*/
+
+double deriv2 (int n, double u,
+			   double x[],
+			   double b[], double c[], double d[],
+			   int *last)
+{  /* begin function deriv2() */
+	
+	int    i, j, k;
+	double w;
+	
+	i = *last;
+	if (i >= n-1) i = 0;
+		if (i < 0) i = 0;
+			
+			if ((x[i] > u) || (x[i+1] < u))
+			{  /* ---- perform a binary search ---- */
+				i = 0;
+				j = n;
+				do
+				{
+					k = (i + j) / 2;          /* split the domain to search */
+					if (u < x[k])  j = k;     /* move the upper bound */
+					if (u >= x[k]) i = k;     /* move the lower bound */
+				}                         /* there are no more segments to search */
+				while (j > i+1);
+			}
+	*last = i;
+	
+	/* ---- Evaluate the derivative ---- */
+	w = u - x[i];
+	w = 2.0 * c[i] + w * 6.0 * d[i];
+	return (w);
+	
+} /* end of deriv2() */
+
+/*-------------------------------------------------------------------*/
+#pragma once
+
+void minTimeGradientRIV(const double *Ci, int Cr, int Cc, double g0, double gfin, double gmax, double smax, double T, double ds,
+        double **Cx, double **Cy, double **Cz, double **gx, double **gy, double **gz,
+        double **sx, double **sy, double **sz, double **kx, double **ky, double **kz, double **sdot, double **sta, double **stb, double *time,
+        int *size_interpolated, int *size_sdot, int *size_st, int gfin_empty, int ds_empty);
+        
+int spline (int n, int end1, int end2,
+            double slope1, double slope2,
+            double x[], double y[],
+            double b[], double c[], double d[],
+            int *iflag);
+
+double deriv2 (int n, double u,
+			   double x[],
+			   double b[], double c[], double d[],
+			   int *last);
+double sinteg (int n, double u,
+			   double x[], double y[],
+			   double b[], double c[], double d[],
+			   int *last);
+double deriv (int n, double u,
+              double x[],
+              double b[], double c[], double d[],
+              int *last);
+double seval (int n, double u,
+              double x[], double y[],
+              double b[], double c[], double d[],
+              int *last);
+/*This file contains all the functions used to calculated the time optimal gradient waveforms.
+
+minTimeGradientRIV   -   Computes the rotationally invariant solution
+     RungeKutte_riv  -   Used to solve the ODE using RK4
+     beta            -   calculates sqrt (gamma^2 * smax^2 - k^2 * st^4) in the ODE. Used in RungeKutte_riv
+minTimeGradientRV    -   Computes the rotationally variant solution
+     RungeKutte_rv   -   Used to solve the ODE using RK4 */
+
+#include <float.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <string.h>
+#include <stdlib.h>
+#include <math.h>
+#include "header.h"
+#include <time.h>
+#include <sys/types.h>
+#include "../utility/global.h"
+
+double beta(double k, double st, double smax) {
+    /* calculates sqrt (gamma^2 * smax^2 - k^2 * st^4) used in RK4 method for rotationally invariant ODE solver */
+    double gamma = 4.257;
+    return  sqrt(sqrt((gamma*gamma*smax*smax - k*k*st*st*st*st)*(gamma*gamma*smax*smax - k*k*st*st*st*st)));
+}
+
+double RungeKutte_riv(double ds, double st, double k[], double smax) {
+    /*  Solves ODE for rotationally invariant solution using Runge-Kutte method*/
+    double k1 = ds * (1/st) * beta(k[0], st, smax);
+    double k2 = ds * 1 / (st + k1/2) * beta(k[1], st + k1/2, smax);
+    double k3 = ds * 1 / (st + k2/2) * beta(k[1], st + k2/2, smax);
+    double k4 = ds * 1 / (st + k3/2) * beta(k[2], st + k3/2, smax);
+    double rtn = k1/6 + k2/3 + k3/3 + k4/6;
+    return rtn;
+}
+
+void minTimeGradientRIV(const double *Ci, int Cr, int Cc, double g0, double gfin, double gmax, double smax, double T, double ds,
+        double **Cx, double **Cy, double **Cz, double **gx, double **gy, double **gz,
+        double **sx, double **sy, double **sz, double **kx, double **ky, double **kz, double **sdot, double **sta, double **stb, double *time,
+        int *size_interpolated, int *size_sdot, int *size_st, int gfin_empty, int ds_empty) {
+    
+    /*Finds the time optimal gradient waveforms for the rotationally invariant constraints case.
+    
+    Ci           -       The input curve (Nx3 double array)
+    Cr           -       row dimension of Ci
+    Cc           -       column dimension of Ci
+    g0           -       Initial gradient amplitude.
+    gfin         -       Gradient value at the end of the trajectory.
+                         If given value is not possible
+                         the result would be the largest possible amplitude.
+    gmax         -       Maximum gradient [G/cm] (4 default)
+    smax         -       Maximum slew [G/cm/ms] (15 default)
+    T            -       Sampling time intervale [ms] (4e-3 default)
+    gx, gy, gz   -       pointers to gradient waveforms to be returned
+    kx, ky, kz   -       pointers to k-space trajectory after interpolation
+    sx, sy, sz   -       pointers to slew waveforms to be returned
+    sdot         -       geometry constrains on the amplitude vs. arclength
+    sta          -       pointer to solution for the forward ODE to be returned
+    stb          -       pointer to solution for the backward ODE to be returned
+    size_interpolated -  Dimension of interpolated k-space trajectory (kx, ky, kz) needed for creating mex return arrays.
+    size_sdot    -       Dimension of sdot needed for creating mex return arrays.
+    size_st      -       Dimension of sta and stb, need for creating mex return array.
+    gfin_empty   -       Indicats wheter or not the final gradient amplitude was specifed */
+    
+    int i = 0;
+    /* iflag used in spline method to signal error */
+    int *iflag;
+    int iflagp;
+    iflag = &iflagp;
+    
+    double dt = T;
+    double gamma = 4.257;
+    
+    /* Length of the curve in p-parameterization */
+    int Lp = Cr;
+
+    double *x, *y, *z;
+    /* Ci given as Nx3 array, parse into x, y, z components */
+    x = (double*)malloc(Cr * sizeof(double));
+    y = (double*)malloc(Cr * sizeof(double));
+    z = (double*)malloc(Cr * sizeof(double));
+    
+    for(i=0; i < Cr; i++) {
+        x[i] = Ci[i];
+        y[i] = Ci[i+Cr];
+        if(Cc == 2) {
+            z[i] = 0;       /* if inputed curve is Nx2, z = 0 */
+        } else {
+            z[i] = Ci[i+2*Cr];
+        }
+    }
+    
+    // double p [Lp];
+    double* p = (double*)malloc(Lp*sizeof(double));
+    
+    /* Representing the curve with parameter p */
+    
+    for (i = 0; i < Lp; i++) {
+        p[i] = i;
+    }
+    
+    /* Interpolation of curve for gradient accuracy, using cubic spline interpolation */
+    double *c1x, *c2x, *c3x,
+            *c1y, *c2y, *c3y,
+            *c1z, *c2z, *c3z;       /* arrays used by spline function to store coefficients. */
+    
+    c1z = (double*)malloc(Lp * sizeof(double));
+    c2z = (double*)malloc(Lp * sizeof(double));
+    c3z = (double*)malloc(Lp * sizeof(double));
+    
+    c1x = (double*)malloc(Lp * sizeof(double));
+    c2x = (double*)malloc(Lp * sizeof(double));
+    c3x = (double*)malloc(Lp * sizeof(double));
+    
+    c1y = (double*)malloc(Lp * sizeof(double));
+    c2y = (double*)malloc(Lp * sizeof(double));
+    c3y = (double*)malloc(Lp * sizeof(double));
+    
+    spline(Lp, 0, 0, 1, 1, p, x, c1x, c2x, c3x, iflag);
+    spline(Lp, 0, 0, 1, 1, p, y, c1y, c2y, c3y, iflag);
+    spline(Lp, 0, 0, 1, 1, p, z, c1z, c2z, c3z, iflag);
+    
+    double dp = 0.1;
+    int num_evals = (int) floor((Lp-1) / dp)+ 1;
+    
+    double *CCx, *CCy, *CCz;
+    CCx = (double*)malloc(num_evals * sizeof(double));
+    CCy = (double*)malloc(num_evals * sizeof(double));
+    CCz = (double*)malloc(num_evals * sizeof(double));
+    
+    double toeval = 0;
+    
+    int *last;
+    int holder = 0;
+    last = &holder;
+    
+    double *Cpx, *Cpy, *Cp_abs, *Cpz;               /* interpolated curve in p-parameterization */
+    Cpx = (double*)malloc(num_evals * sizeof(double));
+    Cpy =  (double*)malloc(num_evals * sizeof(double));
+    Cpz = (double*)malloc(num_evals * sizeof(double));
+    Cp_abs =  (double*)malloc(num_evals * sizeof(double));
+    
+    for (i = 0; i < num_evals; i++) {
+        toeval = (double) i * dp;
+        CCx[i] = seval(Lp, toeval, p, x, c1x, c2x, c3x, last);
+        CCy[i] = seval(Lp, toeval, p, y, c1y, c2y, c3y, last);
+        CCz[i] = seval(Lp, toeval, p, z, c1z, c2z, c3z, last);
+        Cpx[i] = deriv(Lp, toeval, p, c1x, c2x, c3x, last);
+        Cpy[i] = deriv(Lp, toeval, p, c1y, c2y, c3y, last);
+        Cpz[i] = deriv(Lp, toeval, p, c1z, c2z, c3z, last);
+        Cp_abs[i] = sqrt(Cpx[i]*Cpx[i] + Cpy[i]*Cpy[i] + Cpz[i]*Cpz[i]);
+    }
+    free(Cpx);    free(Cpy);    free(Cpz);
+    
+    /* converting to arc-length parameterization from p, using trapezoidal integration */
+    
+    double *s_of_p;
+    s_of_p = (double*)malloc(num_evals * sizeof(double));
+    s_of_p[0] = 0;
+    
+    double sofar = 0;
+    
+    for (i=1; i < num_evals; i++) { // bug fix: i=0 -> i=1
+        
+        sofar += (Cp_abs[i]+ Cp_abs[i-1])/2;
+        s_of_p[i] =  dp * sofar;
+    }
+    
+    free(Cp_abs);
+    
+    /* length of the curve */
+    double L = s_of_p[num_evals-1];
+    
+    /* decide ds and compute st for the first point */
+    double stt0 = gamma*smax;   /* always assumes first point is max slew */
+    double st0 = (stt0*dt)/2;   /* start at half the gradient for accuracy close to g=0 */
+    double s0 = st0*dt;
+
+    if (ds_empty == 1) {        /* if a ds value was not specified */
+        ds = s0/1.5;     /* smaller step size for numerical accuracy */
+    }
+    
+    int length_of_s =  (int) floor(L/ds);
+    int half_ls = (int) floor(L/(ds/2));
+
+    if (glob_enDbgPrint)
+    {
+        i64 MTG_Nit = length_of_s*2-2;
+        PRINT(MTG_Nit);
+    }
+
+    *size_sdot = half_ls;
+    
+    double *s;
+    s = (double*)malloc(length_of_s * sizeof(double));
+    sta[0] =  (double*)malloc(length_of_s * sizeof(double));
+    stb[0] =  (double*)malloc(length_of_s * sizeof(double));
+    
+    *size_st= length_of_s;
+    
+    for (i = 0; i< length_of_s; i++) {
+        s[i] = i*ds;
+        sta[0][i] = 0;
+        stb[0][i] = 0;
+    }
+    double *s_half =  (double*)malloc(half_ls*sizeof(double));
+    
+    for (i=0; i < half_ls; i++) {
+        s_half[i] = (double)i*(ds/2);
+    }
+    
+    double *p_of_s_half;
+    p_of_s_half = (double*)malloc(half_ls * sizeof(double));
+    
+    /* Convert from s(p) to p(s) and interpolate for accuracy */
+    double *a1x, *a2x, *a3x;
+    a1x = (double*)malloc(num_evals * sizeof(double));
+    a2x = (double*)malloc(num_evals * sizeof(double));
+    a3x = (double*)malloc(num_evals * sizeof(double));
+    
+    double* sop_num = (double*)malloc(num_evals*sizeof(double));
+    for (i=0; i<num_evals; i++) {
+        sop_num[i] = i * dp;
+    }
+    
+    spline(num_evals, 0, 0, 1, 1, s_of_p, sop_num, a1x, a2x, a3x, iflag);
+    
+    for (i=0; i < half_ls; i++) {
+        p_of_s_half[i] = seval(num_evals, s_half[i], s_of_p, sop_num, a1x, a2x, a3x, last);
+    }
+    
+    free(sop_num);
+    free(a1x); free(a2x); free(a3x);
+    free(s_of_p);
+    
+    int size_p_of_s = half_ls/2;
+    
+    double *p_of_s;
+    p_of_s = (double*)malloc(size_p_of_s * sizeof(double));
+    
+    for (i=0; i<size_p_of_s; i++) {
+        p_of_s[i] = p_of_s_half[2*i];
+    }
+    
+    double *k;
+    k = (double*)malloc(half_ls*sizeof(double));        /* k is the curvature along the curve */
+    
+    double *Cspx, *Cspy, *Cspz;
+    /* Csp is C(s(p)) = [Cx(p(s)) Cy(p(s)) Cz(p(s))] */
+    Cspx =  (double*)malloc(length_of_s*sizeof(double));
+    Cspy =  (double*)malloc(length_of_s*sizeof(double));
+    Cspz =  (double*)malloc(length_of_s*sizeof(double));
+    
+    for (i=0; i<length_of_s; i++) {
+        Cspx[i] = seval(Lp, p_of_s[i], p, x, c1x, c2x, c3x, last);
+        Cspy[i] = seval(Lp, p_of_s[i], p, y, c1y, c2y, c3y, last);
+        Cspz[i] = seval(Lp, p_of_s[i], p, z, c1z, c2z, c3z, last);
+    }
+    
+    double *Csp1x, *Csp2x, *Csp3x, *Csp1y, *Csp2y, *Csp3y,  *Csp1z, *Csp2z, *Csp3z; /* arrays used by spline function to store coefficients. */
+    Csp1x =  (double*)malloc(length_of_s*sizeof(double));
+    Csp2x =  (double*)malloc(length_of_s*sizeof(double));
+    Csp3x =  (double*)malloc(length_of_s*sizeof(double));
+    Csp1y =  (double*)malloc(length_of_s*sizeof(double));
+    Csp2y =  (double*)malloc(length_of_s*sizeof(double));
+    Csp3y =  (double*)malloc(length_of_s*sizeof(double));
+    Csp1z =  (double*)malloc(length_of_s*sizeof(double));
+    Csp2z =  (double*)malloc(length_of_s*sizeof(double));
+    Csp3z =  (double*)malloc(length_of_s*sizeof(double));
+    spline(length_of_s, 0, 0, 1, 1, s, Cspx, Csp1x, Csp2x, Csp3x, iflag);
+    spline(length_of_s, 0, 0, 1, 1, s, Cspy, Csp1y, Csp2y, Csp3y, iflag);
+    spline(length_of_s, 0, 0, 1, 1, s, Cspz, Csp1z, Csp2z, Csp3z, iflag);
+    
+    for (i=0; i<half_ls; i++) {
+        double kx = (deriv2(length_of_s, s_half[i], s, Csp1x, Csp2x, Csp3x, last));
+        double ky = (deriv2(length_of_s, s_half[i], s, Csp1y, Csp2y, Csp3y, last));
+        double kz = (deriv2(length_of_s, s_half[i], s, Csp1z, Csp2z, Csp3z, last));
+        k[i] =  sqrt(kx*kx + ky*ky + kz*kz);        /* the curvature, magnitude of the second derivative of the curve in arc-length parameterization */
+    }
+    
+    free(CCx);    free(CCy);    free(CCz);
+    free(p_of_s_half);
+    
+    /* computing geomtry dependent constraints (forbidden line curve) */
+    
+    double *sdot1, *sdot2;
+    sdot1 =  (double*)malloc(half_ls*sizeof(double));
+    sdot2 =  (double*)malloc(half_ls*sizeof(double));
+    
+    sdot[0] =  (double*)malloc(half_ls * sizeof(double));
+    *size_sdot = half_ls;
+    /* Calculating the upper bound for the time parametrization */
+    /* sdot (which is a non scaled max gradient constaint) as a function of s. */
+    /* sdot is the minimum of gamma*gmax and sqrt(gamma*gmax / k) */
+    
+    for (i=0; i< half_ls; i++) {
+        sdot1[i] = gamma*gmax;
+        sdot2[i] = sqrt((gamma*smax) / (fabs(k[i]+(DBL_EPSILON))));
+        if (sdot1[i] < sdot2[i]) {
+            sdot[0][i] = sdot1[i];
+        }else {
+            sdot[0][i] = sdot2[i];
+        }
+    }
+    free(sdot1);
+    free(sdot2);
+    free(s_half);
+    free(Cspx); free(Cspy); free(Cspz);
+    free(Csp1x); free(Csp2x); free(Csp3x);
+    free(Csp1y); free(Csp2y); free(Csp3y);
+    free(Csp1z); free(Csp2z); free(Csp3z);
+    
+    int size_k2 = half_ls+2;    /* extend of k for RK4 */
+    double *k2;
+    k2 = (double*)malloc(size_k2*sizeof(double));
+    
+    for(i=0; i < half_ls; i++) {
+        k2[i] = k[i];
+    }
+    
+    k2[size_k2-2] = k2[size_k2-3];
+    k2[size_k2-1] = k2[size_k2-3];
+    
+    double g0gamma = g0*gamma + st0;
+    double gammagmax = gamma *gmax;
+    
+    if (g0gamma < gammagmax) {
+        sta[0][0] = g0gamma;
+    } else {
+        sta[0][0] = gammagmax;
+    }
+    
+    /* Solving ODE Forward */
+    for (i=1; i<length_of_s; i++) {
+        double k_rk[3];
+        k_rk[0] = k2[2*i-2];
+        k_rk[1] = k2[2*i-1];
+        k_rk[2] = k2[2*i];
+        
+        double dstds = RungeKutte_riv(ds, sta[0][i-1], k_rk, smax);
+        double tmpst = sta[0][i-1] + dstds;
+        if (sdot[0][2*i+1] < tmpst) {
+            sta[0][i] = sdot[0][2*i+1];
+        } else {
+            sta[0][i] = tmpst;
+        }
+    }
+    
+    free(k2);
+    
+    /*Solving ODE Backwards: */
+    double max;
+    if(gfin_empty == 1) {
+        /*if gfin is not provided */
+        stb[0][length_of_s-1] = sta[0][length_of_s - 1];
+    } else {
+        
+        if (gfin * gamma > st0) {
+            max = gfin*gamma;
+        } else {
+            max = st0;
+        }
+        
+        if (gamma * gmax < max) {
+            stb[0][length_of_s-1] = gamma * gmax;
+        } else {
+            stb[0][length_of_s-1] = max;
+        }
+    }
+    
+    for (i=length_of_s-2; i>-1; i--) {
+        double k_rk[3];
+        k_rk[0] = k[2*i+2];
+        k_rk[1] = k[2*i+1];
+        k_rk[2] = k[2*i];
+        
+        double dstds = RungeKutte_riv(ds, stb[0][i+1], k_rk, smax);
+        double tmpst = stb[0][i+1] + dstds;
+        
+        if (sdot[0][2*i] < tmpst) {
+            stb[0][i] = sdot[0][2*i];
+        } else {
+            stb[0][i] = tmpst;
+        }
+    }
+    
+    /* take st(s) to be the minimum of the curves sta and stb */
+    double *st_of_s, *st_ds_i;
+    st_of_s = (double*)malloc(length_of_s*sizeof(double));
+    st_ds_i = (double*)malloc(length_of_s*sizeof(double));
+    
+    for (i=0; i<length_of_s; i++) {
+        if (sta[0][i] < stb[0][i]) {
+            st_of_s[i] = sta[0][i];
+        }
+        else {
+            st_of_s[i] = stb[0][i];
+        }
+        
+        st_ds_i[i] = ds*(1/st_of_s[i]);         /* ds * 1/st(s) used in below calculation of t(s) */
+    }
+    
+    /*Final interpolation */
+    
+    /* Converting to the time parameterization, t(s) using trapezoidal integration. t(s) = integral (1/st) ds */
+    double *t_of_s= (double*)malloc(length_of_s*sizeof(double));
+    t_of_s[0] = 0;
+    for (i=1; i < length_of_s; i++) {
+        t_of_s[i] =  t_of_s[i-1] + (st_ds_i[i]+ st_ds_i[i-1])/2;
+    }
+    
+    int l_t =  (int) floor(t_of_s[length_of_s-1]/dt);
+    *size_interpolated = l_t;       /* size of the interpolated trajectory */
+    
+    double* t = (double*)malloc(l_t*sizeof(double));
+    for (i=0; i<l_t; i++) {
+        t[i] = i*dt;                /* time array */
+    }
+    
+    double *t1x, *t2x, *t3x;        /* coefficient arrays for spline interpolation of t(s) to get s(t) */
+    
+    t1x = (double*)malloc(length_of_s*sizeof(double));
+    t2x = (double*)malloc(length_of_s*sizeof(double));
+    t3x = (double*)malloc(length_of_s*sizeof(double));
+    
+    double *s_of_t;
+    s_of_t = (double*)malloc(l_t * sizeof(double));
+    
+    spline(length_of_s, 0, 0, 1, 1, t_of_s, s, t1x, t2x, t3x, iflag);
+    
+    for (i=0; i < l_t; i++){
+        s_of_t[i] = seval(length_of_s, t[i], t_of_s, s, t1x, t2x, t3x, last);
+    }
+    
+    free(t1x);    free(t2x);    free(t3x);
+    free(st_ds_i);
+    free(st_of_s);
+    free(t_of_s);
+    
+    double *p1x, *p2x, *p3x;        /* coefficient arrays for spline interpolation of p(s) with s(t) to get p(s(t)) = p(t) */
+    p1x = (double*)malloc(length_of_s*sizeof(double));
+    p2x = (double*)malloc(length_of_s*sizeof(double));
+    p3x = (double*)malloc(length_of_s*sizeof(double));
+    
+    spline(length_of_s, 0, 0, 1, 1, s, p_of_s, p1x, p2x, p3x, iflag);
+    
+    double *p_of_t;
+    p_of_t = (double*)malloc(l_t*sizeof(double));
+    
+    for (i=0; i < l_t; i++){
+        p_of_t[i] = seval(length_of_s, s_of_t[i], s, p_of_s, p1x, p2x, p3x, last);
+    }
+    
+    free(s);
+    free(p_of_s);
+    free(p1x);    free(p2x);    free(p3x);
+    free(s_of_t);
+    
+    /*  interpolated k-space trajectory */
+    
+    Cx[0] =  (double*)malloc(l_t * sizeof(double));
+    Cy[0] =  (double*)malloc(l_t * sizeof(double));
+    Cz[0] =  (double*)malloc(l_t * sizeof(double));
+    
+    for (i=0; i<l_t; i++) {
+        Cx[0][i] = seval(Lp, p_of_t[i], p, x, c1x, c2x, c3x, last);
+        Cy[0][i] = seval(Lp, p_of_t[i], p, y, c1y, c2y, c3y, last);
+        Cz[0][i] = seval(Lp, p_of_t[i], p, z, c1z, c2z, c3z, last);
+    }
+    
+    free(p);
+    free(x);  free(y);  free(z);
+    free(p_of_t);
+    free(c1x);    free(c2x);    free(c3x);
+    free(c1y);    free(c2y);    free(c3y);
+    free(c1z);    free(c2z);    free(c3z);
+    
+    /* Final gradient waveforms to be returned */
+    gx[0] =  (double*)malloc(l_t * sizeof(double));
+    gy[0] =  (double*)malloc(l_t * sizeof(double));
+    gz[0] =  (double*)malloc(l_t * sizeof(double));
+    
+    for (i=0; i< l_t -1; i++) {
+        gx[0][i] = (Cx[0][i+1] - Cx[0][i]) / (gamma * dt);
+        gy[0][i] = (Cy[0][i+1] - Cy[0][i]) / (gamma * dt);
+        gz[0][i] = (Cz[0][i+1] - Cz[0][i]) / (gamma * dt);
+    }
+    
+    gx[0][l_t-1] = gx[0][l_t-2] + gx[0][l_t-2] - gx[0][l_t-3];
+    gy[0][l_t-1] = gy[0][l_t-2] + gy[0][l_t-2] - gy[0][l_t-3];
+    gz[0][l_t-1] = gz[0][l_t-2] + gz[0][l_t-2] - gz[0][l_t-3];
+    
+    
+    /* k-space trajecoty to be returned (calculated by integrating gradient waveforms by trapezoidal integration) */
+    kx[0] =  (double*)malloc(l_t * sizeof(double));
+    ky[0] =  (double*)malloc(l_t * sizeof(double));
+    kz[0] =  (double*)malloc(l_t * sizeof(double));
+    
+    double sofarx = 0;
+    double sofary = 0;
+    double sofarz = 0;
+    
+    kx[0][0] = 0;
+    ky[0][0] = 0;
+    kz[0][0] = 0;
+    
+    for (i=1; i < l_t; i++) {
+        sofarx += (gx[0][i] + gx[0][i-1]) / 2;
+        sofary += (gy[0][i] + gy[0][i-1]) / 2;
+        sofarz += (gz[0][i] + gz[0][i-1]) / 2;
+        kx[0][i] = sofarx * dt * gamma;
+        ky[0][i] = sofary * dt * gamma;
+        kz[0][i] = sofarz * dt * gamma;
+    }
+    free(k);
+    /* slew waveforms to be returned */
+    sx[0] =  (double*)malloc(l_t * sizeof(double));
+    sy[0] =  (double*)malloc(l_t * sizeof(double));
+    sz[0] =  (double*)malloc(l_t * sizeof(double));
+    
+    for (i=0; i < l_t-1; i++) {
+        sx[0][i] = (gx[0][i+1] - gx[0][i])/dt;
+        sy[0][i] = (gy[0][i+1] - gy[0][i])/dt;
+        sz[0][i] = (gz[0][i+1] - gz[0][i])/dt;
+    }
+    sx[0][l_t-1] = sx[0][l_t-2];
+    sy[0][l_t-1] = sy[0][l_t-2];
+    sz[0][l_t-1] = sz[0][l_t-2];
+    
+    /* total traversal time */
+    *time = t[l_t-1];
+    free(t);
+}
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+#include <Python.h>
+#include <numpy/arrayobject.h>
+#include <cstdio>
+#include <ctime>
+#include <algorithm>
+#include "mag/Mag.h"
+#include "traj/TrajFunc.h"
+#include "traj/MrTraj.h"
+#include "traj/Spiral.h"
+#include "traj/VarDenSpiral.h"
+#include "traj/Rosette.h"
+#include "traj/Shell3d.h"
+#include "traj/Yarnball.h"
+#include "traj/Seiffert.h"
+#include "traj/Cones.h"
+#include "utility/SplineIntp.h"
+
+bool gMain_enTrajRev (0);
+bool gMain_enGoldAng (0);
+bool gMain_enShuffle (0);
+
+typedef std::vector<f64> vf64;
+typedef std::vector<i64> vi64;
+typedef std::vector<v3> vv3;
+typedef std::vector<vv3> vvv3;
+
+PyObject* cvtVv3toNpa(vv3& vv3Src)
+{
+    int dim0 = vv3Src.size();
+    // allocate numpy array
+    PyObject* pNumpyArray;
+    {
+        npy_intp dims[] = {dim0, 3};
+        pNumpyArray = PyArray_ZEROS(2, dims, NPY_FLOAT64, 0);
+    }
+
+    // fill the data in
+    for (i64 i = 0; i < (int)vv3Src.size(); ++i)
+    {
+        *(f64*)PyArray_GETPTR2((PyArrayObject*)pNumpyArray, i, 0) = vv3Src[i].x;
+        *(f64*)PyArray_GETPTR2((PyArrayObject*)pNumpyArray, i, 1) = vv3Src[i].y;
+        *(f64*)PyArray_GETPTR2((PyArrayObject*)pNumpyArray, i, 2) = vv3Src[i].z;
+    }
+
+    return pNumpyArray;
+}
+
+PyObject* cvtVdtoNpa(const std::vector<f64>& vf64Src)
+{
+    int dim0 = vf64Src.size();
+
+    // allocate numpy array
+    PyObject* pNumpyArray;
+    {
+        npy_intp dims[] = {dim0};
+        pNumpyArray = PyArray_ZEROS(1, dims, NPY_FLOAT64, 0);
+    }
+
+    // fill the data in
+    for (i64 i = 0; i < (int)vf64Src.size(); ++i)
+    {
+        *(f64*)PyArray_GETPTR1((PyArrayObject*)pNumpyArray, i) = vf64Src[i];
+    }
+
+    return pNumpyArray;
+}
+
+PyObject* cvtVvv3toList(vvv3& vvv3Src)
+{
+    PyObject* pPyList = PyList_New(0);
+    for (i64 i = 0; i < (int)vvv3Src.size(); ++i)
+    {
+        PyObject* pNumpyArray = cvtVv3toNpa(vvv3Src[i]);
+        PyList_Append(pPyList, pNumpyArray);
+        Py_DECREF(pNumpyArray);
+    }
+    return pPyList;
+}
+
+PyObject* cvtV3toNpa(v3& v3Src)
+{
+    // allocate numpy array
+    PyObject* pNumpyArray;
+    {
+        npy_intp dims[] = {3};
+        pNumpyArray = PyArray_ZEROS(1, dims, NPY_FLOAT64, 0);
+    }
+
+    // fill the data in
+    *(f64*)PyArray_GETPTR1((PyArrayObject*)pNumpyArray, 0) = v3Src.x;
+    *(f64*)PyArray_GETPTR1((PyArrayObject*)pNumpyArray, 1) = v3Src.y;
+    *(f64*)PyArray_GETPTR1((PyArrayObject*)pNumpyArray, 2) = v3Src.z;
+
+    return pNumpyArray;
+}
+
+PyObject* cvtVv3toList(vv3& vv3Src)
+{
+    PyObject* pPyList = PyList_New(0);
+    for (i64 i = 0; i < (int)vv3Src.size(); ++i)
+    {
+        PyObject* pNumpyArray = cvtV3toNpa(vv3Src[i]);
+        PyList_Append(pPyList, pNumpyArray);
+        Py_DECREF(pNumpyArray);
+    }
+    return pPyList;
+}
+
+bool cvtNpa2Vv3(PyObject* pNumpyArray, vv3* pvv3Out)
+{
+    PyArrayObject* ppyaoNpa = (PyArrayObject*)PyArray_FROM_OTF(pNumpyArray, NPY_FLOAT64, NPY_ARRAY_C_CONTIGUOUS);
+    i64 n = PyArray_DIM(ppyaoNpa, 0);
+    pvv3Out->resize(n);
+
+    for (i64 i = 0; i < n; ++i)
+    {
+        f64* pdThis = (f64*)PyArray_GETPTR2(ppyaoNpa, i, 0);
+        pvv3Out->at(i).x = pdThis[0];
+        pvv3Out->at(i).y = pdThis[1];
+        pvv3Out->at(i).z = pdThis[2];
+    }
+
+    Py_DECREF(ppyaoNpa); // what if decref another?
+    return true;
+}
+
+bool cvtNpa2Vd(PyObject* pNumpyArray, vf64* pvf64Out)
+{
+    i64 n = PyArray_DIM((PyArrayObject*)pNumpyArray, 0);
+    pvf64Out->resize(n);
+
+    for (i64 i = 0; i < n; ++i)
+    {
+        pvf64Out->at(i) = *(f64*)PyArray_GETPTR1((PyArrayObject*)pNumpyArray, i);
+    }
+    return true;
+}
+
+bool inline checkNarg(i64 nArg, i64 nArgExp)
+{
+    if (nArg != nArgExp)
+    {
+        printf("wrong num. of arg, narg=%ld, %ld expected\n", nArg, nArgExp);
+        abort();
+        return false;
+    }
+    return true;
+}
+
+bool getGeoGradPara(PyObject* const* args, MrTraj::GeoPara* psGeoPara, MrTraj::GradPara* psGradPara)
+{
+    *psGeoPara = 
+    {
+        (bool)PyLong_AsLong(args[0]),
+        (f64)PyFloat_AsDouble(args[1]),
+        (i64)PyLong_AsLong(args[2])
+    };
+
+    *psGradPara = 
+    {
+        (f64)PyFloat_AsDouble(args[3]),
+        (f64)PyFloat_AsDouble(args[4]),
+        (f64)PyFloat_AsDouble(args[5])
+    };
+
+    return true;
+}
+
+class ExFunc: public TrajFunc
+{
+public:
+    ExFunc
+    (
+        PyObject* pPyObj_getK,
+        PyObject* pPyObj_getDkDp,
+        PyObject* pPyObj_getD2kDp2,
+        f64 p0, f64 p1
+    ):
+        TrajFunc(p0,p1)
+    {
+        m_pPyObj_getK = pPyObj_getK;
+        m_pPyObj_getDkDp = pPyObj_getDkDp;
+        m_pPyObj_getD2kDp2 = pPyObj_getD2kDp2;
+    }
+    
+    bool getK(v3* k, f64 p)
+    {
+        PyObject* pPyObj_p = PyFloat_FromDouble(p);
+        PyObject* pPyObj_v3 = PyObject_CallOneArg(m_pPyObj_getK, pPyObj_p);
+        Py_DECREF(pPyObj_p);
+        PyObject* _pPyObj_v3 = pPyObj_v3;
+        pPyObj_v3 = PyArray_FROM_OTF(pPyObj_v3, NPY_FLOAT64, NPY_ARRAY_CARRAY);
+        Py_DECREF(_pPyObj_v3);
+        if (PyArray_SIZE((PyArrayObject*)pPyObj_v3) != 3)
+        {
+            PyErr_SetString(PyExc_RuntimeError, "the return value of getK / getDkDp / getD2kDp2 must be size-3.\n");
+            PyErr_PrintEx(-1);
+            std::abort();
+            return false;
+        }
+
+        k->x = *(f64*)PyArray_GETPTR1((PyArrayObject*)pPyObj_v3, 0);
+        k->y = *(f64*)PyArray_GETPTR1((PyArrayObject*)pPyObj_v3, 1);
+        k->z = *(f64*)PyArray_GETPTR1((PyArrayObject*)pPyObj_v3, 2);
+
+        return true;
+    }
+
+    bool getDkDp(v3* k, f64 p)
+    {
+        if (m_pPyObj_getDkDp == Py_None)
+        {
+            return TrajFunc::getDkDp(k, p);
+        }
+
+        PyObject* pPyObj_p = PyFloat_FromDouble(p);
+        PyObject* pPyObj_v3 = PyObject_CallOneArg(m_pPyObj_getDkDp, pPyObj_p);
+        Py_DECREF(pPyObj_p);
+        PyObject* _pPyObj_v3 = pPyObj_v3;
+        pPyObj_v3 = PyArray_FROM_OTF(pPyObj_v3, NPY_FLOAT64, NPY_ARRAY_CARRAY);
+        Py_DECREF(_pPyObj_v3);
+        if (PyArray_SIZE((PyArrayObject*)pPyObj_v3) != 3)
+        {
+            PyErr_SetString(PyExc_RuntimeError, "the return value of getK / getDkDp / getD2kDp2 must be size-3.\n");
+            PyErr_PrintEx(-1);
+            std::abort();
+            return false;
+        }
+
+        k->x = *(f64*)PyArray_GETPTR1((PyArrayObject*)pPyObj_v3, 0);
+        k->y = *(f64*)PyArray_GETPTR1((PyArrayObject*)pPyObj_v3, 1);
+        k->z = *(f64*)PyArray_GETPTR1((PyArrayObject*)pPyObj_v3, 2);
+
+        return true;
+    }
+
+    bool getD2kDp2(v3* k, f64 p)
+    {
+        if (m_pPyObj_getD2kDp2 == Py_None)
+        {
+            return TrajFunc::getD2kDp2(k, p);
+        }
+        
+        PyObject* pPyObj_p = PyFloat_FromDouble(p);
+        PyObject* pPyObj_v3 = PyObject_CallOneArg(m_pPyObj_getD2kDp2, pPyObj_p);
+        Py_DECREF(pPyObj_p);
+        PyObject* _pPyObj_v3 = pPyObj_v3;
+        pPyObj_v3 = PyArray_FROM_OTF(pPyObj_v3, NPY_FLOAT64, NPY_ARRAY_CARRAY);
+        Py_DECREF(_pPyObj_v3);
+        if (PyArray_SIZE((PyArrayObject*)pPyObj_v3) != 3)
+        {
+            PyErr_SetString(PyExc_RuntimeError, "the return value of getK / getDkDp / getD2kDp2 must be size-3.\n");
+            PyErr_PrintEx(-1);
+            std::abort();
+            return false;
+        }
+
+        k->x = *(f64*)PyArray_GETPTR1((PyArrayObject*)pPyObj_v3, 0);
+        k->y = *(f64*)PyArray_GETPTR1((PyArrayObject*)pPyObj_v3, 1);
+        k->z = *(f64*)PyArray_GETPTR1((PyArrayObject*)pPyObj_v3, 2);
+
+        return true;
+    }
+protected:
+    PyObject* m_pPyObj_getK;
+    PyObject* m_pPyObj_getDkDp;
+    PyObject* m_pPyObj_getD2kDp2;
+};
+
+class ExTraj: public MrTraj
+{
+public:
+    ExTraj(const GeoPara& sGeoPara, const GradPara& sGradPara, PyObject* pPyObj_getK, PyObject* pPyObj_getDkDp, PyObject* pPyObj_getD2kDp2, f64 p0, f64 p1):
+        MrTraj(sGeoPara,sGradPara,1,0),
+        ptfTrajFunc(NULL)
+    {   
+        ptfTrajFunc = new ExFunc
+        (
+            pPyObj_getK,
+            pPyObj_getDkDp,
+            pPyObj_getD2kDp2,
+            p0,
+            p1
+        );
+
+        TIC;
+        calGRO(&m_vv3G, &m_vf64P, *ptfTrajFunc, m_sGradPara, 8);
+        TOC;
+        m_nSampMax = m_vv3G.size();
+    }
+
+    ExTraj(const GeoPara& sGeoPara, const GradPara& sGradPara, vv3& vv3K):
+        MrTraj(sGeoPara,sGradPara,1,0),
+        ptfTrajFunc(NULL)
+    {
+        TIC;
+        calGRO(&m_vv3G, &m_vf64P, vv3K, m_sGradPara, 8);
+        TOC;
+        m_nSampMax = m_vv3G.size();
+    }
+
+    ~ExTraj()
+    {
+        if (ptfTrajFunc)
+        {
+            delete ptfTrajFunc;
+            ptfTrajFunc = NULL;
+        }
+    }
+
+    virtual bool getGRO(vv3* pvv3G, i64 iAcq)
+    {
+        *pvv3G = m_vv3G;
+        return true;
+    }
+
+    virtual bool getM0PE(v3* pv3M0PE, i64 iAcq)
+    {
+        ptfTrajFunc->getK0(pv3M0PE);
+        return true;
+    }
+
+    bool getPRO(vf64* vf64P, i64 iAcq) // get parameter sequence of GRO
+    {
+        *vf64P = m_vf64P;
+        return true;
+    }
+
+private:
+    TrajFunc* ptfTrajFunc;
+    vv3 m_vv3G;
+    vf64 m_vf64P;
+};
+
+PyObject* calGrad4ExFunc(PyObject* self, PyObject* const* args, Py_ssize_t narg)
+{
+    checkNarg(narg, 11);
+
+    MrTraj::GeoPara sGeoPara;
+    MrTraj::GradPara sGradPara;
+    getGeoGradPara(args, &sGeoPara, &sGradPara);
+
+    f64 p0 = (f64)PyFloat_AsDouble(args[9]);
+    f64 p1 = (f64)PyFloat_AsDouble(args[10]);
+
+    ExTraj traj
+    (
+        sGeoPara, sGradPara,
+        args[6], args[7], args[8], 
+        p0, p1
+    );
+
+    vv3 vv3G;
+    traj.getGRO(&vv3G, 0);
+    vf64 vf64P;
+    traj.getPRO(&vf64P, 0);
+
+    return Py_BuildValue("OO", cvtVv3toNpa(vv3G), cvtVdtoNpa(vf64P));
+}
+
+PyObject* calGrad4ExSamp(PyObject* self, PyObject* const* args, Py_ssize_t narg)
+{
+    checkNarg(narg, 7);
+
+    MrTraj::GeoPara sGeoPara;
+    MrTraj::GradPara sGradPara;
+    getGeoGradPara(args, &sGeoPara, &sGradPara);
+
+    vv3 vv3K; cvtNpa2Vv3(args[6], &vv3K);
+
+    ExTraj traj
+    (
+        sGeoPara, sGradPara,
+        vv3K
+    );
+    
+    vv3 vv3G;
+    traj.getGRO(&vv3G, 0);
+    vf64 vf64P;
+    traj.getPRO(&vf64P, 0);
+
+    return Py_BuildValue("OO", cvtVv3toNpa(vv3G), cvtVdtoNpa(vf64P));
+}
+
+bool getG(MrTraj* pmt, vv3* pvv3M0PE, vvv3* pvvv3GRO)
+{
+    bool ret = true;
+    i64 nAcq = pmt->getNAcq();
+    f64 dt = pmt->getGradPara().dt;
+    pvv3M0PE->resize(nAcq);
+    pvvv3GRO->resize(nAcq);
+
+    bool& enShuf = gMain_enShuffle;
+	vi64 vi64ShufSeq; MrTraj::genRandIdx(&vi64ShufSeq, nAcq);
+    for (i64 i = 0; i < nAcq; ++i)
+    {
+        i64 _i = enShuf?vi64ShufSeq[i]:i;
+        
+        // get M0PE and GRO
+        vv3 vv3GRO; ret &= pmt->getGRO(&vv3GRO, _i);
+        v3 v3M0PE; ret &= pmt->getM0PE(&v3M0PE, _i);
+
+        // reverse gradient if needed
+        if (gMain_enTrajRev) ret &= MagSolver::revGrad(&v3M0PE, &vv3GRO, v3M0PE, vv3GRO, dt);
+
+        pvv3M0PE->at(i) = v3M0PE;
+        pvvv3GRO->at(i) = vv3GRO;
+    }
+    return ret;
+}
+
+PyObject* getG_Spiral(PyObject* self, PyObject* const* args, Py_ssize_t narg)
+{
+    checkNarg(narg, 7);
+
+    MrTraj::GeoPara sGeoPara;
+    MrTraj::GradPara sGradPara;
+    getGeoGradPara(args, &sGeoPara, &sGradPara);
+
+    f64 kRhoPhi = (f64)PyFloat_AsDouble(args[6]);
+    Spiral traj(sGeoPara, sGradPara, kRhoPhi);
+    if (gMain_enGoldAng) traj.setRotang(GOLDANG);
+
+    vv3 vv3K0;
+    vvv3 vvv3G;
+    getG(&traj, &vv3K0, &vvv3G);
+
+    return Py_BuildValue("OO", cvtVv3toList(vv3K0), cvtVvv3toList(vvv3G));
+}
+
+PyObject* getG_VarDenSpiral(PyObject* self, PyObject* const* args, Py_ssize_t narg)
+{
+    checkNarg(narg, 8);
+
+    MrTraj::GeoPara sGeoPara;
+    MrTraj::GradPara sGradPara;
+    getGeoGradPara(args, &sGeoPara, &sGradPara);
+
+    f64 kRhoPhi0 = (f64)PyFloat_AsDouble(args[6]);
+    f64 kRhoPhi1 = (f64)PyFloat_AsDouble(args[7]);
+    VarDenSpiral traj(sGeoPara, sGradPara, kRhoPhi0, kRhoPhi1);
+    if (gMain_enGoldAng) traj.setRotang(GOLDANG);
+
+    vv3 vv3K0;
+    vvv3 vvv3G;
+    getG(&traj, &vv3K0, &vvv3G);
+
+    return Py_BuildValue("OO", cvtVv3toList(vv3K0), cvtVvv3toList(vvv3G));
+}
+
+PyObject* getG_VarDenSpiral_RT(PyObject* self, PyObject* const* args, Py_ssize_t narg)
+{
+    checkNarg(narg, 9);
+
+    MrTraj::GeoPara sGeoPara;
+    MrTraj::GradPara sGradPara;
+    getGeoGradPara(args, &sGeoPara, &sGradPara);
+
+    f64 kRhoPhi0 = (f64)PyFloat_AsDouble(args[6]);
+    f64 kRhoPhi1 = (f64)PyFloat_AsDouble(args[7]);
+    i64 nAcq = (i64)PyLong_AsLong(args[8]);
+    VarDenSpiral_RT traj(sGeoPara, sGradPara, kRhoPhi0, kRhoPhi1, nAcq);
+
+    vv3 vv3K0;
+    vvv3 vvv3G;
+    getG(&traj, &vv3K0, &vvv3G);
+
+    return Py_BuildValue("OO", cvtVv3toList(vv3K0), cvtVvv3toList(vvv3G));
+}
+
+PyObject* getG_Rosette(PyObject* self, PyObject* const* args, Py_ssize_t narg)
+{
+    checkNarg(narg, 9);
+
+    MrTraj::GeoPara sGeoPara;
+    MrTraj::GradPara sGradPara;
+    getGeoGradPara(args, &sGeoPara, &sGradPara);
+
+    f64 om1 = (f64)PyFloat_AsDouble(args[6]);
+    f64 om2 = (f64)PyFloat_AsDouble(args[7]);
+    f64 tMax = (f64)PyFloat_AsDouble(args[8]);
+
+    Rosette traj(sGeoPara, sGradPara, om1, om2, tMax);
+    // printf("Rosette DTE: %e s\n", traj.getAvrDTE());
+    if (gMain_enGoldAng) traj.setRotang(GOLDANG);
+
+    vv3 vv3K0;
+    vvv3 vvv3G;
+    getG(&traj, &vv3K0, &vvv3G);
+
+    return Py_BuildValue("OO", cvtVv3toList(vv3K0), cvtVvv3toList(vvv3G));
+}
+
+PyObject* getG_Rosette_Trad(PyObject* self, PyObject* const* args, Py_ssize_t narg)
+{
+    checkNarg(narg, 10);
+
+    MrTraj::GeoPara sGeoPara;
+    MrTraj::GradPara sGradPara;
+    getGeoGradPara(args, &sGeoPara, &sGradPara);
+
+    f64 om1 = (f64)PyFloat_AsDouble(args[6]);
+    f64 om2 = (f64)PyFloat_AsDouble(args[7]);
+    f64 tMax = (f64)PyFloat_AsDouble(args[8]);
+    f64 dTE = (f64)PyFloat_AsDouble(args[9]);
+
+    Rosette_Trad traj(sGeoPara, sGradPara, om1, om2, tMax, dTE);
+    if (gMain_enGoldAng) traj.setRotang(GOLDANG);
+
+    vv3 vv3K0;
+    vvv3 vvv3G;
+    getG(&traj, &vv3K0, &vvv3G);
+
+    return Py_BuildValue("OO", cvtVv3toList(vv3K0), cvtVvv3toList(vvv3G));
+}
+
+PyObject* getG_Shell3d(PyObject* self, PyObject* const* args, Py_ssize_t narg)
+{
+    checkNarg(narg, 7);
+
+    MrTraj::GeoPara sGeoPara;
+    MrTraj::GradPara sGradPara;
+    getGeoGradPara(args, &sGeoPara, &sGradPara);
+
+    f64 kRhoTht = (f64)PyFloat_AsDouble(args[6]);
+    Shell3d traj(sGeoPara, sGradPara, kRhoTht);
+
+    vv3 vv3K0;
+    vvv3 vvv3G;
+    getG(&traj, &vv3K0, &vvv3G);
+
+    return Py_BuildValue("OO", cvtVv3toList(vv3K0), cvtVvv3toList(vvv3G));
+}
+
+PyObject* getG_Yarnball(PyObject* self, PyObject* const* args, Py_ssize_t narg)
+{
+    checkNarg(narg, 7);
+
+    MrTraj::GeoPara sGeoPara;
+    MrTraj::GradPara sGradPara;
+    getGeoGradPara(args, &sGeoPara, &sGradPara);
+
+    f64 kRhoPhi = (f64)PyFloat_AsDouble(args[6]);
+    Yarnball traj(sGeoPara, sGradPara, kRhoPhi);
+
+    vv3 vv3K0;
+    vvv3 vvv3G;
+    getG(&traj, &vv3K0, &vvv3G);
+
+    return Py_BuildValue("OO", cvtVv3toList(vv3K0), cvtVvv3toList(vvv3G));
+}
+
+PyObject* getG_Seiffert(PyObject* self, PyObject* const* args, Py_ssize_t narg)
+{
+    checkNarg(narg, 8);
+
+    MrTraj::GeoPara sGeoPara;
+    MrTraj::GradPara sGradPara;
+    getGeoGradPara(args, &sGeoPara, &sGradPara);
+
+    f64 m = (f64)PyFloat_AsDouble(args[6]);
+    f64 uMax = (f64)PyFloat_AsDouble(args[7]);
+    Seiffert traj(sGeoPara, sGradPara, m, uMax);
+
+    vv3 vv3K0;
+    vvv3 vvv3G;
+    getG(&traj, &vv3K0, &vvv3G);
+
+    return Py_BuildValue("OO", cvtVv3toList(vv3K0), cvtVvv3toList(vvv3G));
+}
+
+PyObject* getG_Cones(PyObject* self, PyObject* const* args, Py_ssize_t narg)
+{
+    checkNarg(narg, 7);
+
+    MrTraj::GeoPara sGeoPara;
+    MrTraj::GradPara sGradPara;
+    getGeoGradPara(args, &sGeoPara, &sGradPara);
+
+    f64 kRhoPhi = (f64)PyFloat_AsDouble(args[6]);
+    Cones traj(sGeoPara, sGradPara, kRhoPhi);
+
+    vv3 vv3K0;
+    vvv3 vvv3G;
+    getG(&traj, &vv3K0, &vvv3G);
+
+    return Py_BuildValue("OO", cvtVv3toList(vv3K0), cvtVvv3toList(vvv3G));
+}
+
+PyObject* setSolverMtg(PyObject* self, PyObject* const* args, Py_ssize_t narg)
+{
+    extern bool gMrTraj_enMtg;
+    checkNarg(narg, 1);
+    gMrTraj_enMtg = PyLong_AsLong(args[0]);
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+PyObject* setTrajRev(PyObject* self, PyObject* const* args, Py_ssize_t narg)
+{
+    checkNarg(narg, 1);
+    gMain_enTrajRev = PyLong_AsLong(args[0]);
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+PyObject* setGoldAng(PyObject* self, PyObject* const* args, Py_ssize_t narg)
+{
+    checkNarg(narg, 1);
+    gMain_enGoldAng = PyLong_AsLong(args[0]);
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+PyObject* setShuf(PyObject* self, PyObject* const* args, Py_ssize_t narg)
+{
+    checkNarg(narg, 1);
+    gMain_enShuffle = PyLong_AsLong(args[0]);
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+PyObject* setMaxG0(PyObject* self, PyObject* const* args, Py_ssize_t narg)
+{
+    extern f64 gMrTraj_g0Norm;
+    checkNarg(narg, 1);
+    bool enMaxG0 = PyLong_AsLong(args[0]);
+    if (enMaxG0) gMrTraj_g0Norm = 1e6;
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+PyObject* setMaxG1(PyObject* self, PyObject* const* args, Py_ssize_t narg)
+{
+    extern f64 gMrTraj_g1Norm;
+    checkNarg(narg, 1);
+    bool enMaxG1 = PyLong_AsLong(args[0]);
+    if (enMaxG1) gMrTraj_g1Norm = 1e6;
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+PyObject* setMagOverSamp(PyObject* self, PyObject* const* args, Py_ssize_t narg)
+{
+    extern i64 gMag_oversamp;
+    checkNarg(narg, 1);
+    gMag_oversamp = PyLong_AsLong(args[0]);
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+PyObject* setMagSFS(PyObject* self, PyObject* const* args, Py_ssize_t narg)
+{
+    extern bool gMag_enSFS;
+    checkNarg(narg, 1);
+    gMag_enSFS = PyLong_AsLong(args[0]);
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+PyObject* setMagGradRep(PyObject* self, PyObject* const* args, Py_ssize_t narg)
+{
+    extern bool gMag_enGradRep;
+    checkNarg(narg, 1);
+    gMag_enGradRep = PyLong_AsLong(args[0]);
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+PyObject* setMagTrajRep(PyObject* self, PyObject* const* args, Py_ssize_t narg)
+{
+    extern bool gMag_enTrajRep;
+    checkNarg(narg, 1);
+    gMag_enTrajRep = PyLong_AsLong(args[0]);
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+PyObject* setDbgPrint(PyObject* self, PyObject* const* args, Py_ssize_t narg)
+{
+    extern bool glob_enDbgPrint;
+    checkNarg(narg, 1);
+    glob_enDbgPrint = PyLong_AsLong(args[0]);
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+vv3 vv3Test;
+PyObject* getTestVal(PyObject* self, PyObject* const* args, Py_ssize_t narg)
+{
+    checkNarg(narg, 0);
+    return Py_BuildValue("O", cvtVv3toNpa(vv3Test));
+}
+
+static PyMethodDef aMeth[] = 
+{
+    {"calGrad4ExFunc", (PyCFunction)calGrad4ExFunc, METH_FASTCALL, ""},
+    {"calGrad4ExSamp", (PyCFunction)calGrad4ExSamp, METH_FASTCALL, ""},
+    {"getG_Spiral", (PyCFunction)getG_Spiral, METH_FASTCALL, ""},
+    {"getG_VarDenSpiral", (PyCFunction)getG_VarDenSpiral, METH_FASTCALL, ""},
+    {"getG_VarDenSpiral_RT", (PyCFunction)getG_VarDenSpiral_RT, METH_FASTCALL, ""},
+    {"getG_Rosette", (PyCFunction)getG_Rosette, METH_FASTCALL, ""},
+    {"getG_Rosette_Trad", (PyCFunction)getG_Rosette_Trad, METH_FASTCALL, ""},
+    {"getG_Shell3d", (PyCFunction)getG_Shell3d, METH_FASTCALL, ""},
+    {"getG_Yarnball", (PyCFunction)getG_Yarnball, METH_FASTCALL, ""},
+    {"getG_Seiffert", (PyCFunction)getG_Seiffert, METH_FASTCALL, ""},
+    {"getG_Cones", (PyCFunction)getG_Cones, METH_FASTCALL, ""},
+    {"setSolverMtg", (PyCFunction)setSolverMtg, METH_FASTCALL, ""},
+    {"setTrajRev", (PyCFunction)setTrajRev, METH_FASTCALL, ""},
+    {"setGoldAng", (PyCFunction)setGoldAng, METH_FASTCALL, ""},
+    {"setShuf", (PyCFunction)setShuf, METH_FASTCALL, ""},
+    {"setMaxG0", (PyCFunction)setMaxG0, METH_FASTCALL, ""},
+    {"setMaxG1", (PyCFunction)setMaxG1, METH_FASTCALL, ""},
+    {"getTestVal", (PyCFunction)getTestVal, METH_FASTCALL, ""},
+    {"setMagOverSamp", (PyCFunction)setMagOverSamp, METH_FASTCALL, ""},
+    {"setMagSFS", (PyCFunction)setMagSFS, METH_FASTCALL, ""},
+    {"setMagGradRep", (PyCFunction)setMagGradRep, METH_FASTCALL, ""},
+    {"setMagTrajRep", (PyCFunction)setMagTrajRep, METH_FASTCALL, ""},
+    {"setDbgPrint", (PyCFunction)setDbgPrint, METH_FASTCALL, ""},
+    {NULL, NULL, 0, NULL}        /* Sentinel */
+};
+
+static struct PyModuleDef sMod = 
+{
+    PyModuleDef_HEAD_INIT,
+    "ext",   /* name of module */
+    NULL,
+    -1,
+    aMeth
+};
+
+PyMODINIT_FUNC
+PyInit_ext(void)
+{
+    import_array();
+    return PyModule_Create(&sMod);
+}#pragma once
+
+#include "TrajFunc.h"
+#include "MrTraj.h"
+
+class Cones_TrajFun: public TrajFunc
+{
+public:
+    Cones_TrajFun(f64 kRhoPhi, f64 tht0):
+        TrajFunc(0,0)
+    {
+        m_kRhoPhi = kRhoPhi;
+        m_tht0 = tht0;
+        m_p0 = 0e0;
+        m_p1 = 0.5e0/kRhoPhi;
+    }
+
+    bool getK(v3* k, f64 p)
+    {
+        if (k==NULL) return false;
+        f64& kRhoPhi = m_kRhoPhi;
+        f64& phi = p;
+        f64& tht0 = m_tht0;
+        
+        f64 rho = kRhoPhi*phi;
+
+        k->x = rho * std::sin(tht0) * std::cos(phi);
+        k->y = rho * std::sin(tht0) * std::sin(phi);
+        k->z = rho * std::cos(tht0);
+
+        return true;
+    }
+
+protected:
+    f64 m_kRhoPhi;
+    f64 m_tht0;
+};
+
+class Cones: public MrTraj
+{
+public:
+    typedef std::list<i64> ll;
+
+    Cones(const GeoPara& sGeoPara, const GradPara& sGradPara, f64 kRhoPhi):
+        MrTraj(sGeoPara,sGradPara,0,0)
+    {
+        const i64& nPix = m_sGeoPara.nPix;
+
+        // caluclate gradient
+        m_nSet = getNLayer_Cones(nPix);
+        m_vptfBaseTraj.resize(m_nSet);
+        m_vvv3BaseGRO.resize(m_nSet);
+        m_vv3BaseM0PE.resize(m_nSet);
+        
+        m_nSampMax = 0;
+        for (i64 i = 0; i < m_nSet; ++i)
+        {
+            f64 tht0 = getTht0_Cones(i, m_nSet);
+            m_vptfBaseTraj[i] = new Cones_TrajFun(kRhoPhi, tht0);
+            if(!m_vptfBaseTraj[i]) throw std::runtime_error("out of memory");
+
+            calGrad(&m_vv3BaseM0PE[i], &m_vvv3BaseGRO[i], NULL, *m_vptfBaseTraj[i], m_sGradPara);
+            m_nSampMax = std::max(m_nSampMax, (i64)m_vvv3BaseGRO[i].size());
+        }
+        
+        // list of `ISet` and `IRot`
+        m_vi64NRot.resize(m_nSet);
+        m_nAcq = 0;
+        li64 li64SetIdx, li64RotIdx;
+        for (i64 i = 0; i < m_nSet; ++i)
+        {
+            m_vi64NRot[i] = calNRot
+            (
+                m_vptfBaseTraj[i], 
+                m_vptfBaseTraj[i]->getP0(), 
+                m_vptfBaseTraj[i]->getP1(),
+                nPix
+            );
+
+            for (i64 j = 0; j < m_vi64NRot[i]; ++j)
+            {
+                li64SetIdx.push_back(i);
+                li64RotIdx.push_back(j);
+            }
+
+            m_nAcq += m_vi64NRot[i];
+        }
+        m_vi64SetIdx = vi64(li64SetIdx.begin(), li64SetIdx.end());
+        m_vi64RotIdx = vi64(li64RotIdx.begin(), li64RotIdx.end());
+    }
+
+    virtual ~Cones()
+    {
+        for(i64 i = 0; i < (i64)m_vptfBaseTraj.size(); ++i)
+        {
+            delete m_vptfBaseTraj[i];
+        }
+    }
+    
+    virtual bool getGRO(vv3* pvv3GRO, i64 iAcq)
+    {
+        bool ret = true;
+        iAcq %= m_nAcq;
+        i64 iSet = m_vi64SetIdx[iAcq];
+        i64 iRot = m_vi64RotIdx[iAcq];
+        f64 phiStep = calRotAng(m_vi64NRot[iSet]);
+
+        *pvv3GRO = m_vvv3BaseGRO[iSet];
+        ret &= v3::rotate(pvv3GRO, 2, phiStep*iRot, *pvv3GRO);
+
+        return ret;
+    }
+
+    virtual bool getM0PE(v3* pv3M0PE, i64 iAcq)
+    {
+        bool ret = true;
+        iAcq %= m_nAcq;
+        i64 iSet = m_vi64SetIdx[iAcq];
+        i64 iRot = m_vi64RotIdx[iAcq];
+        f64 phiStep = calRotAng(m_vi64NRot[iSet]);
+
+        *pv3M0PE = m_vv3BaseM0PE[iSet];
+        ret &= v3::rotate(pv3M0PE, 2, phiStep*iRot, *pv3M0PE);
+
+        return ret;
+    }
+
+protected:
+    f64 m_kRhoPhi;
+    i64 m_nSet;
+    vi64 m_vi64NRot;
+    vi64 m_vi64SetIdx;
+    vi64 m_vi64RotIdx;
+
+    vptf m_vptfBaseTraj;
+    vvv3 m_vvv3BaseGRO;
+    vv3 m_vv3BaseM0PE;
+
+    static i64 getNLayer_Cones(i64 nPix)
+    {
+        return (i64)std::ceil(nPix*M_PI/2e0);
+    }
+
+    static f64 getTht0_Cones(i64 iLayer, i64 nLayer)
+    {
+        f64 dThtInc = M_PI / (nLayer-1);
+        return iLayer*dThtInc;
+    }
+};
+#pragma once
+
+#include "TrajFunc.h"
+#include "MrTraj_2D.h"
+
+class Rosette_TrajFunc: public TrajFunc
+{
+public:
+    Rosette_TrajFunc(f64 om1, f64 om2, f64 tMax=1e0):
+        TrajFunc(0,0)
+    {
+        /*
+         * NOTE:
+         * When tMax=1, om1=Npi, om2=(N-2)pi,
+         * there will be N petal because om1
+         * controls how fast the rho changes.
+         */
+        m_om1 = om1;
+        m_om2 = om2;
+        m_tMax = tMax;
+
+        m_p0 = 0e0;
+        m_p1 = m_tMax;
+    }
+
+    virtual bool getK(v3* k, f64 p)
+    {
+        if (k==NULL) return false;
+        
+        f64& t = p;
+        f64 dRho = 0.5e0*std::sin(m_om1*t);
+        k->x = dRho * std::cos(m_om2*t);
+        k->y = dRho * std::sin(m_om2*t);
+        k->z = 0e0;
+
+        return true;
+    }
+
+protected:
+    f64 m_om1, m_om2, m_tMax;
+};
+
+class Rosette: public MrTraj_2D
+{
+public:
+    Rosette(const GeoPara& sGeoPara, const GradPara& sGradPara, f64 om1, f64 om2, f64 tMax):
+        MrTraj_2D(sGeoPara,sGradPara,0,0,0,0,v3(),vv3())
+    {
+        m_ptfBaseTraj = new Rosette_TrajFunc(om1, om2, tMax);
+        if(!m_ptfBaseTraj) throw std::runtime_error("out of memory");
+        m_nStack = m_sGeoPara.is3D ? m_sGeoPara.nPix : 1;
+
+        i64 nRot = calNRot(m_ptfBaseTraj, 0e0, (M_PI/2e0)/om1, m_sGeoPara.nPix);
+        m_rotang = calRotAng(nRot);
+        m_nAcq = nRot*m_nStack;
+        
+        calGrad(&m_v3BaseM0PE, &m_vv3BaseGRO, NULL, *m_ptfBaseTraj, m_sGradPara);
+        m_nSampMax = m_vv3BaseGRO.size();
+    }
+    
+    virtual ~Rosette()
+    {
+        delete m_ptfBaseTraj;
+    }
+
+protected:
+    TrajFunc* m_ptfBaseTraj;
+};
+
+class Rosette_Trad: public MrTraj_2D
+{
+public:
+    Rosette_Trad(const GeoPara& sGeoPara, const GradPara& sGradPara, f64 om1, f64 om2, f64 tMax, f64 dTE):
+        MrTraj_2D(sGeoPara,sGradPara,0,0,0,0,v3(),vv3())
+    {
+        m_sGeoPara = sGeoPara;
+        m_sGradPara = sGradPara;
+
+        m_ptfBaseTraj = new Rosette_TrajFunc(om1, om2, tMax);
+        if(!m_ptfBaseTraj) throw std::runtime_error("out of memory");
+        m_nStack = m_sGeoPara.is3D ? m_sGeoPara.nPix : 1;
+        i64 nRot = calNRot(m_ptfBaseTraj, 0e0, (M_PI/2e0)/om1, m_sGeoPara.nPix);
+        m_nAcq = nRot*m_nStack;
+        m_rotang = calRotAng(nRot);
+
+        // readout
+        f64 tAcq = dTE*om1/M_PI;
+        m_nSampMax = tAcq/m_sGradPara.dt;
+        m_vv3BaseGRO.reserve(m_nSampMax);
+        for(i64 i = 0; i < m_nSampMax; ++i)
+        {
+            m_vv3BaseGRO.push_back(v3());
+            m_ptfBaseTraj->getDkDp(&*m_vv3BaseGRO.rbegin(), tMax*i/(f64)m_nSampMax); // derivative to p
+            *m_vv3BaseGRO.rbegin() *= tMax/tAcq; // derivative to t
+        }
+
+        // calculate M0 of PE
+        m_ptfBaseTraj->getK0(&m_v3BaseM0PE);
+    }
+    
+    virtual ~Rosette_Trad()
+    {
+        delete m_ptfBaseTraj;
+    }
+
+protected:
+    TrajFunc* m_ptfBaseTraj;
+};
+#pragma once
+
+#include "MrTraj.h"
+#include "../mag/Mag.h"
+
+class MrTraj_2D: public MrTraj
+{
+public:
+    MrTraj_2D(const GeoPara& m_sGeoPara, const GradPara& m_sGradPara, const i64& m_nAcq, const i64& m_nSampMax, const i64& m_nStack, const f64& m_rotang, const v3& m_v3BaseM0PE, const vv3& m_vv3BaseGRO):
+        MrTraj(m_sGeoPara, m_sGradPara, m_nAcq, m_nSampMax),
+        m_nStack(m_nStack),
+        m_rotang(m_rotang),
+        m_v3BaseM0PE(m_v3BaseM0PE),
+        m_vv3BaseGRO(m_vv3BaseGRO)
+    {}
+    
+    virtual ~MrTraj_2D()
+    {}
+
+    virtual bool getGRO(vv3* pvv3GRO, i64 iAcq)
+    {
+        bool ret = true;
+        i64 nStack = getNStack();
+        f64 rotang = getRotAng();
+        i64 iRot = iAcq/nStack;
+
+        ret &= v3::rotate(pvv3GRO, 2, rotang*iRot, m_vv3BaseGRO);
+
+        return ret;
+    }
+    
+    virtual bool getM0PE(v3* pv3M0PE, i64 iAcq)
+    {
+        bool ret = true;
+        i64 nStack = getNStack();
+        f64 rotang = getRotAng();
+        i64 iStack = iAcq%nStack;
+        i64 iRot = iAcq/nStack;
+        
+        *pv3M0PE = m_v3BaseM0PE;
+        pv3M0PE->z += getK0z(iStack, nStack);
+        
+        ret &= v3::rotate(pv3M0PE, 2, rotang*iRot, *pv3M0PE);
+
+        return ret;
+    }
+
+    i64 getNStack()
+    { return m_nStack; }
+
+    f64 getRotAng()
+    { return m_rotang; }
+
+    void setNStack(i64 nStack)
+    { m_nStack = nStack; }
+
+    void setRotang(f64 rotang)
+    { m_rotang = rotang; }
+
+protected:
+    i64 m_nStack;
+    f64 m_rotang;
+
+    v3 m_v3BaseM0PE;
+    vv3 m_vv3BaseGRO;
+
+    static f64 getK0z(i64 iStack, i64 nStack=256)
+    { return iStack/(f64)nStack - (nStack/2)/(f64)nStack; }
+};
+#pragma once
+
+#include "TrajFunc.h"
+#include "../mag/Mag.h"
+#include <string>
+#include <stdexcept>
+#include <ctime>
+
+#ifdef USE_MTG
+#include "../mtg/header.h"
+#endif
+
+bool gMrTraj_enMtg = false; // whether to use Lustig's minTimeGrad solver
+f64 gMrTraj_g0Norm = 0e0; // initial gradient amplitude
+f64 gMrTraj_g1Norm = 0e0; // final gradient amplitude
+
+/* 
+ * A set of trajectories sufficient to fully-sample the k-space
+ * defined by:
+ * 1. some Base trajectories with different shapes.
+ * 2. a acquisition plan which decides which Base trajectory to use,
+ *    and how to transform to the desired gradient of a particular acquisition.
+ * Or, do nothing in the constructor and compute the gradient on the fly
+ * in getGRO() function.
+ * 
+ * notice:
+ * 1. Different Base trajectoires share the same traj. func. getK(),
+ *    but the behaviour of getK() may differ due to constant parameters.
+ */
+
+class MrTraj
+{
+public:
+    typedef std::vector<i64> vi64;
+    typedef std::vector<f64> vf64;
+    typedef std::list<i64> li64;
+    typedef std::list<f64> lf64;
+    typedef std::string str;
+    typedef std::vector<v3> vv3;
+    typedef std::vector<vv3> vvv3;
+    typedef std::vector<TrajFunc*> vptf;
+    typedef struct
+    {
+        bool is3D;
+        f64 fov;
+        i64 nPix;
+    } GeoPara;
+    typedef struct
+    {
+        f64 sLim;
+        f64 gLim;
+        f64 dt;
+    } GradPara;
+    
+    MrTraj(const GeoPara& m_sGeoPara, const GradPara& m_sGradPara, const i64& m_nAcq, const i64& m_nSampMax):
+        m_gamma(42.5756e6),
+        m_sGeoPara(m_sGeoPara),
+        m_sGradPara(m_sGradPara),
+        m_nAcq(m_nAcq),
+        m_nSampMax(m_nSampMax)
+    { solver = MagSolver(); }
+    
+    virtual ~MrTraj()
+    {}
+    
+    virtual bool getGRO(vv3* pvv3GRO, i64 iAcq) = 0;
+    
+    virtual bool getM0PE(v3* pv3M0PE, i64 iAcq) = 0;
+
+    const GeoPara& getGeoPara()
+    { return m_sGeoPara; }
+
+    const GradPara& getGradPara()
+    { return m_sGradPara; }
+    
+    i64 getNAcq()
+    { return m_nAcq; }
+    
+    i64 getNSampMax()
+    { return m_nSampMax; }
+
+    f64 getGyoMagRat()
+    { return m_gamma; }
+
+    void setGyoMagRat(f64 x)
+    { m_gamma = x; }
+
+    void setUseMtg(bool x)
+    { gMrTraj_enMtg = x; }
+
+    void setGNorm0(f64 x)
+    { gMrTraj_g0Norm = x; }
+
+    void setGNorm1(f64 x)
+    { gMrTraj_g1Norm = x; }
+
+    // a deterministic random number generator
+    static bool genRand3d(v3* v3Res, i64 lIdx)
+    {
+        v3Res->x = fmod(lIdx/(1e0+M_SQRT2), 1e0);
+
+        v3Res->y = fmod(lIdx/(1e0+M_SQRT3), 1e0);
+        v3Res->y = fmod(lIdx*v3Res->y, 1e0);
+
+        v3Res->z = fmod(lIdx/(1e0+M_SQRT7), 1e0);
+        v3Res->z = fmod(lIdx*v3Res->z, 1e0);
+        v3Res->z = fmod(lIdx*v3Res->z, 1e0);
+
+        return true;
+    }
+
+    // a deterministic shuffle sequence generator
+    static bool genRandIdx(vi64* pvi64Idx, i64 num)
+    {
+        // resize target container rationally
+        pvi64Idx->clear();
+        pvi64Idx->reserve(num);
+
+        // generate sequantial index
+        vi64 vi64SeqIdx; vi64SeqIdx.reserve(num);
+        for(i64 i = 0; i < num; ++i)
+        { vi64SeqIdx.push_back(i); }
+        
+        // decide step size, make step size and num of idx coprime
+        i64 step = (i64)(num*(GOLDRAT-1));
+        while (gcd(step, num)!=1)
+        { ++step; }
+
+        // generate random index
+        for(i64 i = 0; i < num; ++i)
+        { pvi64Idx->push_back(i*step%num); }
+
+        return true;
+    }
+
+    static bool calM0SP(v3* pv3M0SP, const v3& v3M0PE, const vv3 vv3GRO)
+    {
+        bool ret = true;
+        *pv3M0SP = v3M0PE;
+        vv3::const_iterator iterGRO = vv3GRO.begin();
+        vv3::const_iterator iterGRO_NonZero = iterGRO;
+        for(i64 i = 0; i < (i64)vv3GRO.size()-1; ++i)
+        {
+            *pv3M0SP += (*iterGRO + *std::next(iterGRO))*1e0/2e0; // assume `dt` to be 1
+            if (v3::norm(*iterGRO)!=0e0) iterGRO_NonZero = iterGRO;
+            ++iterGRO;
+        }
+
+        if (v3::norm(*pv3M0SP) != 0e0)
+        { *pv3M0SP /= v3::norm(*pv3M0SP); }
+        else if (v3::norm(*iterGRO_NonZero) != 0e0)
+        { *pv3M0SP = *iterGRO_NonZero/v3::norm(*iterGRO_NonZero); }
+        else
+        { *pv3M0SP = v3(1,0,0); }
+
+        return ret;
+    }
+
+protected:
+    // constant
+    f64 m_gamma; // Hz/T
+
+    // trajectory info
+    GeoPara m_sGeoPara;
+    GradPara m_sGradPara;
+    i64 m_nAcq;
+    i64 m_nSampMax;
+
+    // solver settings
+    MagSolver solver;
+    
+    // calculate required num. of rot. to satisfy Nyquist sampling (for spiral only)
+    static i64 calNRot(f64 kRhoPhi, i64 nPix)
+    {
+        return (i64)std::ceil(nPix*2e0*M_PI*kRhoPhi);
+    }
+
+    // calculate required num. of rot. to satisfy Nyquist sampling
+    static i64 calNRot(TrajFunc* ptraj, f64 p0, f64 p1, i64 nPix, i64 nSamp=1000)
+    /*
+    * Note:
+    * This method is base on the derivative of trajectory function,
+    * only local sampling is considered, so there are limitations for
+    * this method
+    * 
+    * Applicable Trajectories:
+    * Spiral, Cones, Rosette (single petal)
+    * 
+    * Non-Applicable Trajectories:
+    * Yarnball, Rosette (multi petal)
+    */
+    {
+        // calculate and find min. rot. ang.
+        f64 nyq = 1e0/nPix;
+        f64 minRotang = 2e0*M_PI;
+        for (i64 iK = 1; iK < nSamp-1; ++iK)
+        {
+            f64 p = p0 + ((f64)iK/nSamp)*(p1-p0);
+            v3 k; ptraj->getK(&k, p);
+            v3 dkdp;
+            {
+                v3 v3K_Nx; ptraj->getK(&v3K_Nx, p+1e-7);
+                dkdp = v3K_Nx - k;
+            }
+            if (v3::norm(dkdp)==0) continue;
+            v3 dkdphi;
+            {
+                v3 v3K_Nx; v3::rotate(&v3K_Nx, 2, 1e-7, k);
+                dkdphi = v3K_Nx - k;
+            }
+            if (v3::norm(dkdphi)==0) continue;
+            f64 rho = std::sqrt(k.x*k.x + k.y*k.y);
+            f64 cosine = v3::inner(dkdp, dkdphi) / (v3::norm(dkdp) * v3::norm(dkdphi));
+            f64 sine = std::sqrt(1e0 - std::min(cosine*cosine,1e0));
+            f64 rotang = (nyq/sine) / (rho);
+            minRotang = std::min(minRotang, rotang);
+        }
+
+        // ensure the rot. Num. is a integer
+        return (i64)std::ceil(2e0*M_PI/minRotang);
+    }
+    
+    static f64 calRotAng(i64 nRot)
+    {
+        return 2e0*M_PI/nRot;
+    }
+
+    bool calGRO_MAG(vv3* pvv3G, vf64* pvf64P, TrajFunc& tf, const GradPara& sGradPara, i64 oversamp=8)
+    {
+        bool ret = true;
+        const f64& sLim = sGradPara.sLim;
+        const f64& gLim = sGradPara.gLim;
+        const f64& dt = sGradPara.dt;
+
+        solver.setup(&tf, sLim, gLim, dt, oversamp, gMrTraj_g0Norm, gMrTraj_g1Norm);
+        ret &= solver.compute(pvv3G, pvf64P);
+
+        return ret;
+    }
+    
+    bool calGRO_MAG(vv3* pvv3G, vf64* pvf64P, const vv3& vv3TrajSamp, const GradPara& sGradPara, i64 oversamp=8)
+    {
+        bool ret = true;
+        const f64& sLim = sGradPara.sLim;
+        const f64& gLim = sGradPara.gLim;
+        const f64& dt = sGradPara.dt;
+
+        solver.setup(vv3TrajSamp, sLim, gLim, dt, oversamp, gMrTraj_g0Norm, gMrTraj_g1Norm);
+        ret &= solver.compute(pvv3G, pvf64P);
+
+        return ret;
+    }
+
+    bool calGRO_MTG(vv3* pvv3G, vf64* pvf64P, const vf64& vf64C, const GradPara& sGradPara)
+    {
+        #ifdef USE_MTG
+        bool ret = true;
+        const f64& sLim = sGradPara.sLim;
+        const f64& gLim = sGradPara.gLim;
+        const f64& dt = sGradPara.dt;
+        if (pvf64P) pvf64P->clear(); // does not supported
+
+        // Prepare arg. for Lustig's function
+        f64 g0 = gMrTraj_g0Norm, gfin = gMrTraj_g1Norm, gmax = gLim, smax = sLim, T = dt, ds = -1; // ds = 35e-4 for const-Nstep comparison
+
+        f64 *p_Cx = nullptr, *p_Cy = nullptr, *p_Cz = nullptr;
+        f64 *p_gx = nullptr, *p_gy = nullptr, *p_gz = nullptr;
+        f64 *p_sx = nullptr, *p_sy = nullptr, *p_sz = nullptr;
+        f64 *p_kx = nullptr, *p_ky = nullptr, *p_kz = nullptr;
+        f64 *p_sdot = nullptr, *p_sta = nullptr, *p_stb = nullptr;
+        
+        f64 time = 0;
+        int size_interpolated = 0, size_sdot = 0, size_st = 0;
+        int gfin_empty = (gfin<0), ds_empty = (ds<0);
+
+        // Call Lustig's function (assume it is linked in or compiled as C)
+        minTimeGradientRIV(
+            vf64C.data(), vf64C.size()/3, 3, g0, gfin, gmax, smax, T, ds,
+            &p_Cx, &p_Cy, &p_Cz, &p_gx, &p_gy, &p_gz,
+            &p_sx, &p_sy, &p_sz, &p_kx, &p_ky, &p_kz, &p_sdot, &p_sta, &p_stb, &time,
+            &size_interpolated, &size_sdot, &size_st, gfin_empty, ds_empty);
+
+        // Copy results to C++ outputs
+        pvv3G->clear();
+        for (i64 i = 0; i < size_interpolated; ++i)
+        {
+            pvv3G->push_back(v3(p_gx[i], p_gy[i], p_gz[i]));
+        }
+        
+        free(p_Cx);    free(p_Cy);    free(p_Cz);
+        free(p_gx);    free(p_gy);    free(p_gz);
+        free(p_sx);    free(p_sy);    free(p_sz);
+        free(p_kx);    free(p_ky);    free(p_kz);
+        free(p_sdot);  free(p_sta);   free(p_stb);
+
+        return ret;
+        #else
+
+        char sErrMsg[] = "MTG not found";
+        puts(sErrMsg);
+        throw std::runtime_error(sErrMsg);
+        return false;
+
+        #endif
+    }
+
+    bool calGRO(vv3* pvv3G, vf64* pvf64P, TrajFunc& tf, GradPara& sGradPara, i64 oversamp=8)
+    {
+        bool ret = true;
+        const i64 nTrajSamp = 1000;
+
+        // calculate gradient
+        if(!gMrTraj_enMtg)
+        {
+            ret &= calGRO_MAG(pvv3G, pvf64P, tf, sGradPara, oversamp);
+        }
+        else
+        {
+            // Prepare trajectory sampling
+            vf64 vf64C(nTrajSamp * 3, 0.0);
+
+            // Sample the trajectory at N points
+            f64 dP0 = tf.getP0();
+            f64 dP1 = tf.getP1();
+            for (i64 i = 0; i < nTrajSamp; ++i)
+            {
+                f64 dP = dP0 + (dP1-dP0)* (i)/f64(nTrajSamp-1);
+                v3 v3K; tf.getK(&v3K, dP);
+                v3K *= 4.257; // k is defined by k*4.257 in Lustig's method
+                vf64C[i] = v3K.x;
+                vf64C[i + nTrajSamp] = v3K.y;
+                vf64C[i + 2*nTrajSamp] = v3K.z;
+            }
+
+            ret &= calGRO_MTG(pvv3G, pvf64P, vf64C, sGradPara);
+        }
+
+        return ret;
+    }
+
+    bool calGRO(vv3* pvv3G, vf64* pvf64P, vv3& vv3TrajSamp, const GradPara& sGradPara, i64 oversamp=8)
+    {
+        bool ret = true;
+        i64 nTrajSamp = vv3TrajSamp.size();
+
+        // calculate gradient
+        if(!gMrTraj_enMtg)
+        {
+            ret &= calGRO_MAG(pvv3G, pvf64P, vv3TrajSamp, sGradPara, oversamp);
+        }
+        else
+        {
+            // Prepare trajectory sampling
+            vf64 vf64C(nTrajSamp*3);
+
+            // Sample the trajectory at N points
+            for (int i = 0; i < nTrajSamp; ++i)
+            {
+                v3 v3K = vv3TrajSamp[i]*4.257; // k is defined by k*4.257 in Lustig's method
+                vf64C[i] = v3K.x;
+                vf64C[i + nTrajSamp] = v3K.y;
+                vf64C[i + 2*nTrajSamp] = v3K.z;
+            }
+
+            ret &= calGRO_MTG(pvv3G, pvf64P, vf64C, sGradPara);
+        }
+
+        return ret;
+    }
+
+    bool calGrad(v3* pv3M0PE, vv3* pvv3GRO, vf64* pvf64P, TrajFunc& tfTraj, GradPara& sGradPara, i64 oversamp=8)
+    {
+        bool ret = true;
+        const f64& sLim = sGradPara.sLim;
+        const f64& dt = sGradPara.dt;
+        
+        // calculate GRO
+        TIC;
+        ret &= calGRO(pvv3GRO, pvf64P, tfTraj, sGradPara, oversamp);
+        TOC;
+
+        // if GEnd needs to be fixed
+        if (gMrTraj_g0Norm==0e0 && pvv3GRO)
+        {
+            // add ramp gradient to satisfy desired Gstart and Gfinal
+            vv3 vv3GRampFront;
+            ret &= MagSolver::ramp_front(&vv3GRampFront, pvv3GRO->front(), v3(), sLim, dt);
+            pvv3GRO->insert(pvv3GRO->begin(), vv3GRampFront.begin(), vv3GRampFront.end());
+            
+            // corresponding parameter sequence
+            if (pvf64P && !pvf64P->empty()) // null: user does not need p seq, empty: q seq not supported
+            {
+                vf64 vf64PInsert = vf64(vv3GRampFront.size(), pvf64P->front());
+                pvf64P->insert(pvf64P->begin(), vf64PInsert.begin(), vf64PInsert.end());
+            }
+        }
+        if (gMrTraj_g1Norm==0e0 && pvv3GRO)
+        {
+            // add ramp gradient to satisfy desired Gstart and Gfinal
+            vv3 vv3GRampBack;
+            ret &= MagSolver::ramp_back(&vv3GRampBack, pvv3GRO->back(), v3(), sLim, dt);
+            pvv3GRO->insert(pvv3GRO->end(), vv3GRampBack.begin(), vv3GRampBack.end());
+            
+            // corresponding parameter sequence
+            if (pvf64P && !pvf64P->empty()) // null: user does not need p seq, empty: q seq not supported
+            {
+                vf64 vf64PInsert = vf64(vv3GRampBack.size(), pvf64P->back());
+                pvf64P->insert(pvf64P->end(), vf64PInsert.begin(), vf64PInsert.end());
+            }
+        }
+
+        if (pv3M0PE) ret &= tfTraj.getK0(pv3M0PE);
+
+        return ret;
+    }
+};
+#pragma once
+
+#include "TrajFunc.h"
+#include "MrTraj_2D.h"
+
+class Spiral_TrajFunc: public TrajFunc
+{
+public:
+    Spiral_TrajFunc(f64 kRhoPhi):
+        TrajFunc(0,0)
+    {
+        m_kRhoPhi = kRhoPhi;
+
+        m_p0 = 0e0;
+        m_p1 = 0.5e0/m_kRhoPhi;
+    }
+
+    bool getK(v3* k, f64 p)
+    {
+        if (k==NULL) return false;
+        
+        f64& phi = p;
+        f64 rho = m_kRhoPhi*phi;
+        k->x = rho * std::cos(phi);
+        k->y = rho * std::sin(phi);
+        k->z = 0e0;
+
+        return true;
+    }
+
+protected:
+    f64 m_kRhoPhi;
+};
+
+class Spiral: public MrTraj_2D
+{
+public:
+    Spiral(const GeoPara& sGeoPara, const GradPara& sGradPara, f64 kRhoPhi):
+        MrTraj_2D(sGeoPara,sGradPara,0,0,0,0,v3(),vv3())
+    {
+        m_ptfBaseTraj = new Spiral_TrajFunc(kRhoPhi);
+        if(!m_ptfBaseTraj) throw std::runtime_error("out of memory");
+        m_nStack = m_sGeoPara.is3D ? m_sGeoPara.nPix : 1;
+
+        i64 nRot = calNRot(kRhoPhi, m_sGeoPara.nPix);
+        m_rotang = calRotAng(nRot);
+        m_nAcq = nRot*m_nStack;
+
+        calGrad(&m_v3BaseM0PE, &m_vv3BaseGRO, NULL, *m_ptfBaseTraj, m_sGradPara);
+        m_nSampMax = m_vv3BaseGRO.size();
+    }
+    
+    virtual ~Spiral()
+    {
+        delete m_ptfBaseTraj;
+    }
+
+protected:
+    TrajFunc* m_ptfBaseTraj;
+};
+#pragma once
+
+#include "TrajFunc.h"
+#include "MrTraj.h"
+
+class Yarnball_TrajFunc: public TrajFunc
+{
+public:
+    Yarnball_TrajFunc(f64 kRhoPhi, f64 tht0, f64 phi0=0e0):
+        TrajFunc(0,0)
+    {
+        m_kPhiSqrtTht = std::sqrt(2e0);
+        m_kRhoSqrtTht = std::sqrt(2e0)*kRhoPhi;
+        m_tht0 = tht0;
+        m_phi0 = phi0;
+
+        m_p0 = 0e0;
+        m_p1 = 1e0/(std::sqrt(8e0)*kRhoPhi);
+    }
+
+    ~Yarnball_TrajFunc()
+    {}
+
+    virtual bool getK(v3* k, f64 p)
+    {
+        if (k==NULL) return false;
+
+        const f64& dSqrtTht = p;
+        f64 tht = dSqrtTht*dSqrtTht * (dSqrtTht>=0?1e0:-1e0);
+        f64 rho = m_kRhoSqrtTht * dSqrtTht;
+        f64 phi = m_kPhiSqrtTht * dSqrtTht;
+
+        k->x = rho * std::sin(tht+m_tht0) * std::cos(phi+m_phi0);
+        k->y = rho * std::sin(tht+m_tht0) * std::sin(phi+m_phi0);
+        k->z = rho * std::cos(tht+m_tht0);
+
+        return true;
+    }
+
+protected:
+    f64 m_kPhiSqrtTht, m_kRhoSqrtTht;
+    f64 m_tht0, m_phi0;
+};
+
+class Yarnball: public MrTraj
+{
+public:
+    Yarnball(const GeoPara& sGeoPara, const GradPara& sGradPara, f64 kRhoPhi):
+        MrTraj(sGeoPara,sGradPara,0,0)
+    {
+        m_sGeoPara = sGeoPara;
+        m_sGradPara = sGradPara;
+        m_nRot = calNRot(kRhoPhi, m_sGeoPara.nPix);
+        m_rotang = calRotAng(m_nRot);
+        m_nAcq = m_nRot*m_nRot;
+        
+        m_vptfBaseTraj.resize(m_nRot);
+        m_vvv3BaseGRO.resize(m_nRot);
+        m_vv3BaseM0PE.resize(m_nRot);
+
+        m_nSampMax = 0;
+        for(i64 i = 0; i < m_nRot; ++i)
+        {
+            f64 tht0 = i*m_rotang;
+            m_vptfBaseTraj[i] = new Yarnball_TrajFunc(kRhoPhi, tht0);
+            if(!m_vptfBaseTraj[i]) throw std::runtime_error("out of memory");
+
+            calGrad(&m_vv3BaseM0PE[i], &m_vvv3BaseGRO[i], NULL, *m_vptfBaseTraj[i], m_sGradPara);
+            m_nSampMax = std::max(m_nSampMax, (i64)m_vvv3BaseGRO[i].size());
+        }
+    }
+    
+    virtual ~Yarnball()
+    {
+        for(i64 i = 0; i < (i64)m_vptfBaseTraj.size(); ++i)
+        {
+            delete m_vptfBaseTraj[i];
+        }
+    }
+
+    virtual bool getGRO(vv3* pvv3GRO, i64 iAcq)
+    {
+        bool ret = true;
+        const f64& rotang = m_rotang;
+        i64 iSet = iAcq%m_nRot;
+        i64 iRot = iAcq/m_nRot;
+
+        *pvv3GRO = m_vvv3BaseGRO[iSet];
+        ret &= v3::rotate(pvv3GRO, 2, rotang*iRot, *pvv3GRO);
+        
+        return ret;
+    }
+
+    virtual bool getM0PE(v3* pv3M0PE, i64 iAcq)
+    {
+        bool ret = true;
+        const f64& rotang = m_rotang;
+        i64 iSet = iAcq%m_nRot;
+        i64 iRot = iAcq/m_nRot;
+
+        *pv3M0PE = m_vv3BaseM0PE[iSet];
+        ret &= v3::rotate(pv3M0PE, 2, rotang*iRot, *pv3M0PE);
+
+        return ret;
+    }
+
+protected:
+    i64 m_nRot;
+    f64 m_rotang;
+
+    vptf m_vptfBaseTraj;
+    vv3 m_vv3BaseM0PE;
+    vvv3 m_vvv3BaseGRO;
+};
+
+/* incomplete - we plan to test 2D real-time first before 3D
+class AxrollYarnball_RT: public MrTraj
+{
+public:
+    AxrollYarnball_RT(const GeoPara& sGeoPara, const GradPara& sGradPara, f64 dRhoPhi, i64 lNAcq)
+    {
+        m_sGeoPara = sGeoPara;
+        m_sGradPara = sGradPara;
+        m_nAcq = lNAcq;
+
+        m_dRhoPhi = dRhoPhi;
+
+        m_vv3M0PE.resize(lNAcq); std::fill(m_vv3M0PE.begin(), m_vv3M0PE.end(), v3(-1,-1,-1));
+        m_vlNWait.resize(lNAcq); std::fill(m_vlNWait.begin(), m_vlNWait.end(), -1);
+        m_vlNSamp.resize(lNAcq); std::fill(m_vlNSamp.begin(), m_vlNSamp.end(), -1);
+    }
+
+    virtual ~AxrollYarnball_RT()
+    {
+        ;
+    }
+    
+    virtual bool getGRO(vv3* pvv3GRO, i64 iAcq) const
+    {
+        bool ret = true;
+        v3 v3Tht0Phi0; genRand3d(&v3Tht0Phi0, iAcq);
+        v3Tht0Phi0 *= 2*M_PI;
+        v3Tht0Phi0 -= M_PI;
+        TrajFunc* ptfTraj = new Yarnball_TrajFunc(m_dRhoPhi, v3Tht0Phi0.x, v3Tht0Phi0.y);
+        if (!ptfTraj) throw std::runtime_error("out of memory");
+        if (iAcq>=m_nAcq) throw std::runtime_error("iAcq>=m_nAcq");
+        ret &= calGrad(&m_vv3M0PE[iAcq], plv3GRO, NULL, &m_vlNWait[iAcq], &m_vlNSamp[iAcq], *ptfTraj, m_sGradPara, 4);
+        m_vv3M0PE[iAcq] = v3::axisroll(m_vv3M0PE[iAcq], iAcq%3);
+        {
+            lv3::iterator ilv3GRO = plv3GRO->begin();
+            while (ilv3GRO!=plv3GRO->end())
+            {
+                *ilv3GRO = v3::axisroll(*ilv3GRO, iAcq % 3);
+            }
+        }
+        delete ptfTraj;
+        return ret;
+    }
+
+    virtual bool getM0PE(v3* pv3M0PE, i64 iAcq) const
+    {
+        if (iAcq>=m_nAcq)
+        {
+            throw std::runtime_error("iAcq>=m_nAcq");
+        }
+        *pv3M0PE = m_vv3M0PE[iAcq];
+        return true;
+    }
+
+    virtual i64 getNWait(i64 iAcq) const
+    {
+        if (iAcq>=m_nAcq)
+        {
+            throw std::runtime_error("iAcq>=m_nAcq");
+        }
+        return m_vlNWait[iAcq];
+    }
+
+    virtual i64 getNSamp(i64 iAcq) const
+    {
+        if (iAcq>=m_nAcq)
+        {
+            throw std::runtime_error("iAcq>=m_nAcq");
+        }
+        return m_vlNSamp[iAcq];
+    }
+
+protected:
+    f64 m_dRhoPhi;
+
+    vv3 m_vv3M0PE;
+    vl m_vlNWait;
+    vl m_vlNSamp;
+}
+*/#pragma once
+
+#include "TrajFunc.h"
+#include "MrTraj_2D.h"
+
+class VarDenSpiral_TrajFunc: public TrajFunc
+{
+public:
+    VarDenSpiral_TrajFunc(f64 kRhoPhi0, f64 kRhoPhi1, f64 phi0=0e0):
+        TrajFunc(0,0)
+    {
+        m_kRhoPhi0 = kRhoPhi0;
+        m_kRhoPhi1 = kRhoPhi1;
+        m_phi0 = phi0;
+
+        m_p0 = 0e0;
+        m_p1 = (std::log(m_kRhoPhi1)-std::log(m_kRhoPhi0)) / (2e0*(m_kRhoPhi1-m_kRhoPhi0));
+    }
+
+    virtual bool getK(v3* k, f64 p)
+    {
+        if (k==NULL) return false;
+        
+        f64& phi = p;
+        f64 rho = m_kRhoPhi0*(std::exp(2e0*(m_kRhoPhi1 - m_kRhoPhi0)*phi) - 1e0) / (2e0*(m_kRhoPhi1 - m_kRhoPhi0));
+        k->x = rho * std::cos(phi + m_phi0);
+        k->y = rho * std::sin(phi + m_phi0);
+        k->z = 0e0;
+
+        return true;
+    }
+
+protected:
+    f64 m_kRhoPhi0;
+    f64 m_kRhoPhi1;
+    f64 m_phi0;
+};
+
+class VarDenSpiral: public MrTraj_2D
+{
+public:
+    VarDenSpiral(const GeoPara& sGeoPara, const GradPara& sGradPara, f64 kRhoPhi0, f64 dRhoPhi1):
+        MrTraj_2D(sGeoPara,sGradPara,0,0,0,0,v3(),vv3())
+    {
+        if (kRhoPhi0==dRhoPhi1) throw std::invalid_argument("kRhoPhi0==dRhoPhi1");
+
+        m_ptfBaseTraj = new VarDenSpiral_TrajFunc(kRhoPhi0, dRhoPhi1);
+        if(!m_ptfBaseTraj) throw std::runtime_error("out of memory");
+        m_nStack = m_sGeoPara.is3D ? m_sGeoPara.nPix : 1;
+
+        i64 nRot = calNRot(std::max(kRhoPhi0, dRhoPhi1), m_sGeoPara.nPix);
+        m_rotang = calRotAng(nRot);
+        m_nAcq = nRot*m_nStack;
+
+        calGrad(&m_v3BaseM0PE, &m_vv3BaseGRO, NULL, *m_ptfBaseTraj, m_sGradPara);
+        m_nSampMax = m_vv3BaseGRO.size();
+    }
+    
+    virtual ~VarDenSpiral()
+    {
+        delete m_ptfBaseTraj;
+    }
+
+protected:
+    TrajFunc* m_ptfBaseTraj;
+};
+
+class VarDenSpiral_RT: public MrTraj
+{
+    // TODO: Goldang sampling is incomplete, shuffled sampling is incomplete.
+public:
+    VarDenSpiral_RT(const GeoPara& sGeoPara, const GradPara& sGradPara, f64 kRhoPhi0, f64 dRhoPhi1, f64 nAcq):
+        MrTraj(sGeoPara,sGradPara,0,0)
+    {
+        m_nAcq = nAcq;
+
+        m_dRhoPhi0 = kRhoPhi0;
+        m_dRhoPhi1 = dRhoPhi1;
+
+        m_vv3M0PE.resize(nAcq); std::fill(m_vv3M0PE.begin(), m_vv3M0PE.end(), v3(0));
+    }
+
+    virtual ~VarDenSpiral_RT()
+    {}
+
+    virtual bool getGRO(vv3* pvv3GRO, i64 iAcq)
+    {
+        bool ret = true;
+        TrajFunc* ptfTraj = new VarDenSpiral_TrajFunc(m_dRhoPhi0, m_dRhoPhi1, iAcq*GOLDANG);
+        if (!ptfTraj) throw std::runtime_error("out of memory");
+        if (iAcq>=m_nAcq) throw std::runtime_error("iAcq>=m_nAcq");
+        ret &= calGrad(&m_vv3M0PE[iAcq], pvv3GRO, NULL, *ptfTraj, m_sGradPara, 4);
+        delete ptfTraj;
+        return ret;
+    }
+
+    virtual bool getM0PE(v3* pv3M0PE, i64 iAcq)
+    {
+        if (iAcq>=m_nAcq)
+        {
+            throw std::runtime_error("iAcq>=m_nAcq");
+        }
+        *pv3M0PE = m_vv3M0PE[iAcq];
+        return true;
+    }
+
+    virtual i64 getNWait(i64 iAcq)
+    {
+        if (iAcq>=m_nAcq)
+        {
+            throw std::runtime_error("iAcq>=m_nAcq");
+        }
+        return m_vlNWait[iAcq];
+    }
+
+    virtual i64 getNSamp(i64 iAcq)
+    {
+        if (iAcq>=m_nAcq)
+        {
+            throw std::runtime_error("iAcq>=m_nAcq");
+        }
+        return m_vlNSamp[iAcq];
+    }
+
+protected:
+    f64 m_dRhoPhi0;
+    f64 m_dRhoPhi1;
+
+    vv3 m_vv3M0PE;
+    vi64 m_vlNWait;
+    vi64 m_vlNSamp;
+};#pragma once
+
+#include "TrajFunc.h"
+#include "MrTraj.h"
+
+class Shell3d_TrajFunc: public TrajFunc
+{
+public:
+    Shell3d_TrajFunc(f64 kRhoTht, f64 tht0, f64 phi0=0e0):
+        TrajFunc(0,0)
+    {
+        m_kThtSqrtPhi = std::sqrt(2e0);
+        m_kRhoSqrtPhi = std::sqrt(2e0)*kRhoTht;
+        m_tht0 = tht0;
+        m_phi0 = phi0;
+
+        m_p0 = 0e0;
+        m_p1 = 1e0/(std::sqrt(8e0)*kRhoTht);
+    }
+
+    ~Shell3d_TrajFunc()
+    {}
+
+    bool getK(v3* k, f64 p)
+    {
+        if (k==NULL) return false;
+        
+        const f64& f64SqrtPhi = p;
+        f64 phi = f64SqrtPhi*f64SqrtPhi * (f64SqrtPhi>=0?1e0:-1e0);
+        f64 rho = m_kRhoSqrtPhi * f64SqrtPhi;
+        f64 tht = m_kThtSqrtPhi * f64SqrtPhi;
+
+        k->x = rho * std::sin(tht+m_tht0) * std::cos(phi+m_phi0);
+        k->y = rho * std::sin(tht+m_tht0) * std::sin(phi+m_phi0);
+        k->z = rho * std::cos(tht+m_tht0);
+
+        return true;
+    }
+
+protected:
+    f64 m_kThtSqrtPhi, m_kRhoSqrtPhi;
+    f64 m_tht0, m_phi0;
+};
+
+class Shell3d: public MrTraj
+{
+public:
+    Shell3d(const GeoPara& sGeoPara, const GradPara& sGradPara, f64 kRhoTht):
+        MrTraj(sGeoPara,sGradPara,0,0)
+    {
+        m_sGeoPara = sGeoPara;
+        m_sGradPara = sGradPara;
+        m_nRot = calNRot(kRhoTht, m_sGeoPara.nPix);
+        m_rotang = calRotAng(m_nRot);
+        m_nAcq = m_nRot*m_nRot;
+        
+        m_vptfBaseTraj.resize(m_nRot);
+        m_vvv3BaseGRO.resize(m_nRot);
+        m_vv3BaseM0PE.resize(m_nRot);
+
+        m_nSampMax = 0;
+        for(i64 i = 0; i < m_nRot; ++i)
+        {
+            f64 tht0 = i*m_rotang;
+            m_vptfBaseTraj[i] = new Shell3d_TrajFunc(kRhoTht, tht0);
+            if(!m_vptfBaseTraj[i]) throw std::runtime_error("out of memory");
+
+            calGrad(&m_vv3BaseM0PE[i], &m_vvv3BaseGRO[i], NULL, *m_vptfBaseTraj[i], m_sGradPara);
+            m_nSampMax = std::max(m_nSampMax, (i64)m_vvv3BaseGRO[i].size());
+        }
+    }
+    
+    virtual ~Shell3d()
+    {
+        for(i64 i = 0; i < (i64)m_vptfBaseTraj.size(); ++i)
+        {
+            delete m_vptfBaseTraj[i];
+        }
+    }
+
+    virtual bool getGRO(vv3* pvv3GRO, i64 iAcq)
+    {
+        bool ret = true;
+        const f64& rotang = m_rotang;
+        i64 iSet = iAcq%m_nRot;
+        i64 iRot = iAcq/m_nRot;
+
+        *pvv3GRO = m_vvv3BaseGRO[iSet];
+        ret &= v3::rotate(pvv3GRO, 2, rotang*iRot, *pvv3GRO);
+        
+        return ret;
+    }
+
+    virtual bool getM0PE(v3* pv3M0PE, i64 iAcq)
+    {
+        bool ret = true;
+        const f64& rotang = m_rotang;
+        i64 iSet = iAcq%m_nRot;
+        i64 iRot = iAcq/m_nRot;
+
+        *pv3M0PE = m_vv3BaseM0PE[iSet];
+        ret &= v3::rotate(pv3M0PE, 2, rotang*iRot, *pv3M0PE);
+
+        return ret;
+    }
+    
+protected:
+    i64 m_nRot;
+    f64 m_rotang;
+
+    vptf m_vptfBaseTraj;
+    vv3 m_vv3BaseM0PE;
+    vvv3 m_vvv3BaseGRO;
+};
+#pragma once
+
+#include "TrajFunc.h"
+#include "MrTraj.h"
+#include <vector>
+#include <list>
+
+static bool cvtXyz2Ang(f64* ptht, f64* pphi, const v3& xyz)
+{
+    const f64& x = xyz.x;
+    const f64& y = xyz.y;
+    const f64& z = xyz.z;
+    f64 xy = std::sqrt(x*x + y*y);
+    *ptht = std::atan2(xy, z);
+    *pphi = std::atan2(y, x);
+
+    return true;
+}
+
+class Seiffert_Trajfunc: public TrajFunc
+{
+public:
+    typedef std::vector<f64> vf64;
+    typedef std::list<f64> lf64;
+
+    Seiffert_Trajfunc(f64 m, f64 uMax):
+        TrajFunc(0,0)
+    {
+        m_m = m;
+        m_uMax = uMax;
+
+        initJacElip(m_m);
+
+        m_p0 = 0e0;
+        m_p1 = uMax;
+        m_thtBias = 0e0; m_phiBias = 0e0;
+        v3 k1; getK(&k1, uMax);
+        cvtXyz2Ang(&m_thtBias, &m_phiBias, k1);
+    }
+    
+    bool getK(v3* k, f64 u)
+    {
+        if (k==NULL) return false;
+        
+        f64 sn, cn;
+        calJacElip(&sn, &cn, u);
+
+        f64 rho = 0.5e0 * (u/m_uMax);
+        k->x = rho * sn * std::cos(u*std::sqrt(m_m));
+        k->y = rho * sn * std::sin(u*std::sqrt(m_m));
+        k->z = rho * cn;
+
+        v3::rotate(k, 2, -m_phiBias, *k);
+        v3::rotate(k, 1, -m_thtBias, *k);
+
+        return true;
+    }
+    
+protected:
+    f64 m_m, m_uMax;
+
+    // precompute for AGM
+    lf64 m_lf64a, m_lf64b, m_lf64c; 
+    
+    f64 m_thtBias, m_phiBias;
+
+    bool initJacElip(f64 m)
+    {
+        if (m<0e0 || m>1e0)
+        {
+            printf("ArgError, m=%lf\n", m);
+            abort();
+        }
+
+        // calculate a, b, c value of AGM
+        m_lf64a.clear(); m_lf64a.push_back(1e0);
+        m_lf64b.clear(); m_lf64b.push_back(std::sqrt(1e0-m));
+        m_lf64c.clear(); m_lf64c.push_back(0e0);
+        while (std::fabs(*m_lf64b.rbegin() - *m_lf64a.rbegin()) > 1e-8)
+        {
+            const f64& a_Old = *std::prev(m_lf64a.end());
+            const f64& b_Old = *std::prev(m_lf64b.end());
+            m_lf64a.push_back((a_Old + b_Old) / 2e0);
+            m_lf64b.push_back(std::sqrt(a_Old * b_Old));
+            m_lf64c.push_back((a_Old - b_Old) / 2e0);
+        }
+
+        return true;
+    }
+    
+    bool calJacElip(f64* psn, f64* pcn, f64 u) const
+    {
+        // calculate phi with AGM
+        i64 n = m_lf64a.size() - 1;
+        lf64::const_reverse_iterator ilf64a = m_lf64a.rbegin();
+        lf64::const_reverse_iterator ilf64c = m_lf64c.rbegin();
+        f64 phi = std::pow(2e0,f64(n)) * (*ilf64a) * u;
+        for (i64 i = 0; i < n; ++i)
+        {
+            f64 _ = (*ilf64c)/(*ilf64a)*std::sin(phi);
+            _ = std::max(-1.0, std::min(1.0, _));
+            phi = (1e0/2e0)*(phi + std::asin(_));
+            ++ilf64a;
+            ++ilf64c;
+        }
+        *psn = std::sin(phi);
+        *pcn = std::cos(phi);
+        
+        return true;
+    }
+};
+
+class Seiffert: public MrTraj
+{
+public:
+    Seiffert(const GeoPara& sGeoPara, const GradPara& sGradPara, f64 dM, f64 dUMax):
+        MrTraj(sGeoPara,sGradPara,0,0)
+    // m = 0.07 is optimized for diaphony
+    // Umax = 20 can achieve similar readout time as original paper
+    {
+        const i64& nPix = m_sGeoPara.nPix;
+        m_nAcq = (i64)round(-2.53819233e-03*nPix*nPix + 8.53447761e+01*nPix); // fitted
+
+        m_ptfBaseTraj = new Seiffert_Trajfunc(dM, dUMax);
+        if(!m_ptfBaseTraj) throw std::runtime_error("out of memory");
+
+        calGrad(&m_v3BaseM0PE, &m_vv3BaseGRO, NULL, *m_ptfBaseTraj, m_sGradPara);
+        m_nSampMax = m_vv3BaseGRO.size();
+    }
+    
+    virtual ~Seiffert()
+    {
+        delete m_ptfBaseTraj;
+    }
+    
+    virtual bool getGRO(vv3* pvv3GRO, i64 iAcq)
+    {
+        bool ret = true;
+        vi64 vi64Ax; vf64 vf64Ang;
+        ret &= getRotAng(&vi64Ax, &vf64Ang, iAcq);
+        ret &= appRotAng(pvv3GRO, m_vv3BaseGRO, vi64Ax, vf64Ang);
+
+        return ret;
+    }
+
+    virtual bool getM0PE(v3* pv3M0PE, i64 iAcq)
+    {
+        bool ret = true;
+        vi64 vi64Ax; vf64 vf64Ang;
+        ret &= getRotAng(&vi64Ax, &vf64Ang, iAcq);
+        ret &= appRotAng(pv3M0PE, m_v3BaseM0PE, vi64Ax, vf64Ang);
+
+        return ret;
+    }
+    
+protected:
+    TrajFunc* m_ptfBaseTraj;
+    vv3 m_vv3BaseGRO;
+    v3 m_v3BaseM0PE;
+
+    bool getRotAng(vi64* pvi64Ax, vf64* pvf64Ang, i64 iAcq) const
+    {
+        pvi64Ax->resize(3);
+        pvf64Ang->resize(3);
+
+        // randomly rotate around z-axis
+        pvi64Ax->at(0) = 2;
+        pvf64Ang->at(0) = iAcq*(iAcq+1)*GOLDANG;
+
+        // rotate endpoint to Fibonaci Points
+        v3 v3FibPt;
+        {
+            i64 lNf = m_nAcq;
+            f64 dK = f64(iAcq%m_nAcq) - lNf/2;
+
+            f64 dSf = dK/(lNf/2);
+            f64 dCf = std::sqrt((lNf/2+dK)*(lNf/2-dK)) / (lNf/2);
+            f64 phi = (1e0+std::sqrt(5e0)) / 2e0;
+            f64 dTht = 2e0*M_PI*dK/phi;
+
+            v3FibPt.x = dCf*std::sin(dTht);
+            v3FibPt.y = dCf*std::cos(dTht);
+            v3FibPt.z = dSf;
+        }
+        f64 tht, phi; cvtXyz2Ang(&tht, &phi, v3FibPt);
+
+        pvi64Ax->at(1) = 1;
+        pvf64Ang->at(1) = tht;
+        pvi64Ax->at(2) = 2;
+        pvf64Ang->at(2) = phi;
+
+        return true;
+    }
+
+    template<typename T>
+    bool appRotAng(T* pdst, const T& src, vi64 vi64Ax, vf64 vf64Ang) const
+    {
+        bool ret = true;
+
+        if (vi64Ax.size() != vf64Ang.size()) throw std::invalid_argument("vi64Ax.size() != vf64Ang.size()");
+
+        *pdst = src;
+        for(i64 i = 0; i < (i64)vi64Ax.size(); ++i)
+        {
+            ret &= v3::rotate(pdst, vi64Ax[i], vf64Ang[i], *pdst);
+        }
+
+        return ret;
+    }
+};
+#pragma once
+
+#include "../utility/global.h"
+#include "../utility/v3.h"
+// #include "../mag/MagSolver.h" // VS2010 reports error on this
+
+/* 
+ * Single trajectory define by a parameterized function getK()
+ * and parameter bounding m_dP0, m_dP1
+ */
+
+class TrajFunc
+{
+public:
+    TrajFunc(const f64& m_p0, const f64& m_p1):
+        m_p0(m_p0), m_p1(m_p1)
+    {}
+
+    virtual ~TrajFunc()
+    {}
+    
+    virtual bool getK(v3* k, f64 p) = 0; // trajectory function
+    
+    virtual bool getDkDp(v3* dkdp, f64 p) // 1st-ord differentiative of trajectory function
+    {
+        static const f64 dp = 1e-7;
+        v3 v3K_Nx1; getK(&v3K_Nx1, p+dp);
+        v3 v3K_Pv1; getK(&v3K_Pv1, p-dp);
+        *dkdp = (v3K_Nx1-v3K_Pv1)/(2e0*dp);
+
+        return true;
+    }
+
+    virtual bool getD2kDp2(v3* d2kdp2, f64 p) // 2nd-ord differentiative of trajectory function
+    {
+        static const f64 dp = 1e-3;
+        v3 v3K_Nx1; getK(&v3K_Nx1, p+dp);
+        v3 v3K_This; getK(&v3K_This, p);
+        v3 v3K_Pv1; getK(&v3K_Pv1, p-dp);
+        *d2kdp2 = (v3K_Nx1-v3K_This*2e0+v3K_Pv1)/(dp*dp);
+    
+        return true;
+    }
+
+    // get the lower bound of traj. para.
+    f64 getP0()
+    { return m_p0; }
+
+    // get the higher bound of traj. para.
+    f64 getP1()
+    { return m_p1; }
+
+    bool getK0(v3* k0)
+    { return getK(k0, m_p0); }
+    
+    bool getK1(v3* k1)
+    { return getK(k1, m_p1); }
+
+    // convinient interface
+    v3 getK(f64 p)
+    {
+        v3 k; getK(&k, p);
+        return k;
+    }
+
+    v3 getDkDp(f64 p)
+    {
+        v3 dkdp; getDkDp(&dkdp, p);
+        return dkdp;
+    }
+
+    v3 getD2kDp2(f64 p)
+    {
+        v3 d2kdp2; getD2kDp2(&d2kdp2, p);
+        return d2kdp2;
+    }
+    v3 getK0(f64 p)
+    {
+        v3 k0; getK0(&k0);
+        return k0;
+    }
+    v3 getK1(f64 p)
+    {
+        v3 k1; getK1(&k1);
+        return k1;
+    }
+    
+protected:
+    f64 m_p0, m_p1;
+};
+#pragma once
+
+#include <stdint.h>
+#include <vector>
+#include <stdexcept>
+#include <cmath>
+#include <algorithm>
+
+class Intp
+{
+public:
+    typedef std::vector<f64> vf64;
+    
+    enum SearchMode
+    {
+        EBinary = 0,
+        ECached,
+        EUniform
+    } m_eSearchMode;
+
+    Intp() : m_eSearchMode(EBinary), m_idxCache(0) {}
+    virtual ~Intp() {}
+
+    virtual bool fit(const vf64& vf64X, const vf64& vf64Y) = 0;
+
+    virtual f64 eval(f64 x, i64 ord = 0) const = 0;
+
+protected:
+    vf64 m_vf64X, m_vf64Y;
+    mutable i64 m_idxCache;
+
+    static bool validate(vf64& vf64X, vf64& vf64Y)
+    {
+        if (vf64X.size() != vf64Y.size() || vf64X.size() < 2) return false;
+        i64 i64N = i64(vf64X.size());
+        if (i64N == 2 && vf64X[0] == vf64X[1]) return false;
+        for (i64 i = 2; i < i64N; ++i)
+        {
+            if ((vf64X[i]-vf64X[i - 1]) * (vf64X[i - 1]-vf64X[i - 2]) < 0) return false;
+        }
+        if (vf64X.back() < vf64X.front())
+        {
+            std::reverse(vf64X.begin(), vf64X.end());
+            std::reverse(vf64Y.begin(), vf64Y.end());
+        }
+        return true;
+    }
+
+    i64 getIdx(const f64& x) const
+    {
+        const i64 num = i64(m_vf64X.size());
+        if (num < 2) throw std::runtime_error("num < 2");
+
+        i64 idx;
+
+        if (m_eSearchMode == EBinary)
+        {
+            i64 low = 0;
+            i64 high = num - 1;
+            while (high - low > 1)
+            {
+                i64 mid = (low + high) / 2;
+                if (m_vf64X[mid] > x) high = mid;
+                else low = mid;
+            }
+            idx = low;
+            return idx;
+        }
+        if (m_eSearchMode == ECached)
+        {
+            if (m_idxCache < 0) m_idxCache = 0;
+            if (m_idxCache > num - 2) m_idxCache = num - 2;
+            idx = m_idxCache;
+            while (idx > 0 && m_vf64X[idx] > x) --idx;
+            while (idx + 1 < num - 1 && m_vf64X[idx + 1] < x) ++idx;
+            m_idxCache = idx;
+            return idx;
+        }
+        if (m_eSearchMode == EUniform)
+        {
+            const f64 x0 = m_vf64X.front();
+            const f64 x1 = m_vf64X.back();
+            idx = i64((x - x0) / (x1 - x0) * (num - 1));
+            if (idx < 0) idx = 0;
+            if (idx > num - 2) idx = num - 2;
+            return idx;
+        }
+
+        throw std::invalid_argument("m_eSearchMode");
+    }
+};#pragma once
+
+#include "Intp.h"
+
+class LinIntp : public Intp
+{
+public:
+    LinIntp() {}
+
+    LinIntp(const vf64& vf64X, const vf64& vf64Y)
+    {
+        fit(vf64X, vf64Y);
+    }
+
+    virtual bool fit(const vf64& vf64X, const vf64& vf64Y)
+    {
+        m_vf64X = vf64X;
+        m_vf64Y = vf64Y;
+
+        if (!validate(m_vf64X, m_vf64Y))
+        {
+            m_vf64X.clear();
+            m_vf64Y.clear();
+            throw std::invalid_argument("!validate(m_vf64X, m_vf64Y)");
+        }
+
+        m_idxCache = 0;
+
+        const i64 num = (i64)m_vf64X.size();
+        m_vf64Slope.resize(num - 1);
+
+        for (i64 i = 0; i < num - 1; ++i)
+        {
+            const f64 dx = m_vf64X[i + 1] - m_vf64X[i];
+            m_vf64Slope[i] = (m_vf64Y[i + 1] - m_vf64Y[i]) / dx;
+        }
+
+        return true;
+    }
+
+    virtual f64 eval(f64 x, i64 ord = 0) const
+    {
+        if (m_vf64X.size() < 2) throw std::runtime_error("m_vf64X.size()");
+
+        const i64 idx = getIdx(x);
+        const f64 dx = x - m_vf64X[idx];
+
+        if (ord == 0)
+        {
+            return m_vf64Y[idx] + m_vf64Slope[idx] * dx;
+        }
+        if (ord == 1)
+        {
+            return m_vf64Slope[idx];
+        }
+
+        return 0e0;
+    }
+
+private:
+    vf64 m_vf64Slope;
+};
+#include "v3.h"
+#include <array>
+
+v3::v3() :x(0e0), y(0e0), z(0e0) {}
+v3::v3(f64 _) :x(_), y(_), z(_) {}
+v3::v3(f64 x, f64 y, f64 z) :x(x), y(y), z(z) {}
+v3::~v3() {}
+
+v3 v3::operator+(const v3 &rhs) const
+{
+    return v3
+    (
+        this->x + rhs.x,
+        this->y + rhs.y,
+        this->z + rhs.z
+    );
+}
+
+v3& v3::operator+=(const v3 &rhs)
+{
+    this->x += rhs.x;
+    this->y += rhs.y;
+    this->z += rhs.z;
+    return *this;
+}
+
+v3 v3::operator+(const f64 &rhs) const
+{
+    return v3
+    (
+        this->x + rhs,
+        this->y + rhs,
+        this->z + rhs
+    );
+}
+
+v3& v3::operator+=(const f64 &rhs)
+{
+    this->x += rhs;
+    this->y += rhs;
+    this->z += rhs;
+    return *this;
+}
+
+v3 v3::operator-(const v3 &rhs) const
+{
+    return v3
+    (
+        this->x - rhs.x,
+        this->y - rhs.y,
+        this->z - rhs.z
+    );
+}
+
+v3& v3::operator-=(const v3 &rhs)
+{
+    this->x -= rhs.x;
+    this->y -= rhs.y;
+    this->z -= rhs.z;
+    return *this;
+}
+
+v3 v3::operator-(const f64 &rhs) const
+{
+    return v3
+    (
+        this->x - rhs,
+        this->y - rhs,
+        this->z - rhs
+    );
+}
+
+v3& v3::operator-=(const f64 &rhs)
+{
+    this->x -= rhs;
+    this->y -= rhs;
+    this->z -= rhs;
+    return *this;
+}
+
+v3 v3::operator*(const v3 &rhs) const
+{
+    return v3
+    (
+        this->x * rhs.x,
+        this->y * rhs.y,
+        this->z * rhs.z
+    );
+}
+
+v3& v3::operator*=(const v3 &rhs)
+{
+    this->x *= rhs.x;
+    this->y *= rhs.y;
+    this->z *= rhs.z;
+    return *this;
+}
+
+v3 v3::operator*(const f64 &rhs) const
+{
+    return v3
+    (
+        this->x * rhs,
+        this->y * rhs,
+        this->z * rhs
+    );
+}
+
+v3& v3::operator*=(const f64 &rhs)
+{
+    this->x *= rhs;
+    this->y *= rhs;
+    this->z *= rhs;
+    return *this;
+}
+
+v3 v3::operator/(const v3 &rhs) const
+{
+    return v3
+    (
+        this->x / rhs.x,
+        this->y / rhs.y,
+        this->z / rhs.z
+    );
+}
+
+v3& v3::operator/=(const v3 &rhs)
+{
+    this->x /= rhs.x;
+    this->y /= rhs.y;
+    this->z /= rhs.z;
+    return *this;
+}
+
+v3 v3::operator/(const f64 &rhs) const
+{
+    return v3
+    (
+        this->x / rhs,
+        this->y / rhs,
+        this->z / rhs
+    );
+}
+
+v3& v3::operator/=(const f64 &rhs)
+{
+    this->x /= rhs;
+    this->y /= rhs;
+    this->z /= rhs;
+    return *this;
+}
+
+bool v3::operator==(const v3 &rhs) const
+{
+    return bool
+    (
+        this->x == rhs.x &&
+        this->y == rhs.y &&
+        this->z == rhs.z
+    );
+}
+
+bool v3::operator!=(const v3 &rhs) const
+{
+    return bool
+    (
+        this->x != rhs.x ||
+        this->y != rhs.y ||
+        this->z != rhs.z
+    );
+}
+
+f64& v3::operator[](i64 idx)
+{
+    if (idx==0 || idx==-3) return x;
+    if (idx==1 || idx==-2) return y;
+    if (idx==2 || idx==-1) return z;
+    throw std::runtime_error("idx");
+}
+
+f64 v3::operator[](i64 idx) const
+{
+    if (idx==0 || idx==-3) return x;
+    if (idx==1 || idx==-2) return y;
+    if (idx==2 || idx==-1) return z;
+    throw std::runtime_error("idx");
+}
+
+f64 v3::norm(const v3& v3In)
+{
+    return sqrt
+    (
+        v3In.x*v3In.x +
+        v3In.y*v3In.y +
+        v3In.z*v3In.z
+    );
+}
+
+v3 v3::cross(const v3& v3In0, const v3& v3In1)
+{
+    return v3
+    (
+        v3In0.y*v3In1.z - v3In0.z*v3In1.y,
+        -v3In0.x*v3In1.z + v3In0.z*v3In1.x,
+        v3In0.x*v3In1.y - v3In0.y*v3In1.x
+    );
+}
+
+f64 v3::inner(const v3& v3In0, const v3& v3In1)
+{
+    return f64
+    (
+        v3In0.x*v3In1.x +
+        v3In0.y*v3In1.y +
+        v3In0.z*v3In1.z
+    );
+}
+
+v3 v3::pow(const v3& v3In, f64 exp)
+{
+    return v3
+    (
+        std::pow(v3In.x, exp),
+        std::pow(v3In.y, exp),
+        std::pow(v3In.z, exp)
+    );
+}
+
+bool v3::genRotMat(std::array<v3,3>* pav3RotMat, int iAx, f64 ang)
+{
+    switch (iAx)
+    {
+    case 0:
+        (*pav3RotMat)[0] = v3(1e0, 0e0, 0e0);
+        (*pav3RotMat)[1] = v3(0e0, std::cos(ang), -std::sin(ang));
+        (*pav3RotMat)[2] = v3(0e0, std::sin(ang), std::cos(ang));
+        break;
+    case 1:
+        (*pav3RotMat)[0] = v3(std::cos(ang), 0e0, std::sin(ang));
+        (*pav3RotMat)[1] = v3(0e0, 1e0, 0e0);
+        (*pav3RotMat)[2] = v3(-std::sin(ang), 0e0, std::cos(ang));
+        break;
+    case 2:
+        (*pav3RotMat)[0] = v3(std::cos(ang), -std::sin(ang), 0e0);
+        (*pav3RotMat)[1] = v3(std::sin(ang), std::cos(ang), 0e0);
+        (*pav3RotMat)[2] = v3(0e0, 0e0, 1e0);
+        break;
+    default:
+        return false;
+    }
+
+    return true;
+}
+
+bool v3::rotate
+(
+    v3* pv3Dst,
+    int iAx, f64 ang,
+    const v3& v3Src
+)
+{
+    bool ret = true;
+
+    std::array<v3,3> av3RotMat;
+    ret &= genRotMat(&av3RotMat, iAx, ang);
+
+    *pv3Dst = v3
+    (
+        v3::inner(av3RotMat[0], v3Src),
+        v3::inner(av3RotMat[1], v3Src),
+        v3::inner(av3RotMat[2], v3Src)
+    );
+
+    return ret;
+}
+
+bool v3::rotate
+(
+    vv3* pvv3Dst,
+    int iAx, f64 ang,
+    const vv3& vv3Src
+)
+{
+    std::array<v3, 3> av3RotMat;
+    if (!genRotMat(&av3RotMat, iAx, ang)) return false;
+
+    if (pvv3Dst->size() != vv3Src.size()) {
+        pvv3Dst->resize(vv3Src.size());
+    }
+
+    for (size_t i = 0; i < vv3Src.size(); ++i)
+    {
+        f64 tx = v3::inner(av3RotMat[0], vv3Src[i]);
+        f64 ty = v3::inner(av3RotMat[1], vv3Src[i]);
+        f64 tz = v3::inner(av3RotMat[2], vv3Src[i]);
+
+        (*pvv3Dst)[i].x = tx;
+        (*pvv3Dst)[i].y = ty;
+        (*pvv3Dst)[i].z = tz;
+    }
+
+    return true;
+}
+
+bool v3::rotate
+(
+    lv3* plv3Dst,
+    int iAx, f64 ang,
+    const lv3& lv3Src
+)
+{
+    bool ret = true;
+
+    std::array<v3,3> av3RotMat;
+    ret &= genRotMat(&av3RotMat, iAx, ang);
+
+    // apply rotation matrix
+    lv3 _lv3Dst; // for self-in self-out compatible
+    lv3::const_iterator ilv3CoordSrc = lv3Src.begin();
+    while (ilv3CoordSrc != lv3Src.end())
+    {
+        _lv3Dst.push_back
+        (
+            v3
+            (
+                v3::inner(av3RotMat[0], *ilv3CoordSrc),
+                v3::inner(av3RotMat[1], *ilv3CoordSrc),
+                v3::inner(av3RotMat[2], *ilv3CoordSrc)
+            )
+        );
+
+        ++ilv3CoordSrc;
+    }
+    plv3Dst->swap(_lv3Dst);
+
+    return ret;
+}
+
+v3 v3::axisroll(const v3& v3In, i64 nShift)
+{
+    v3 v3Ot;
+    switch ((nShift%3+3)%3)
+    {
+    case 1:
+        v3Ot.x = v3In.y;
+        v3Ot.y = v3In.z;
+        v3Ot.z = v3In.x;
+        break;
+        
+    case 2:
+        v3Ot.x = v3In.z;
+        v3Ot.y = v3In.x;
+        v3Ot.z = v3In.y;
+        break;
+    
+    default:
+        v3Ot = v3In;
+        break;
+    }
+    return v3Ot;
+}#pragma once
+
+#include <cmath>
+#include <ctime>
+#include <stdint.h>
+
+typedef int8_t i8;
+typedef int16_t i16;
+typedef int32_t i32;
+typedef int64_t i64;
+typedef uint8_t u8;
+typedef uint16_t u16;
+typedef uint32_t u32;
+typedef uint64_t u64;
+typedef float f32;
+typedef double f64;
+
+template<typename T>
+inline T round(T x)
+{ return (x >= 0) ? std::floor(x + T(0.5)) : std::ceil(x - T(0.5)); }
+
+template<typename T>
+inline T gcd(T x, T y)
+{ return y==0 ? x : gcd(y, x%y); }
+
+#undef M_PI
+#define M_PI (3.1415926535897931e0)
+#undef M_SQRT2
+#define M_SQRT2 (1.4142135623730951e0)
+#undef M_SQRT3
+#define M_SQRT3 (1.7320508075688772e0)
+#undef M_SQRT5
+#define M_SQRT5 (2.2360679774997898e0)
+#undef M_SQRT7
+#define M_SQRT7 (2.6457513110645907e0)
+
+#define GOLDRAT (1.6180339887498949e0) // ((1e0+std::sqrt(5e0))/2e0)
+#define GOLDANG (2.3999632297286531e0) // ((3e0-std::sqrt(5e0))*M_PI)
+
+#define PRINT(X) printf("%s: %ld\n", #X, (i64)(X));
+#define PRINT_F(X) printf("%s: %.3lf\n", #X, (f64)(X));
+#define PRINT_E(X) printf("%s: %.3e\n", #X, (f64)(X));
+
+#define TIC \
+    clock_t cTick = std::clock();\
+
+#define TOC \
+    cTick = std::clock() - cTick;\
+    if (glob_enDbgPrint) printf("Elapsed time: %.3lf ms\n", 1e3*cTick/CLOCKS_PER_SEC);
+
+extern bool glob_enDbgPrint;
+    #pragma once
+
+#include "Intp.h"
+
+class SplineIntp : public Intp
+{
+public:
+    SplineIntp() {}
+
+    explicit SplineIntp(const vf64& vf64X, const vf64& vf64Y)
+    {
+        fit(vf64X, vf64Y);
+    }
+
+    virtual bool fit(const vf64& vf64X, const vf64& vf64Y)
+    {
+        m_vf64X = vf64X;
+        m_vf64Y = vf64Y;
+
+        if (!validate(m_vf64X, m_vf64Y))
+        {
+            m_vf64X.clear();
+            m_vf64Y.clear();
+            throw std::invalid_argument("!validate(m_vf64X, m_vf64Y)");
+        }
+
+        m_idxCache = 0;
+
+        const i64 num = i64(m_vf64X.size());
+
+        vf64 vf64H(num - 1);
+        for (i64 i = 0; i < num - 1; ++i)
+            vf64H[i] = m_vf64X[i + 1] - m_vf64X[i];
+
+        // Step 1: Set up the tridiagonal system
+        vf64 vf64Alpha(num, 0.0);
+        for (i64 i = 1; i < num - 1; ++i)
+            vf64Alpha[i] = (3e0 / vf64H[i]) * (m_vf64Y[i + 1] - m_vf64Y[i]) - (3e0 / vf64H[i - 1]) * (m_vf64Y[i] - m_vf64Y[i - 1]);
+
+        // Step 2: Solve tridiagonal system for c (second derivatives)
+        vf64 vf64L(num, 1.0), vf64Mu(num, 0.0), vf64Z(num, 0.0);
+        m_vf64C.resize(num, 0.0);
+        m_vf64B.resize(num - 1, 0.0);
+        m_vf64D.resize(num - 1, 0.0);
+        m_vf64A = m_vf64Y;
+
+        for (i64 i = 1; i < num - 1; ++i)
+        {
+            vf64L[i] = 2e0 * (m_vf64X[i + 1] - m_vf64X[i - 1]) - vf64H[i - 1] * vf64Mu[i - 1];
+            vf64Mu[i] = vf64H[i] / vf64L[i];
+            vf64Z[i] = (vf64Alpha[i] - vf64H[i - 1] * vf64Z[i - 1]) / vf64L[i];
+        }
+
+        // Natural spline boundary conditions
+        vf64L[num - 1] = 1.0;
+        vf64Z[num - 1] = 0.0;
+        m_vf64C[num - 1] = 0.0;
+
+        // Back substitution
+        for (i64 i = num - 2; i >= 0; --i)
+        {
+            m_vf64C[i] = vf64Z[i] - vf64Mu[i] * m_vf64C[i + 1];
+            m_vf64B[i] = (m_vf64A[i + 1] - m_vf64A[i]) / vf64H[i] - vf64H[i] * (m_vf64C[i + 1] + 2e0 * m_vf64C[i]) / 3e0;
+            m_vf64D[i] = (m_vf64C[i + 1] - m_vf64C[i]) / (3e0 * vf64H[i]);
+        }
+
+        return true;
+    }
+
+    virtual f64 eval(f64 x, i64 ord = 0) const // order: order of derivation, default is 0 (function value)
+    {
+        if (m_vf64X.size() < 2) throw std::runtime_error("m_vdX.size()");
+
+        i64 idx = getIdx(x);
+
+        f64 dx = x - m_vf64X[idx];
+        if (ord == 0) return
+        (
+            m_vf64A[idx]
+            + m_vf64B[idx] * dx
+            + m_vf64C[idx] * dx * dx
+            + m_vf64D[idx] * dx * dx * dx
+        );
+        if (ord == 1) return
+        (
+            m_vf64B[idx]
+            + m_vf64C[idx] * 2e0 * dx
+            + m_vf64D[idx] * 3e0 * dx * dx
+        );
+        if (ord == 2) return
+        (
+            m_vf64C[idx] * 2e0
+            + m_vf64D[idx] * 6e0 * dx
+        );
+        if (ord == 3) return
+        (
+            m_vf64D[idx] * 6e0
+        );
+        return 0e0;
+    }
+
+private:
+    vf64 m_vf64A, m_vf64B, m_vf64C, m_vf64D;
+};
+bool glob_enDbgPrint = false;#pragma once
+
+#include <cmath>
+#include <vector>
+#include <list>
+#include <array>
+#include <cstdio>
+#include <cstdint>
+#include <stdexcept>
+#include "global.h"
+
+class v3
+{
+public:
+    typedef std::vector<v3> vv3;
+    typedef std::list<v3> lv3;
+
+    f64 x, y, z;
+
+    v3();
+    v3(f64 _);
+    v3(f64 x, f64 y, f64 z);
+    ~v3();
+    v3 operator+(const v3 &rhs) const;
+    v3& operator+=(const v3 &rhs);
+    v3 operator+(const f64 &rhs) const;
+    v3& operator+=(const f64 &rhs);
+    v3 operator-(const v3 &rhs) const;
+    v3& operator-=(const v3 &rhs);
+    v3 operator-(const f64 &rhs) const;
+    v3& operator-=(const f64 &rhs);
+    v3 operator*(const v3 &rhs) const;
+    v3& operator*=(const v3 &rhs);
+    v3 operator*(const f64 &rhs) const;
+    v3& operator*=(const f64 &rhs);
+    v3 operator/(const v3 &rhs) const;
+    v3& operator/=(const v3 &rhs);
+    v3 operator/(const f64 &rhs) const;
+    v3& operator/=(const f64 &rhs);
+    bool operator==(const v3 &rhs) const;
+    bool operator!=(const v3 &rhs) const;
+    f64& operator[](i64 idx);
+    f64 operator[](i64 idx) const;
+    static f64 norm(const v3& v3In);
+    static v3 cross(const v3& v3In0, const v3& v3In1);
+    static f64 inner(const v3& v3In0, const v3& v3In1);
+    static v3 pow(const v3& v3In, f64 exp);
+    static bool rotate
+    (
+        v3* pv3Dst,
+        int iAx, f64 ang,
+        const v3& v3Src
+    );
+    static bool rotate
+    (
+        vv3* pvv3Dst,
+        int iAx, f64 ang,
+        const vv3& vv3Src
+    );
+    static bool rotate
+    (
+        lv3* plv3Dst,
+        int iAx, f64 ang,
+        const lv3& lv3Src
+    );
+    static v3 axisroll(const v3& v3In, i64 lShift);
+    template<typename cv3>
+    static bool saveF64(FILE* pfBHdr, FILE* pfBin, const cv3& cv3Data);
+    template<typename cv3>
+    static bool loadF64(FILE* pfBHdr, FILE* pfBin, cv3* pcv3Data);
+    template<typename cv3>
+    static bool saveF32(FILE* pfBHdr, FILE* pfBin, const cv3& cv3Data);
+    template<typename cv3>
+    static bool loadF32(FILE* pfBHdr, FILE* pfBin, cv3* pcv3Data);
+private:
+    static bool genRotMat(std::array<v3,3>* pav3RotMat, int iAx, f64 ang);
+};
+
+template<typename cv3>
+bool v3::saveF64(FILE* pfBHdr, FILE* pfBin, const cv3& cv3Data)
+{
+    bool ret = true;
+    fprintf(pfBHdr, "float64[%ld][3];\n", (i64)cv3Data.size());
+    typename cv3::const_iterator icv3Data = cv3Data.begin();
+    while (icv3Data!=cv3Data.end())
+    {
+        ret &= (fwrite(&icv3Data->x, sizeof(f64), 1, pfBin) == 1);
+        ret &= (fwrite(&icv3Data->y, sizeof(f64), 1, pfBin) == 1);
+        ret &= (fwrite(&icv3Data->z, sizeof(f64), 1, pfBin) == 1);
+        ++icv3Data;
+    }
+    return ret;
+}
+
+template<typename cv3>
+bool v3::loadF64(FILE* pfBHdr, FILE* pfBin, cv3* pcv3Data)
+{
+    bool ret = true;
+    i64 lenData = 0;
+    int nByte = fscanf(pfBHdr, "float64[%ld][3];\n", &lenData);
+    if (nByte!=1) ret = false;
+    pcv3Data->resize(lenData);
+    typename cv3::iterator icv3Data = pcv3Data->begin();
+    while (icv3Data!=pcv3Data->end())
+    {
+        ret &= (fread(&icv3Data->x, sizeof(f64), 1, pfBin) == 1);
+        ret &= (fread(&icv3Data->y, sizeof(f64), 1, pfBin) == 1);
+        ret &= (fread(&icv3Data->z, sizeof(f64), 1, pfBin) == 1);
+        ++icv3Data;
+    }
+    return ret;
+}
+
+template<typename cv3>
+bool v3::saveF32(FILE* pfBHdr, FILE* pfBin, const cv3& cv3Data)
+{
+    bool ret = true;
+    fprintf(pfBHdr, "float32[%ld][3];\n", (i64)cv3Data.size());
+    typename cv3::const_iterator icv3Data = cv3Data.begin();
+    float f32X, f32Y, f32Z;
+    while (icv3Data!=cv3Data.end())
+    {
+        f32X = (float)icv3Data->x;
+        f32Y = (float)icv3Data->y;
+        f32Z = (float)icv3Data->z;
+        ret &= (fwrite(&f32X, sizeof(float), 1, pfBin) == 1);
+        ret &= (fwrite(&f32Y, sizeof(float), 1, pfBin) == 1);
+        ret &= (fwrite(&f32Z, sizeof(float), 1, pfBin) == 1);
+        ++icv3Data;
+    }
+    return ret;
+}
+
+template<typename cv3>
+bool v3::loadF32(FILE* pfBHdr, FILE* pfBin, cv3* pcv3Data)
+{
+    bool ret = true;
+    i64 lenData = 0;
+    int nByte = fscanf(pfBHdr, "float32[%ld][3];\n", &lenData);
+    if (nByte!=1) ret = false;
+    pcv3Data->resize(lenData);
+    typename cv3::iterator icv3Data = pcv3Data->begin();
+    float f32X, f32Y, f32Z;
+    while (icv3Data!=pcv3Data->end())
+    {
+        ret &= (fread(&f32X, sizeof(float), 1, pfBin) == 1);
+        ret &= (fread(&f32Y, sizeof(float), 1, pfBin) == 1);
+        ret &= (fread(&f32Z, sizeof(float), 1, pfBin) == 1);
+
+        icv3Data->x = (f64)f32X;
+        icv3Data->y = (f64)f32Y;
+        icv3Data->z = (f64)f32Z;
+
+        ++icv3Data;
+    }
+    return ret;
+}
+
+from numpy import *
+from numpy.typing import *
+from matplotlib.pyplot import *
+
+goldrat = (1+sqrt(5))/2
+goldang = (2*pi)/(1+goldrat)
+
+getGoldrat = lambda: goldrat
+getGoldang = lambda: goldang
+
+def rand3d(i:int|NDArray, nAx:int=3, kx=sqrt(2), ky=sqrt(3), kz=sqrt(7)) -> NDArray:
+    return (hstack if size(i)==1 else vstack)\
+    ([
+        (i**1 * 1/(1+kx))%1,
+        (i**2 * 1/(1+ky))%1,
+        (i**3 * 1/(1+kz))%1
+    ][:nAx]).T
+
+def cvtGrad2Traj(arrG:NDArray, dtGrad:int|float, dtADC:int|float, nShift:int|float=1.0) -> tuple[NDArray, NDArray]:
+    """
+    # description:
+    interpolate gradient waveform and calculate trajectory
+
+    # parameter
+    `arrG`: array of gradient waveform
+    `dtGrad`, `dtADC`: temporal resolution of gradient system and ADC
+
+    # return:
+    interpolated trajectory and gradient
+    """
+    dtShift = nShift*dtADC
+    nGrad, nDim = arrG.shape
+    nADC = int(dtGrad/dtADC)*(nGrad-1)
+    arrG_Resamp = zeros([nADC,nDim], dtype=float64)
+    for iDim in range(nDim):
+        arrG_Resamp[:,iDim] = interp(dtADC*arange(nADC)+dtShift, dtGrad*arange(nGrad), arrG[:,iDim])
+    arrDk = zeros_like(arrG_Resamp)
+    arrDk[0,:] = (arrG[0,:] + arrG_Resamp[0,:])*dtShift/2
+    arrDk[1:,:] = (arrG_Resamp[:-1] + arrG_Resamp[1:])*dtADC/2
+    arrK = cumsum(arrDk,axis=0)
+    return arrK, arrG_Resamp
+
+def delGrad(arrG:NDArray, tau:int|float) -> NDArray:
+    """
+    # description:
+    delay the input gradient waveform by time constant tau
+
+    # parameter
+    `arrG`: array of single gradient waveform
+    `tau`: time constant in RL circuit transfer function
+
+    # return:
+    delayed gradient waveform
+    """
+    assert arrG.ndim == 2, "only single gradient waveform is supported."
+    if tau == 0: return arrG.copy() # avoid divided-by-0 later
+    nPt, nAx = arrG.shape
+
+    # perform oversample to get better impluse response profile
+    ov = clip(10/tau, 1, 1e3).astype(int64) # the smaller the ov, the bigger oversampling is needed
+    arrG_ov = zeros([nPt*ov,nAx], dtype=arrG.dtype)
+    for iAx in range(nAx):
+        arrG_ov[:,iAx] = interp(linspace(0,nPt,nPt*ov,0), linspace(0,nPt,nPt,0), arrG[:,iAx]) # oversample
+    nPt *= ov
+    tau *= ov
+
+    # derive impluse response of RL circuit
+    arrG_Pad = zeros_like(arrG_ov)
+    arrG_Pad[:nPt//2,:] = arrG_ov[-1:,:]
+    arrG_Pad[nPt//2:,:] = arrG_ov[:1,:]
+    arrG_ov = concatenate([arrG_ov, arrG_Pad], axis=0)
+    arrT = linspace(0,2*nPt,2*nPt,0) + 0.5
+    arrImpResRL = (1/tau)*exp(-arrT/tau)
+    if abs(arrImpResRL.sum() - 1) > 1e-2: raise ValueError(f"arrImpResRL.sum() = {arrImpResRL.sum():.2f} (supposed to be 1) (tau too small or too large)")
+    
+    # perform convolution between input waveform and impulse response
+    arrG_ov = fft.ifft(fft.fft(arrG_ov,axis=0)*fft.fft(arrImpResRL)[:,newaxis], axis=0).real
+    
+    # de-oversample
+    arrG = arrG_ov[:nPt:ov,:]
+
+    return arrG
+
+def rotate(arr:NDArray, ang:float64, axis:int64) -> NDArray:
+    if axis==0: # x
+        matRot = array([
+            [1, 0, 0],
+            [0, cos(ang), -sin(ang)],
+            [0, sin(ang), cos(ang)],
+        ], dtype=float64)
+    elif axis==1: # y
+        matRot = array([
+            [cos(ang), 0, sin(ang)],
+            [0, 1, 0],
+            [-sin(ang), 0, cos(ang)]
+        ], dtype=float64)
+    elif axis==2: # z
+        matRot = array([
+            [cos(ang), -sin(ang), 0],
+            [sin(ang), cos(ang), 0],
+            [0, 0, 1]
+        ], dtype=float64)
+    else:
+        raise ValueError("axis should be 0, 1, 2 (denotes for x, y, z)")
+    
+    return arr@matRot.T
+
+def _walsh(b:float64, k:float64, x:float64) -> float64:
+    assert x>=0 and x<1
+    
+    # Convert k to its base-b representation
+    lstKai = []
+    while k > 0:
+        lstKai.append(k % b)
+        k //= b
+    lstKai = lstKai[::-1]  # Reverse to get the correct order
+    nDig = len(lstKai)
+    
+    # Convert x to its base-b fractional representation
+    lstX = []
+    for iDig in range(nDig):
+        x *= b
+        lstX.append(int(x))
+        x -= int(x)
+        
+    return exp(2*pi*1j*inner(lstKai,lstX)/b)
+
+def _calDiaphony(arrX:NDArray, b:float64=2) -> float64: # b-adic diaphony
+    assert any(arrX>=0) and any(arrX<1)
+    N, s = arrX.shape
+    
+    nume = 0
+    deno = 0
+    for vecK in ndindex(*([2] * s)):  # Iterate over all k in [0, 10)^s
+        if all(vecK == zeros_like(vecK)): continue  # Skip k = 0
+
+        # Compute weight r_b(k)
+        r = prod([b**-floor(log(k+1)/log(b)) if k > 0 else 1 for k in vecK])
+
+        # Compute Walsh coefficient
+        meaWalsh = 0
+        for vecX in arrX:
+            meaWalsh += prod([_walsh(b, k, x) for k, x in zip(vecK, vecX)])
+        meaWalsh /= N
+
+        nume += r**2 * abs(meaWalsh)**2
+        deno += r**2
+    # deno = (1+b)**s - 1 # original implement, abandoned because it doesn't satisfy F_1 = 1
+
+    diaphony = sqrt(nume/deno)
+    return diaphony
+
+def _calSphFibPt(nF:int64=250) -> NDArray: # get spherical Fibonacci points
+    lstPtFb = []
+    for iIntlea in range(nF):
+        k = iIntlea - nF/2
+        sf = k/(nF//2)
+        cf = sqrt(((nF//2)+k)*((nF//2)-k))/(nF//2)
+        phi = (1+sqrt(5))/2
+        tht= 2*pi*k/phi
+        
+        xf = cf*sin(tht)
+        yf = cf*cos(tht)
+        zf = sf
+        
+        lstPtFb.append(array([xf,yf,zf]))
+        
+    return array(lstPtFb)
+
+def _calJacElip(arrU:NDArray, m:float64) -> tuple[NDArray, NDArray]: # calculate Jacobi elliptic functions sn(u,m) and cn(u,m) numerically
+    lstA = [1]
+    lstB = [sqrt(1-m)]
+    lstC = [0]
+    while abs(lstB[-1]-lstA[-1]) > 1e-8:
+        aNew = (lstA[-1]+lstB[-1])/2
+        bNew = sqrt(lstA[-1]*lstB[-1])
+        cNew = (lstA[-1]-lstB[-1])/2
+        lstA.append(aNew)
+        lstB.append(bNew)
+        lstC.append(cNew)
+    N = len(lstA) - 1
+    lstPhi = [2**N*lstA[N]*arrU]*(N+1)
+    for n in range(N,0,-1):
+        lstPhi[n-1] = (1/2)*(lstPhi[n] + arcsin(lstC[n]/lstA[n]*sin(lstPhi[n])))
+    arrAm = lstPhi[0]
+    arrSn = sin(arrAm)
+    arrCn = cos(arrAm)
+    
+    return arrSn, arrCn
+
+def _calCompElipInt(m:float64) -> float64: # calculate complete Elliptical integral of the first kind
+    lstA = [1]
+    lstB = [sqrt(1-m)]
+    while abs(lstB[-1]-lstA[-1]) > 1e-8:
+        aNew = (lstA[-1]+lstB[-1])/2
+        bNew = sqrt(lstA[-1]*lstB[-1])
+        lstA.append(aNew)
+        lstB.append(bNew)
+    return pi/2/lstA[-1]
+
+

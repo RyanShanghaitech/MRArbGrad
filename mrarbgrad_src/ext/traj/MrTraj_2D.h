@@ -1,77 +1,69 @@
 #pragma once
 
 #include "MrTraj.h"
-#include "../mag/GradGen.h"
+#include "../mag/Mag.h"
 
 class MrTraj_2D: public MrTraj
 {
 public:
-    MrTraj_2D() {}
+    MrTraj_2D(const GeoPara& m_sGeoPara, const GradPara& m_sGradPara, const i64& m_nAcq, const i64& m_nSampMax, const i64& m_nStack, const f64& m_rotang, const v3& m_v3BaseM0PE, const vv3& m_vv3BaseGRO):
+        MrTraj(m_sGeoPara, m_sGradPara, m_nAcq, m_nSampMax),
+        m_nStack(m_nStack),
+        m_rotang(m_rotang),
+        m_v3BaseM0PE(m_v3BaseM0PE),
+        m_vv3BaseGRO(m_vv3BaseGRO)
+    {}
     
     virtual ~MrTraj_2D()
     {}
-    
-    bool getM0PE(v3* pv3M0PE, int64_t lIAcq) const
+
+    virtual bool getGRO(vv3* pvv3GRO, i64 iAcq)
     {
-        bool bRet = true;
-        int64_t lIStack = lIAcq%m_lNStack;
-        int64_t lIRot = lIAcq/m_lNStack;
+        bool ret = true;
+        i64 nStack = getNStack();
+        f64 rotang = getRotAng();
+        i64 iRot = iAcq/nStack;
+
+        ret &= v3::rotate(pvv3GRO, 2, rotang*iRot, m_vv3BaseGRO);
+
+        return ret;
+    }
+    
+    virtual bool getM0PE(v3* pv3M0PE, i64 iAcq)
+    {
+        bool ret = true;
+        i64 nStack = getNStack();
+        f64 rotang = getRotAng();
+        i64 iStack = iAcq%nStack;
+        i64 iRot = iAcq/nStack;
         
         *pv3M0PE = m_v3BaseM0PE;
-        pv3M0PE->m_dZ += getK0z(lIStack, m_lNStack);
+        pv3M0PE->z += getK0z(iStack, nStack);
         
-        bRet &= v3::rotate(pv3M0PE, 2, m_dRotAngInc*lIRot, *pv3M0PE);
+        ret &= v3::rotate(pv3M0PE, 2, rotang*iRot, *pv3M0PE);
 
-        return bRet;
+        return ret;
     }
 
-    bool getGRO(lv3* plv3GRO, int64_t lIAcq) const
-    {
-        bool bRet = true;
-        // int64_t lIStack = lIAcq%m_lNStack;
-        int64_t lIRot = lIAcq/m_lNStack;
+    i64 getNStack()
+    { return m_nStack; }
 
-        bRet &= v3::rotate(plv3GRO, 2, m_dRotAngInc*lIRot, m_lv3BaseGRO);
+    f64 getRotAng()
+    { return m_rotang; }
 
-        return bRet;
-    }
+    void setNStack(i64 nStack)
+    { m_nStack = nStack; }
 
-    int64_t getNWait(int64_t lIAcq) const
-    {
-        return m_lNWait;
-    }
-
-    int64_t getNSamp(int64_t lIAcq) const
-    {
-        return m_lNSamp;
-    }
-
-    int64_t getNRot()
-    { return m_lNRot; }
-
-    int64_t getNStack()
-    { return m_lNStack; }
-
-    double getRotAngInc()
-    { return m_dRotAngInc; }
-
-    bool setRotAngInc(double dRotAngInc=GOLDANG)
-    {
-        m_dRotAngInc = dRotAngInc;
-        return true;
-    }
+    void setRotang(f64 rotang)
+    { m_rotang = rotang; }
 
 protected:
-    int64_t m_lNRot, m_lNStack;
-    double m_dRotAngInc;
+    i64 m_nStack;
+    f64 m_rotang;
 
     v3 m_v3BaseM0PE;
-    lv3 m_lv3BaseGRO;
-    int64_t m_lNWait;
-    int64_t m_lNSamp;
+    vv3 m_vv3BaseGRO;
 
-    static double getK0z(int64_t lIStack, int64_t lNStack=256)
-    {
-        return lIStack/(double)lNStack - (lNStack/2)/(double)lNStack;
-    }
+    static f64 getK0z(i64 iStack, i64 nStack=256)
+    { return iStack/(f64)nStack - (nStack/2)/(f64)nStack; }
 };

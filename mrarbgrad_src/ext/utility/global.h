@@ -2,26 +2,51 @@
 
 #include <cmath>
 #include <ctime>
+#include <stdint.h>
+
+typedef int8_t i8;
+typedef int16_t i16;
+typedef int32_t i32;
+typedef int64_t i64;
+typedef uint8_t u8;
+typedef uint16_t u16;
+typedef uint32_t u32;
+typedef uint64_t u64;
+typedef float f32;
+typedef double f64;
 
 template<typename T>
 inline T round(T x)
-{
-    return (x >= 0) ? std::floor(x + T(0.5)) : std::ceil(x - T(0.5));
-}
+{ return (x >= 0) ? std::floor(x + T(0.5)) : std::ceil(x - T(0.5)); }
+
+template<typename T>
+inline T gcd(T x, T y)
+{ return y==0 ? x : gcd(y, x%y); }
 
 #undef M_PI
-#define M_PI (3.14159265358979323846)
+#define M_PI (3.1415926535897931e0)
+#undef M_SQRT2
+#define M_SQRT2 (1.4142135623730951e0)
+#undef M_SQRT3
+#define M_SQRT3 (1.7320508075688772e0)
+#undef M_SQRT5
+#define M_SQRT5 (2.2360679774997898e0)
+#undef M_SQRT7
+#define M_SQRT7 (2.6457513110645907e0)
 
-#define PRINT(X) printf("%s: %ld\n", #X, (int64_t)(X));
-#define PRINT_F(X) printf("%s: %.3f\n", #X, (double)(X));
-#define PRINT_E(X) printf("%s: %.3e\n", #X, (double)(X));
+#define GOLDRAT (1.6180339887498949e0) // ((1e0+std::sqrt(5e0))/2e0)
+#define GOLDANG (2.3999632297286531e0) // ((3e0-std::sqrt(5e0))*M_PI)
+
+#define PRINT(X) printf("%s: %ld\n", #X, (i64)(X));
+#define PRINT_F(X) printf("%s: %.3lf\n", #X, (f64)(X));
+#define PRINT_E(X) printf("%s: %.3e\n", #X, (f64)(X));
 
 #define TIC \
     clock_t cTick = std::clock();\
 
 #define TOC \
     cTick = std::clock() - cTick;\
-    if (g_bDbgPrint) printf("Elapsed time: %.3f ms\n", (float)1e3*cTick/CLOCKS_PER_SEC);
+    if (glob_enDbgPrint) printf("Elapsed time: %.3lf ms\n", 1e3*cTick/CLOCKS_PER_SEC);
 
-extern bool g_bDbgPrint;
+extern bool glob_enDbgPrint;
     

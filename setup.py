@@ -10,7 +10,7 @@ _sources = \
 [
     './mrarbgrad_src/ext/utility/global.cpp',
     './mrarbgrad_src/ext/utility/v3.cpp',
-    './mrarbgrad_src/ext/mag/GradGen.cpp',
+    './mrarbgrad_src/ext/mag/Mag.cpp',
     './mrarbgrad_src/ext/main.cpp',
     './mrarbgrad_src/ext/mtg/mtg_functions.cpp',
     './mrarbgrad_src/ext/mtg/spline.cpp'

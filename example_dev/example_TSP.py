@@ -6,7 +6,7 @@ from python_tsp.heuristics import solve_tsp_local_search as solve_tsp
 
 def genTspTraj(nCity:int) -> NDArray:
     # print("# 1. Generate random k-space points (the cities for the TSP)")
-    arrCity = empty([nCity,3], dtype=double)
+    arrCity = empty([nCity,3], dtype=f64)
     arrCity[:,:2] = qmc.Halton(d=2).random(n=nCity)-0.5
     arrCity[0,:] = 0
     arrCity[:,-1] = 0
@@ -19,7 +19,7 @@ def genTspTraj(nCity:int) -> NDArray:
     idxSort, _ = solve_tsp(matDist, 0)
     return arrCity[idxSort]
 
-def rmCity(arrCity:NDArray, angMax:double=pi/6, distMin:double=1) -> NDArray:
+def rmCity(arrCity:NDArray, angMax:f64=pi/6, distMin:f64=1) -> NDArray:
     print(arrCity.shape)
     while 1:
         nCity = arrCity.shape[0]
