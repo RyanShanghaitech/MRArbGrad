@@ -54,7 +54,7 @@ public:
     void setNStack(i64 nStack)
     { m_nStack = nStack; }
 
-    void setRotang(f64 rotang)
+    void setRotAng(f64 rotang)
     { m_rotang = rotang; }
 
 protected:

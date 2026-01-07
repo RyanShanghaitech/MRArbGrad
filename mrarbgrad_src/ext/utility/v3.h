@@ -1,20 +1,19 @@
 #pragma once
 
 #include <cmath>
-#include <vector>
 #include <list>
 #include <array>
-#include <cstdio>
-#include <cstdint>
-#include <stdexcept>
 #include "global.h"
+
+class v3;
+
+typedef std::vector<v3> vv3;
+typedef std::vector<vv3> vvv3;
+typedef std::list<v3> lv3;
 
 class v3
 {
 public:
-    typedef std::vector<v3> vv3;
-    typedef std::list<v3> lv3;
-
     f64 x, y, z;
 
     v3();
@@ -155,4 +154,3 @@ bool v3::loadF32(FILE* pfBHdr, FILE* pfBin, cv3* pcv3Data)
     }
     return ret;
 }
-

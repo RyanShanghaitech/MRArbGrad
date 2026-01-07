@@ -2,7 +2,12 @@
 
 #include <cmath>
 #include <ctime>
-#include <stdint.h>
+#include <vector>
+#include <list>
+#include <string>
+#include <cstdio>
+#include <cstdint>
+#include <stdexcept>
 
 typedef int8_t i8;
 typedef int16_t i16;
@@ -14,6 +19,13 @@ typedef uint32_t u32;
 typedef uint64_t u64;
 typedef float f32;
 typedef double f64;
+
+typedef std::vector<i64> vi64;
+typedef std::vector<f64> vf64;
+typedef std::list<i64> li64;
+typedef std::list<f64> lf64;
+
+typedef std::string str;
 
 template<typename T>
 inline T round(T x)

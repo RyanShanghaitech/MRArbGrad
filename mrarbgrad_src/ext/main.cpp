@@ -21,11 +21,6 @@ bool gMain_enTrajRev (0);
 bool gMain_enGoldAng (0);
 bool gMain_enShuffle (0);
 
-typedef std::vector<f64> vf64;
-typedef std::vector<i64> vi64;
-typedef std::vector<v3> vv3;
-typedef std::vector<vv3> vvv3;
-
 PyObject* cvtVv3toNpa(vv3& vv3Src)
 {
     int dim0 = vv3Src.size();
@@ -428,7 +423,7 @@ PyObject* getG_Spiral(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 
     f64 kRhoPhi = (f64)PyFloat_AsDouble(args[6]);
     Spiral traj(sGeoPara, sGradPara, kRhoPhi);
-    if (gMain_enGoldAng) traj.setRotang(GOLDANG);
+    if (gMain_enGoldAng) traj.setRotAng(GOLDANG);
 
     vv3 vv3K0;
     vvv3 vvv3G;
@@ -448,7 +443,7 @@ PyObject* getG_VarDenSpiral(PyObject* self, PyObject* const* args, Py_ssize_t na
     f64 kRhoPhi0 = (f64)PyFloat_AsDouble(args[6]);
     f64 kRhoPhi1 = (f64)PyFloat_AsDouble(args[7]);
     VarDenSpiral traj(sGeoPara, sGradPara, kRhoPhi0, kRhoPhi1);
-    if (gMain_enGoldAng) traj.setRotang(GOLDANG);
+    if (gMain_enGoldAng) traj.setRotAng(GOLDANG);
 
     vv3 vv3K0;
     vvv3 vvv3G;
@@ -491,7 +486,7 @@ PyObject* getG_Rosette(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 
     Rosette traj(sGeoPara, sGradPara, om1, om2, tMax);
     // printf("Rosette DTE: %e s\n", traj.getAvrDTE());
-    if (gMain_enGoldAng) traj.setRotang(GOLDANG);
+    if (gMain_enGoldAng) traj.setRotAng(GOLDANG);
 
     vv3 vv3K0;
     vvv3 vvv3G;
@@ -514,7 +509,7 @@ PyObject* getG_Rosette_Trad(PyObject* self, PyObject* const* args, Py_ssize_t na
     f64 dTE = (f64)PyFloat_AsDouble(args[9]);
 
     Rosette_Trad traj(sGeoPara, sGradPara, om1, om2, tMax, dTE);
-    if (gMain_enGoldAng) traj.setRotang(GOLDANG);
+    if (gMain_enGoldAng) traj.setRotAng(GOLDANG);
 
     vv3 vv3K0;
     vvv3 vvv3G;

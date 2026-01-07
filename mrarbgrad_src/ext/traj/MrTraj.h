@@ -31,13 +31,6 @@ f64 gMrTraj_g1Norm = 0e0; // final gradient amplitude
 class MrTraj
 {
 public:
-    typedef std::vector<i64> vi64;
-    typedef std::vector<f64> vf64;
-    typedef std::list<i64> li64;
-    typedef std::list<f64> lf64;
-    typedef std::string str;
-    typedef std::vector<v3> vv3;
-    typedef std::vector<vv3> vvv3;
     typedef std::vector<TrajFunc*> vptf;
     typedef struct
     {

@@ -39,8 +39,6 @@ protected:
 class Cones: public MrTraj
 {
 public:
-    typedef std::list<i64> ll;
-
     Cones(const GeoPara& sGeoPara, const GradPara& sGradPara, f64 kRhoPhi):
         MrTraj(sGeoPara,sGradPara,0,0)
     {

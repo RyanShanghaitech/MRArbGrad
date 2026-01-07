@@ -20,9 +20,6 @@ static bool cvtXyz2Ang(f64* ptht, f64* pphi, const v3& xyz)
 class Seiffert_Trajfunc: public TrajFunc
 {
 public:
-    typedef std::vector<f64> vf64;
-    typedef std::list<f64> lf64;
-
     Seiffert_Trajfunc(f64 m, f64 uMax):
         TrajFunc(0,0)
     {
