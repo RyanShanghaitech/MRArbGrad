@@ -34,7 +34,6 @@ public:
     typedef std::vector<TrajFunc*> vptf;
     typedef struct
     {
-        bool is3D;
         f64 fov;
         i64 nPix;
     } GeoPara;
@@ -45,10 +44,10 @@ public:
         f64 dt;
     } GradPara;
     
-    MrTraj(const GeoPara& m_sGeoPara, const GradPara& m_sGradPara, const i64& m_nAcq, const i64& m_nSampMax):
+    MrTraj(const GeoPara& m_objGeoPara, const GradPara& m_objGradPara, const i64& m_nAcq, const i64& m_nSampMax):
         m_gamma(42.5756e6),
-        m_sGeoPara(m_sGeoPara),
-        m_sGradPara(m_sGradPara),
+        m_objGeoPara(m_objGeoPara),
+        m_objGradPara(m_objGradPara),
         m_nAcq(m_nAcq),
         m_nSampMax(m_nSampMax)
     { mag = Mag(); }
@@ -61,10 +60,10 @@ public:
     virtual bool getM0PE(v3* pv3M0PE, i64 iAcq) = 0;
 
     const GeoPara& getGeoPara()
-    { return m_sGeoPara; }
+    { return m_objGeoPara; }
 
     const GradPara& getGradPara()
-    { return m_sGradPara; }
+    { return m_objGradPara; }
     
     i64 getNAcq()
     { return m_nAcq; }
@@ -154,8 +153,8 @@ protected:
     f64 m_gamma; // Hz/T
 
     // trajectory info
-    GeoPara m_sGeoPara;
-    GradPara m_sGradPara;
+    GeoPara m_objGeoPara;
+    GradPara m_objGradPara;
     i64 m_nAcq;
     i64 m_nSampMax;
 
@@ -218,12 +217,12 @@ protected:
         return 2e0*M_PI/nRot;
     }
 
-    bool calGRO_MAG(vv3* pvv3G, vf64* pvf64P, TrajFunc& tf, const GradPara& sGradPara, i64 oversamp=8)
+    bool calGRO_MAG(vv3* pvv3G, vf64* pvf64P, TrajFunc& tf, const GradPara& objGradPara, i64 oversamp=8)
     {
         bool ret = true;
-        const f64& sLim = sGradPara.sLim;
-        const f64& gLim = sGradPara.gLim;
-        const f64& dt = sGradPara.dt;
+        const f64& sLim = objGradPara.sLim;
+        const f64& gLim = objGradPara.gLim;
+        const f64& dt = objGradPara.dt;
 
         mag.setup(&tf, sLim, gLim, dt, oversamp, gMrTraj_g0Norm, gMrTraj_g1Norm);
         ret &= mag.solve(pvv3G, pvf64P);
@@ -231,12 +230,12 @@ protected:
         return ret;
     }
     
-    bool calGRO_MAG(vv3* pvv3G, vf64* pvf64P, const vv3& vv3TrajSamp, const GradPara& sGradPara, i64 oversamp=8)
+    bool calGRO_MAG(vv3* pvv3G, vf64* pvf64P, const vv3& vv3TrajSamp, const GradPara& objGradPara, i64 oversamp=8)
     {
         bool ret = true;
-        const f64& sLim = sGradPara.sLim;
-        const f64& gLim = sGradPara.gLim;
-        const f64& dt = sGradPara.dt;
+        const f64& sLim = objGradPara.sLim;
+        const f64& gLim = objGradPara.gLim;
+        const f64& dt = objGradPara.dt;
 
         mag.setup(vv3TrajSamp, sLim, gLim, dt, oversamp, gMrTraj_g0Norm, gMrTraj_g1Norm);
         ret &= mag.solve(pvv3G, pvf64P);
@@ -244,13 +243,13 @@ protected:
         return ret;
     }
 
-    bool calGRO_MTG(vv3* pvv3G, vf64* pvf64P, const vf64& vf64C, const GradPara& sGradPara)
+    bool calGRO_MTG(vv3* pvv3G, vf64* pvf64P, const vf64& vf64C, const GradPara& objGradPara)
     {
         #ifdef USE_MTG
         bool ret = true;
-        const f64& sLim = sGradPara.sLim;
-        const f64& gLim = sGradPara.gLim;
-        const f64& dt = sGradPara.dt;
+        const f64& sLim = objGradPara.sLim;
+        const f64& gLim = objGradPara.gLim;
+        const f64& dt = objGradPara.dt;
         if (pvf64P) pvf64P->clear(); // does not supported
 
         // Prepare arg. for Lustig's function
@@ -297,7 +296,7 @@ protected:
         #endif
     }
 
-    bool calGRO(vv3* pvv3G, vf64* pvf64P, TrajFunc& tf, GradPara& sGradPara, i64 oversamp=8)
+    bool calGRO(vv3* pvv3G, vf64* pvf64P, TrajFunc& tf, GradPara& objGradPara, i64 oversamp=8)
     {
         bool ret = true;
         const i64 nTrajSamp = 1000;
@@ -305,7 +304,7 @@ protected:
         // calculate gradient
         if(!gMrTraj_enMtg)
         {
-            ret &= calGRO_MAG(pvv3G, pvf64P, tf, sGradPara, oversamp);
+            ret &= calGRO_MAG(pvv3G, pvf64P, tf, objGradPara, oversamp);
         }
         else
         {
@@ -325,13 +324,13 @@ protected:
                 vf64C[i + 2*nTrajSamp] = v3K.z;
             }
 
-            ret &= calGRO_MTG(pvv3G, pvf64P, vf64C, sGradPara);
+            ret &= calGRO_MTG(pvv3G, pvf64P, vf64C, objGradPara);
         }
 
         return ret;
     }
 
-    bool calGRO(vv3* pvv3G, vf64* pvf64P, vv3& vv3TrajSamp, const GradPara& sGradPara, i64 oversamp=8)
+    bool calGRO(vv3* pvv3G, vf64* pvf64P, vv3& vv3TrajSamp, const GradPara& objGradPara, i64 oversamp=8)
     {
         bool ret = true;
         i64 nTrajSamp = vv3TrajSamp.size();
@@ -339,7 +338,7 @@ protected:
         // calculate gradient
         if(!gMrTraj_enMtg)
         {
-            ret &= calGRO_MAG(pvv3G, pvf64P, vv3TrajSamp, sGradPara, oversamp);
+            ret &= calGRO_MAG(pvv3G, pvf64P, vv3TrajSamp, objGradPara, oversamp);
         }
         else
         {
@@ -355,21 +354,21 @@ protected:
                 vf64C[i + 2*nTrajSamp] = v3K.z;
             }
 
-            ret &= calGRO_MTG(pvv3G, pvf64P, vf64C, sGradPara);
+            ret &= calGRO_MTG(pvv3G, pvf64P, vf64C, objGradPara);
         }
 
         return ret;
     }
 
-    bool calGrad(v3* pv3M0PE, vv3* pvv3GRO, vf64* pvf64P, TrajFunc& tfTraj, GradPara& sGradPara, i64 oversamp=8)
+    bool calGrad(v3* pv3M0PE, vv3* pvv3GRO, vf64* pvf64P, TrajFunc& tfTraj, GradPara& objGradPara, i64 oversamp=8)
     {
         bool ret = true;
-        const f64& sLim = sGradPara.sLim;
-        const f64& dt = sGradPara.dt;
+        const f64& sLim = objGradPara.sLim;
+        const f64& dt = objGradPara.dt;
         
         // calculate GRO
         TIC;
-        ret &= calGRO(pvv3GRO, pvf64P, tfTraj, sGradPara, oversamp);
+        ret &= calGRO(pvv3GRO, pvf64P, tfTraj, objGradPara, oversamp);
         TOC;
 
         // if GEnd needs to be fixed

@@ -45,12 +45,12 @@ protected:
 class Yarnball: public MrTraj
 {
 public:
-    Yarnball(const GeoPara& sGeoPara, const GradPara& sGradPara, f64 kRhoPhi):
-        MrTraj(sGeoPara,sGradPara,0,0)
+    Yarnball(const GeoPara& objGeoPara, const GradPara& objGradPara, f64 kRhoPhi):
+        MrTraj(objGeoPara,objGradPara,0,0)
     {
-        m_sGeoPara = sGeoPara;
-        m_sGradPara = sGradPara;
-        m_nRot = calNRot(kRhoPhi, m_sGeoPara.nPix);
+        m_objGeoPara = objGeoPara;
+        m_objGradPara = objGradPara;
+        m_nRot = calNRot(kRhoPhi, m_objGeoPara.nPix);
         m_rotang = calRotAng(m_nRot);
         m_nAcq = m_nRot*m_nRot;
         
@@ -65,7 +65,7 @@ public:
             m_vptfBaseTraj[i] = new Yarnball_TrajFunc(kRhoPhi, tht0);
             if(!m_vptfBaseTraj[i]) throw std::runtime_error("out of memory");
 
-            calGrad(&m_vv3BaseM0PE[i], &m_vvv3BaseGRO[i], NULL, *m_vptfBaseTraj[i], m_sGradPara);
+            calGrad(&m_vv3BaseM0PE[i], &m_vvv3BaseGRO[i], NULL, *m_vptfBaseTraj[i], m_objGradPara);
             m_nSampMax = std::max(m_nSampMax, (i64)m_vvv3BaseGRO[i].size());
         }
     }
@@ -117,10 +117,10 @@ protected:
 class AxrollYarnball_RT: public MrTraj
 {
 public:
-    AxrollYarnball_RT(const GeoPara& sGeoPara, const GradPara& sGradPara, f64 dRhoPhi, i64 lNAcq)
+    AxrollYarnball_RT(const GeoPara& objGeoPara, const GradPara& objGradPara, f64 dRhoPhi, i64 lNAcq)
     {
-        m_sGeoPara = sGeoPara;
-        m_sGradPara = sGradPara;
+        m_objGeoPara = objGeoPara;
+        m_objGradPara = objGradPara;
         m_nAcq = lNAcq;
 
         m_dRhoPhi = dRhoPhi;
@@ -144,7 +144,7 @@ public:
         TrajFunc* ptfTraj = new Yarnball_TrajFunc(m_dRhoPhi, v3Tht0Phi0.x, v3Tht0Phi0.y);
         if (!ptfTraj) throw std::runtime_error("out of memory");
         if (iAcq>=m_nAcq) throw std::runtime_error("iAcq>=m_nAcq");
-        ret &= calGrad(&m_vv3M0PE[iAcq], plv3GRO, NULL, &m_vlNWait[iAcq], &m_vlNSamp[iAcq], *ptfTraj, m_sGradPara, 4);
+        ret &= calGrad(&m_vv3M0PE[iAcq], plv3GRO, NULL, &m_vlNWait[iAcq], &m_vlNSamp[iAcq], *ptfTraj, m_objGradPara, 4);
         m_vv3M0PE[iAcq] = v3::axisroll(m_vv3M0PE[iAcq], iAcq%3);
         {
             lv3::iterator ilv3GRO = plv3GRO->begin();

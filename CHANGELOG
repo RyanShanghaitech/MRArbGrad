@@ -1,3 +1,9 @@
+3.0.0 (Jan 8, 2026)
+Delete `is3D` parameter - it's useless and confusing now in practice. We also rename `VarDenSpiral` to `VDSpiral` to make the naming more concise.
+
+2.1.1 (Jan 8, 2026)
+move all typedef to global.h.
+
 2.1.0 (Jan 4, 2026)
 add a helper function `gradClip()`.
 

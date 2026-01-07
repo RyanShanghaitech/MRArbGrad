@@ -3,7 +3,7 @@ from numpy import *
 from matplotlib.pyplot import *
 from numpy.linalg import norm
 import finufft as fn
-import slime
+from mrphantom import *
 import mrarbdcf as mad
 from time import time
 
@@ -30,17 +30,17 @@ mag.setMagTrajRep(1)
 mag.setDbgPrint(1)
 
 # calculate gradient
-# lstArrK0, lstArrGrad = mag.getG_Spiral(is3D=0, **argCom); nAx = 2
-# lstArrK0, lstArrGrad = mag.getG_VarDenSpiral(is3D=0, **argCom); nAx = 2
-# lstArrK0, lstArrGrad = mag.getG_VarDenSpiral_RT(is3D=0, **argCom); nAx = 2
-# lstArrK0, lstArrGrad = mag.getG_Rosette(is3D=0, **argCom); nAx = 2
+# lstArrK0, lstArrGrad = mag.getG_Spiral(**argCom); nAx = 2
+# lstArrK0, lstArrGrad = mag.getG_VDSpiral(**argCom); nAx = 2
+# lstArrK0, lstArrGrad = mag.getG_VDSpiral_RT(**argCom); nAx = 2
+lstArrK0, lstArrGrad = mag.getG_Rosette(**argCom); nAx = 2
 # lstArrK0, lstArrGrad = mag.getG_Rosette_Trad(**argCom, om1=10*pi, om2=8*pi, tMax=1, tAcq=2e-03); nAx = 2
 # lstArrK0, lstArrGrad = mag.getG_Shell3d(**argCom, kRhoTht = 0.5 / (4 * pi)); nAx = 3
-lstArrK0, lstArrGrad = mag.getG_Yarnball(**argCom, kRhoPhi = 0.5 / (3 * pi)); nAx = 3
+# lstArrK0, lstArrGrad = mag.getG_Yarnball(**argCom, kRhoPhi = 0.5 / (1 * pi)); nAx = 3
 # lstArrK0, lstArrGrad = mag.getG_Seiffert(**argCom); nAx = 3
 # lstArrK0, lstArrGrad = mag.getG_Cones(**argCom, kRhoPhi = 0.5 / (16 * pi)); nAx = 3
 
-lstArrGrad = mag.gradClip(lstArrGrad, dtGrad, sLim, gLim)
+# lstArrGrad = mag.gradClip(lstArrGrad, dtGrad, sLim, gLim)
 
 print(f"Intlea Num.: {len(lstArrGrad)}")
 nRO_Max = amax([arrG.shape[0] for arrG in lstArrGrad])
@@ -73,7 +73,7 @@ for arrK0, arrGrad in zip(lstArrK0, lstArrGrad):
     lstArrK.append(arrK)
 
 # simulate phantom
-arrI = slime.Enum2M0(slime.genPhant(nAx, nPix)).squeeze()
+arrI = Enum2M0(genPhant(nAx, nPix)).squeeze()
 arrK = concatenate(lstArrK, axis=0)
 
 mad.setNumStep(2)

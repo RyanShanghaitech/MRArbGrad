@@ -1,1 +1,1 @@
-from .main import Spiral, prange_Spiral, VDS, prange_VDS, Rosette, prange_Rosette, Yarnball, prange_Yarnball, Cones, prange_Cones
+from .main import Spiral, prange_Spiral, VDSpiral, prange_VDSpiral, Rosette, prange_Rosette, Yarnball, prange_Yarnball, Cones, prange_Cones

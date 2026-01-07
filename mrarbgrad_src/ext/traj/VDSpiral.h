@@ -3,10 +3,10 @@
 #include "TrajFunc.h"
 #include "MrTraj_2D.h"
 
-class VarDenSpiral_TrajFunc: public TrajFunc
+class VDSpiral_TrajFunc: public TrajFunc
 {
 public:
-    VarDenSpiral_TrajFunc(f64 kRhoPhi0, f64 kRhoPhi1, f64 phi0=0e0):
+    VDSpiral_TrajFunc(f64 kRhoPhi0, f64 kRhoPhi1, f64 phi0=0e0):
         TrajFunc(0,0)
     {
         m_kRhoPhi0 = kRhoPhi0;
@@ -36,27 +36,27 @@ protected:
     f64 m_phi0;
 };
 
-class VarDenSpiral: public MrTraj_2D
+class VDSpiral: public MrTraj_2D
 {
 public:
-    VarDenSpiral(const GeoPara& sGeoPara, const GradPara& sGradPara, f64 kRhoPhi0, f64 dRhoPhi1):
-        MrTraj_2D(sGeoPara,sGradPara,0,0,0,0,v3(),vv3())
+    VDSpiral(const GeoPara& objGeoPara, const GradPara& objGradPara, i64 nStack, f64 kRhoPhi0, f64 dRhoPhi1):
+        MrTraj_2D(objGeoPara,objGradPara,0,0,0,0,v3(),vv3())
     {
         if (kRhoPhi0==dRhoPhi1) throw std::invalid_argument("kRhoPhi0==dRhoPhi1");
 
-        m_ptfBaseTraj = new VarDenSpiral_TrajFunc(kRhoPhi0, dRhoPhi1);
+        m_ptfBaseTraj = new VDSpiral_TrajFunc(kRhoPhi0, dRhoPhi1);
         if(!m_ptfBaseTraj) throw std::runtime_error("out of memory");
-        m_nStack = m_sGeoPara.is3D ? m_sGeoPara.nPix : 1;
+        m_nStack = nStack;
 
-        i64 nRot = calNRot(std::max(kRhoPhi0, dRhoPhi1), m_sGeoPara.nPix);
+        i64 nRot = calNRot(std::max(kRhoPhi0, dRhoPhi1), m_objGeoPara.nPix);
         m_rotang = calRotAng(nRot);
         m_nAcq = nRot*m_nStack;
 
-        calGrad(&m_v3BaseM0PE, &m_vv3BaseGRO, NULL, *m_ptfBaseTraj, m_sGradPara);
+        calGrad(&m_v3BaseM0PE, &m_vv3BaseGRO, NULL, *m_ptfBaseTraj, m_objGradPara);
         m_nSampMax = m_vv3BaseGRO.size();
     }
     
-    virtual ~VarDenSpiral()
+    virtual ~VDSpiral()
     {
         delete m_ptfBaseTraj;
     }
@@ -65,12 +65,12 @@ protected:
     TrajFunc* m_ptfBaseTraj;
 };
 
-class VarDenSpiral_RT: public MrTraj
+class VDSpiral_RT: public MrTraj
 {
     // TODO: Goldang sampling is incomplete, shuffled sampling is incomplete.
 public:
-    VarDenSpiral_RT(const GeoPara& sGeoPara, const GradPara& sGradPara, f64 kRhoPhi0, f64 dRhoPhi1, f64 nAcq):
-        MrTraj(sGeoPara,sGradPara,0,0)
+    VDSpiral_RT(const GeoPara& objGeoPara, const GradPara& objGradPara, f64 kRhoPhi0, f64 dRhoPhi1, f64 nAcq):
+        MrTraj(objGeoPara,objGradPara,0,0)
     {
         m_nAcq = nAcq;
 
@@ -80,16 +80,16 @@ public:
         m_vv3M0PE.resize(nAcq); std::fill(m_vv3M0PE.begin(), m_vv3M0PE.end(), v3(0));
     }
 
-    virtual ~VarDenSpiral_RT()
+    virtual ~VDSpiral_RT()
     {}
 
     virtual bool getGRO(vv3* pvv3GRO, i64 iAcq)
     {
         bool ret = true;
-        TrajFunc* ptfTraj = new VarDenSpiral_TrajFunc(m_dRhoPhi0, m_dRhoPhi1, iAcq*GOLDANG);
+        TrajFunc* ptfTraj = new VDSpiral_TrajFunc(m_dRhoPhi0, m_dRhoPhi1, iAcq*GOLDANG);
         if (!ptfTraj) throw std::runtime_error("out of memory");
         if (iAcq>=m_nAcq) throw std::runtime_error("iAcq>=m_nAcq");
-        ret &= calGrad(&m_vv3M0PE[iAcq], pvv3GRO, NULL, *ptfTraj, m_sGradPara, 4);
+        ret &= calGrad(&m_vv3M0PE[iAcq], pvv3GRO, NULL, *ptfTraj, m_objGradPara, 4);
         delete ptfTraj;
         return ret;
     }

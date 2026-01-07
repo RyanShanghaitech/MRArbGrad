@@ -30,7 +30,7 @@ mag.ext.setMaxG1(0)
 t = time()
 for i in range(1):
     # lstArrK0, lstArrGrad = mag.Function.getG_Spiral(bIs3D=0, **argCom); nAx = 2 # 0.380s
-    # lstArrK0, lstArrGrad = mag.Function.getG_VarDenSpiral(bIs3D=0, **argCom); nAx = 2 # 0.499s
+    # lstArrK0, lstArrGrad = mag.Function.getG_VDSpiral(bIs3D=0, **argCom); nAx = 2 # 0.499s
     lstArrK0, lstArrGrad = mag.Function.getG_Rosette(bIs3D=0, **argCom); nAx = 2 # 16.39s (9 frames)
     # lstArrK0, lstArrGrad = mag.Function.getG_Rosette_Trad(**argCom, dOm1=10*pi, dOm2=8*pi, dTmax=1, dTacq=2e-03); nAx = 2 # 16.39s (9 frames)
     # lstArrK0, lstArrGrad = mag.Function.getG_Shell3d(dRhoTht=0.5/(2*pi), **argCom); nAx = 3 # 183.7

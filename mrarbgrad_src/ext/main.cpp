@@ -9,7 +9,7 @@
 #include "traj/TrajFunc.h"
 #include "traj/MrTraj.h"
 #include "traj/Spiral.h"
-#include "traj/VarDenSpiral.h"
+#include "traj/VDSpiral.h"
 #include "traj/Rosette.h"
 #include "traj/Shell3d.h"
 #include "traj/Yarnball.h"
@@ -42,7 +42,7 @@ PyObject* cvtVv3toNpa(vv3& vv3Src)
     return pNumpyArray;
 }
 
-PyObject* cvtVdtoNpa(const std::vector<f64>& vf64Src)
+PyObject* cvtVf64toNpa(const std::vector<f64>& vf64Src)
 {
     int dim0 = vf64Src.size();
 
@@ -121,7 +121,7 @@ bool cvtNpa2Vv3(PyObject* pNumpyArray, vv3* pvv3Out)
     return true;
 }
 
-bool cvtNpa2Vd(PyObject* pNumpyArray, vf64* pvf64Out)
+bool cvtNpa2Vf64(PyObject* pNumpyArray, vf64* pvf64Out)
 {
     i64 n = PyArray_DIM((PyArrayObject*)pNumpyArray, 0);
     pvf64Out->resize(n);
@@ -144,20 +144,19 @@ bool inline checkNarg(i64 nArg, i64 nArgExp)
     return true;
 }
 
-bool getGeoGradPara(PyObject* const* args, MrTraj::GeoPara* psGeoPara, MrTraj::GradPara* psGradPara)
+bool getGeoGradPara(PyObject* const* args, MrTraj::GeoPara* pobjGeoPara, MrTraj::GradPara* pobjGradPara)
 {
-    *psGeoPara = 
+    *pobjGeoPara = 
     {
-        (bool)PyLong_AsLong(args[0]),
-        (f64)PyFloat_AsDouble(args[1]),
-        (i64)PyLong_AsLong(args[2])
+        (f64)PyFloat_AsDouble(args[0]),
+        (i64)PyLong_AsLong(args[1])
     };
 
-    *psGradPara = 
+    *pobjGradPara = 
     {
+        (f64)PyFloat_AsDouble(args[2]),
         (f64)PyFloat_AsDouble(args[3]),
-        (f64)PyFloat_AsDouble(args[4]),
-        (f64)PyFloat_AsDouble(args[5])
+        (f64)PyFloat_AsDouble(args[4])
     };
 
     return true;
@@ -267,8 +266,8 @@ protected:
 class ExTraj: public MrTraj
 {
 public:
-    ExTraj(const GeoPara& sGeoPara, const GradPara& sGradPara, PyObject* pPyObj_getK, PyObject* pPyObj_getDkDp, PyObject* pPyObj_getD2kDp2, f64 p0, f64 p1):
-        MrTraj(sGeoPara,sGradPara,1,0),
+    ExTraj(const GeoPara& objGeoPara, const GradPara& objGradPara, PyObject* pPyObj_getK, PyObject* pPyObj_getDkDp, PyObject* pPyObj_getD2kDp2, f64 p0, f64 p1):
+        MrTraj(objGeoPara,objGradPara,1,0),
         ptfTrajFunc(NULL)
     {   
         ptfTrajFunc = new ExFunc
@@ -281,17 +280,17 @@ public:
         );
 
         TIC;
-        calGRO(&m_vv3G, &m_vf64P, *ptfTrajFunc, m_sGradPara, 8);
+        calGRO(&m_vv3G, &m_vf64P, *ptfTrajFunc, m_objGradPara, 8);
         TOC;
         m_nSampMax = m_vv3G.size();
     }
 
-    ExTraj(const GeoPara& sGeoPara, const GradPara& sGradPara, vv3& vv3K):
-        MrTraj(sGeoPara,sGradPara,1,0),
+    ExTraj(const GeoPara& objGeoPara, const GradPara& objGradPara, vv3& vv3K):
+        MrTraj(objGeoPara,objGradPara,1,0),
         ptfTrajFunc(NULL)
     {
         TIC;
-        calGRO(&m_vv3G, &m_vf64P, vv3K, m_sGradPara, 8);
+        calGRO(&m_vv3G, &m_vf64P, vv3K, m_objGradPara, 8);
         TOC;
         m_nSampMax = m_vv3G.size();
     }
@@ -331,19 +330,19 @@ private:
 
 PyObject* calGrad4ExFunc(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 {
-    checkNarg(narg, 11);
+    checkNarg(narg, 10);
 
-    MrTraj::GeoPara sGeoPara;
-    MrTraj::GradPara sGradPara;
-    getGeoGradPara(args, &sGeoPara, &sGradPara);
+    MrTraj::GeoPara objGeoPara;
+    MrTraj::GradPara objGradPara;
+    getGeoGradPara(args, &objGeoPara, &objGradPara);
 
-    f64 p0 = (f64)PyFloat_AsDouble(args[9]);
-    f64 p1 = (f64)PyFloat_AsDouble(args[10]);
+    f64 p0 = (f64)PyFloat_AsDouble(args[8]);
+    f64 p1 = (f64)PyFloat_AsDouble(args[9]);
 
     ExTraj traj
     (
-        sGeoPara, sGradPara,
-        args[6], args[7], args[8], 
+        objGeoPara, objGradPara,
+        args[5], args[6], args[7], 
         p0, p1
     );
 
@@ -352,24 +351,24 @@ PyObject* calGrad4ExFunc(PyObject* self, PyObject* const* args, Py_ssize_t narg)
     vf64 vf64P;
     traj.getPRO(&vf64P, 0);
 
-    return Py_BuildValue("OO", cvtVv3toNpa(vv3G), cvtVdtoNpa(vf64P));
+    return Py_BuildValue("OO", cvtVv3toNpa(vv3G), cvtVf64toNpa(vf64P));
 }
 
 PyObject* calGrad4ExSamp(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 {
     try
     {
-        checkNarg(narg, 7);
+        checkNarg(narg, 6);
 
-        MrTraj::GeoPara sGeoPara;
-        MrTraj::GradPara sGradPara;
-        getGeoGradPara(args, &sGeoPara, &sGradPara);
+        MrTraj::GeoPara objGeoPara;
+        MrTraj::GradPara objGradPara;
+        getGeoGradPara(args, &objGeoPara, &objGradPara);
 
-        vv3 vv3K; cvtNpa2Vv3(args[6], &vv3K);
+        vv3 vv3K; cvtNpa2Vv3(args[5], &vv3K);
 
         ExTraj traj
         (
-            sGeoPara, sGradPara,
+            objGeoPara, objGradPara,
             vv3K
         );
         
@@ -378,7 +377,7 @@ PyObject* calGrad4ExSamp(PyObject* self, PyObject* const* args, Py_ssize_t narg)
         vf64 vf64P;
         traj.getPRO(&vf64P, 0);
 
-        return Py_BuildValue("OO", cvtVv3toNpa(vv3G), cvtVdtoNpa(vf64P));
+        return Py_BuildValue("OO", cvtVv3toNpa(vv3G), cvtVf64toNpa(vf64P));
     }
     catch (const std::exception& e)
     {
@@ -417,12 +416,13 @@ PyObject* getG_Spiral(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 {
     checkNarg(narg, 7);
     
-    MrTraj::GeoPara sGeoPara;
-    MrTraj::GradPara sGradPara;
-    getGeoGradPara(args, &sGeoPara, &sGradPara);
+    MrTraj::GeoPara objGeoPara;
+    MrTraj::GradPara objGradPara;
+    getGeoGradPara(args, &objGeoPara, &objGradPara);
 
+    i64 nSlice = (i64)PyLong_AsLong(args[5]);
     f64 kRhoPhi = (f64)PyFloat_AsDouble(args[6]);
-    Spiral traj(sGeoPara, sGradPara, kRhoPhi);
+    Spiral traj(objGeoPara, objGradPara, nSlice, kRhoPhi);
     if (gMain_enGoldAng) traj.setRotAng(GOLDANG);
 
     vv3 vv3K0;
@@ -432,17 +432,18 @@ PyObject* getG_Spiral(PyObject* self, PyObject* const* args, Py_ssize_t narg)
     return Py_BuildValue("OO", cvtVv3toList(vv3K0), cvtVvv3toList(vvv3G));
 }
 
-PyObject* getG_VarDenSpiral(PyObject* self, PyObject* const* args, Py_ssize_t narg)
+PyObject* getG_VDSpiral(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 {
     checkNarg(narg, 8);
 
-    MrTraj::GeoPara sGeoPara;
-    MrTraj::GradPara sGradPara;
-    getGeoGradPara(args, &sGeoPara, &sGradPara);
+    MrTraj::GeoPara objGeoPara;
+    MrTraj::GradPara objGradPara;
+    getGeoGradPara(args, &objGeoPara, &objGradPara);
 
+    i64 nSlice = (i64)PyLong_AsLong(args[5]);
     f64 kRhoPhi0 = (f64)PyFloat_AsDouble(args[6]);
     f64 kRhoPhi1 = (f64)PyFloat_AsDouble(args[7]);
-    VarDenSpiral traj(sGeoPara, sGradPara, kRhoPhi0, kRhoPhi1);
+    VDSpiral traj(objGeoPara, objGradPara, nSlice, kRhoPhi0, kRhoPhi1);
     if (gMain_enGoldAng) traj.setRotAng(GOLDANG);
 
     vv3 vv3K0;
@@ -452,18 +453,18 @@ PyObject* getG_VarDenSpiral(PyObject* self, PyObject* const* args, Py_ssize_t na
     return Py_BuildValue("OO", cvtVv3toList(vv3K0), cvtVvv3toList(vvv3G));
 }
 
-PyObject* getG_VarDenSpiral_RT(PyObject* self, PyObject* const* args, Py_ssize_t narg)
+PyObject* getG_VDSpiral_RT(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 {
-    checkNarg(narg, 9);
+    checkNarg(narg, 8);
 
-    MrTraj::GeoPara sGeoPara;
-    MrTraj::GradPara sGradPara;
-    getGeoGradPara(args, &sGeoPara, &sGradPara);
+    MrTraj::GeoPara objGeoPara;
+    MrTraj::GradPara objGradPara;
+    getGeoGradPara(args, &objGeoPara, &objGradPara);
 
-    f64 kRhoPhi0 = (f64)PyFloat_AsDouble(args[6]);
-    f64 kRhoPhi1 = (f64)PyFloat_AsDouble(args[7]);
-    i64 nAcq = (i64)PyLong_AsLong(args[8]);
-    VarDenSpiral_RT traj(sGeoPara, sGradPara, kRhoPhi0, kRhoPhi1, nAcq);
+    f64 kRhoPhi0 = (f64)PyFloat_AsDouble(args[5]);
+    f64 kRhoPhi1 = (f64)PyFloat_AsDouble(args[6]);
+    i64 nAcq = (i64)PyLong_AsLong(args[7]);
+    VDSpiral_RT traj(objGeoPara, objGradPara, kRhoPhi0, kRhoPhi1, nAcq);
 
     vv3 vv3K0;
     vvv3 vvv3G;
@@ -476,15 +477,16 @@ PyObject* getG_Rosette(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 {
     checkNarg(narg, 9);
 
-    MrTraj::GeoPara sGeoPara;
-    MrTraj::GradPara sGradPara;
-    getGeoGradPara(args, &sGeoPara, &sGradPara);
+    MrTraj::GeoPara objGeoPara;
+    MrTraj::GradPara objGradPara;
+    getGeoGradPara(args, &objGeoPara, &objGradPara);
 
+    i64 nSlice = (i64)PyLong_AsLong(args[5]);
     f64 om1 = (f64)PyFloat_AsDouble(args[6]);
     f64 om2 = (f64)PyFloat_AsDouble(args[7]);
     f64 tMax = (f64)PyFloat_AsDouble(args[8]);
 
-    Rosette traj(sGeoPara, sGradPara, om1, om2, tMax);
+    Rosette traj(objGeoPara, objGradPara, nSlice, om1, om2, tMax);
     // printf("Rosette DTE: %e s\n", traj.getAvrDTE());
     if (gMain_enGoldAng) traj.setRotAng(GOLDANG);
 
@@ -499,16 +501,17 @@ PyObject* getG_Rosette_Trad(PyObject* self, PyObject* const* args, Py_ssize_t na
 {
     checkNarg(narg, 10);
 
-    MrTraj::GeoPara sGeoPara;
-    MrTraj::GradPara sGradPara;
-    getGeoGradPara(args, &sGeoPara, &sGradPara);
+    MrTraj::GeoPara objGeoPara;
+    MrTraj::GradPara objGradPara;
+    getGeoGradPara(args, &objGeoPara, &objGradPara);
 
+    i64 nSlice = (i64)PyLong_AsLong(args[5]);
     f64 om1 = (f64)PyFloat_AsDouble(args[6]);
     f64 om2 = (f64)PyFloat_AsDouble(args[7]);
     f64 tMax = (f64)PyFloat_AsDouble(args[8]);
     f64 dTE = (f64)PyFloat_AsDouble(args[9]);
 
-    Rosette_Trad traj(sGeoPara, sGradPara, om1, om2, tMax, dTE);
+    Rosette_Trad traj(objGeoPara, objGradPara, nSlice, om1, om2, tMax, dTE);
     if (gMain_enGoldAng) traj.setRotAng(GOLDANG);
 
     vv3 vv3K0;
@@ -520,14 +523,14 @@ PyObject* getG_Rosette_Trad(PyObject* self, PyObject* const* args, Py_ssize_t na
 
 PyObject* getG_Shell3d(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 {
-    checkNarg(narg, 7);
+    checkNarg(narg, 6);
 
-    MrTraj::GeoPara sGeoPara;
-    MrTraj::GradPara sGradPara;
-    getGeoGradPara(args, &sGeoPara, &sGradPara);
+    MrTraj::GeoPara objGeoPara;
+    MrTraj::GradPara objGradPara;
+    getGeoGradPara(args, &objGeoPara, &objGradPara);
 
-    f64 kRhoTht = (f64)PyFloat_AsDouble(args[6]);
-    Shell3d traj(sGeoPara, sGradPara, kRhoTht);
+    f64 kRhoTht = (f64)PyFloat_AsDouble(args[5]);
+    Shell3d traj(objGeoPara, objGradPara, kRhoTht);
 
     vv3 vv3K0;
     vvv3 vvv3G;
@@ -538,14 +541,14 @@ PyObject* getG_Shell3d(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 
 PyObject* getG_Yarnball(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 {
-    checkNarg(narg, 7);
+    checkNarg(narg, 6);
 
-    MrTraj::GeoPara sGeoPara;
-    MrTraj::GradPara sGradPara;
-    getGeoGradPara(args, &sGeoPara, &sGradPara);
+    MrTraj::GeoPara objGeoPara;
+    MrTraj::GradPara objGradPara;
+    getGeoGradPara(args, &objGeoPara, &objGradPara);
 
-    f64 kRhoPhi = (f64)PyFloat_AsDouble(args[6]);
-    Yarnball traj(sGeoPara, sGradPara, kRhoPhi);
+    f64 kRhoPhi = (f64)PyFloat_AsDouble(args[5]);
+    Yarnball traj(objGeoPara, objGradPara, kRhoPhi);
 
     vv3 vv3K0;
     vvv3 vvv3G;
@@ -556,15 +559,15 @@ PyObject* getG_Yarnball(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 
 PyObject* getG_Seiffert(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 {
-    checkNarg(narg, 8);
+    checkNarg(narg, 7);
 
-    MrTraj::GeoPara sGeoPara;
-    MrTraj::GradPara sGradPara;
-    getGeoGradPara(args, &sGeoPara, &sGradPara);
+    MrTraj::GeoPara objGeoPara;
+    MrTraj::GradPara objGradPara;
+    getGeoGradPara(args, &objGeoPara, &objGradPara);
 
-    f64 m = (f64)PyFloat_AsDouble(args[6]);
-    f64 uMax = (f64)PyFloat_AsDouble(args[7]);
-    Seiffert traj(sGeoPara, sGradPara, m, uMax);
+    f64 m = (f64)PyFloat_AsDouble(args[5]);
+    f64 uMax = (f64)PyFloat_AsDouble(args[6]);
+    Seiffert traj(objGeoPara, objGradPara, m, uMax);
 
     vv3 vv3K0;
     vvv3 vvv3G;
@@ -575,14 +578,14 @@ PyObject* getG_Seiffert(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 
 PyObject* getG_Cones(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 {
-    checkNarg(narg, 7);
+    checkNarg(narg, 6);
 
-    MrTraj::GeoPara sGeoPara;
-    MrTraj::GradPara sGradPara;
-    getGeoGradPara(args, &sGeoPara, &sGradPara);
+    MrTraj::GeoPara objGeoPara;
+    MrTraj::GradPara objGradPara;
+    getGeoGradPara(args, &objGeoPara, &objGradPara);
 
-    f64 kRhoPhi = (f64)PyFloat_AsDouble(args[6]);
-    Cones traj(sGeoPara, sGradPara, kRhoPhi);
+    f64 kRhoPhi = (f64)PyFloat_AsDouble(args[5]);
+    Cones traj(objGeoPara, objGradPara, kRhoPhi);
 
     vv3 vv3K0;
     vvv3 vvv3G;
@@ -703,8 +706,8 @@ static PyMethodDef aMeth[] =
     {"calGrad4ExFunc", (PyCFunction)calGrad4ExFunc, METH_FASTCALL, ""},
     {"calGrad4ExSamp", (PyCFunction)calGrad4ExSamp, METH_FASTCALL, ""},
     {"getG_Spiral", (PyCFunction)getG_Spiral, METH_FASTCALL, ""},
-    {"getG_VarDenSpiral", (PyCFunction)getG_VarDenSpiral, METH_FASTCALL, ""},
-    {"getG_VarDenSpiral_RT", (PyCFunction)getG_VarDenSpiral_RT, METH_FASTCALL, ""},
+    {"getG_VDSpiral", (PyCFunction)getG_VDSpiral, METH_FASTCALL, ""},
+    {"getG_VDSpiral_RT", (PyCFunction)getG_VDSpiral_RT, METH_FASTCALL, ""},
     {"getG_Rosette", (PyCFunction)getG_Rosette, METH_FASTCALL, ""},
     {"getG_Rosette_Trad", (PyCFunction)getG_Rosette_Trad, METH_FASTCALL, ""},
     {"getG_Shell3d", (PyCFunction)getG_Shell3d, METH_FASTCALL, ""},
