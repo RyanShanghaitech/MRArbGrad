@@ -24,7 +24,7 @@ arrK = Yarnball(arrP)
 
 # derive slew-rate constrained trajectory
 mag.setDbgPrint(1)
-arrGrad = mag.calGrad4ExSamp(True, fov, nPix, sLim, gLim, dtGrad, arrK)[0]
+arrGrad = mag.calGrad4ExSamp(fov, nPix, sLim, gLim, dtGrad, arrK)[0]
 # arrGrad = mag.gradClip(arrGrad, dtGrad, sLim, gLim) # clip slew/grad amp with hardware constraint
 nRO = arrGrad.shape[0]
 

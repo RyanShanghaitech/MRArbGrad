@@ -8,10 +8,10 @@ def Spiral(phi:float64, kRhoPhi:float64=0.5/(4*pi), phi0:float64=0e0):
     rho = kRhoPhi*phi
     return array([rho*cos(phi+phi0), rho*sin(phi+phi0), zeros_like(phi)]).T
 
-# VDS
-prange_VDS = lambda kRhoPhi0, kRhoPhi1: [0e0, (log(kRhoPhi1)-log(kRhoPhi0))/(2e0*(kRhoPhi1-kRhoPhi0))]
+# VDSpiral
+prange_VDSpiral = lambda kRhoPhi0, kRhoPhi1: [0e0, (log(kRhoPhi1)-log(kRhoPhi0))/(2e0*(kRhoPhi1-kRhoPhi0))]
 
-def VDS(phi:float64, kRhoPhi0:float64=0.5/(8*pi), kRhoPhi1:float64=0.5/(2*pi), phi0:float64=0e0):
+def VDSpiral(phi:float64, kRhoPhi0:float64=0.5/(8*pi), kRhoPhi1:float64=0.5/(2*pi), phi0:float64=0e0):
     rho = kRhoPhi0*(exp(2e0*(kRhoPhi1-kRhoPhi0)*phi)-1e0)/(2e0*(kRhoPhi1-kRhoPhi0))
     return array([rho*cos(phi+phi0), rho*sin(phi+phi0), zeros_like(phi)]).T
 

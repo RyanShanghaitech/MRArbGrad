@@ -9,8 +9,6 @@
 class Intp
 {
 public:
-    typedef std::vector<f64> vf64;
-    
     enum SearchMode
     {
         EBinary = 0,

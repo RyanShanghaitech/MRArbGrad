@@ -20,9 +20,6 @@ static bool cvtXyz2Ang(f64* ptht, f64* pphi, const v3& xyz)
 class Seiffert_Trajfunc: public TrajFunc
 {
 public:
-    typedef std::vector<f64> vf64;
-    typedef std::list<f64> lf64;
-
     Seiffert_Trajfunc(f64 m, f64 uMax):
         TrajFunc(0,0)
     {
@@ -113,18 +110,18 @@ protected:
 class Seiffert: public MrTraj
 {
 public:
-    Seiffert(const GeoPara& sGeoPara, const GradPara& sGradPara, f64 dM, f64 dUMax):
-        MrTraj(sGeoPara,sGradPara,0,0)
+    Seiffert(const GeoPara& objGeoPara, const GradPara& objGradPara, f64 dM, f64 dUMax):
+        MrTraj(objGeoPara,objGradPara,0,0)
     // m = 0.07 is optimized for diaphony
     // Umax = 20 can achieve similar readout time as original paper
     {
-        const i64& nPix = m_sGeoPara.nPix;
+        const i64& nPix = m_objGeoPara.nPix;
         m_nAcq = (i64)round(-2.53819233e-03*nPix*nPix + 8.53447761e+01*nPix); // fitted
 
         m_ptfBaseTraj = new Seiffert_Trajfunc(dM, dUMax);
         if(!m_ptfBaseTraj) throw std::runtime_error("out of memory");
 
-        calGrad(&m_v3BaseM0PE, &m_vv3BaseGRO, NULL, *m_ptfBaseTraj, m_sGradPara);
+        calGrad(&m_v3BaseM0PE, &m_vv3BaseGRO, NULL, *m_ptfBaseTraj, m_objGradPara);
         m_nSampMax = m_vv3BaseGRO.size();
     }
     

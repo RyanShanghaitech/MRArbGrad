@@ -6,8 +6,8 @@
 class MrTraj_2D: public MrTraj
 {
 public:
-    MrTraj_2D(const GeoPara& m_sGeoPara, const GradPara& m_sGradPara, const i64& m_nAcq, const i64& m_nSampMax, const i64& m_nStack, const f64& m_rotang, const v3& m_v3BaseM0PE, const vv3& m_vv3BaseGRO):
-        MrTraj(m_sGeoPara, m_sGradPara, m_nAcq, m_nSampMax),
+    MrTraj_2D(const GeoPara& m_objGeoPara, const GradPara& m_objGradPara, const i64& m_nAcq, const i64& m_nSampMax, const i64& m_nStack, const f64& m_rotang, const v3& m_v3BaseM0PE, const vv3& m_vv3BaseGRO):
+        MrTraj(m_objGeoPara, m_objGradPara, m_nAcq, m_nSampMax),
         m_nStack(m_nStack),
         m_rotang(m_rotang),
         m_v3BaseM0PE(m_v3BaseM0PE),
@@ -54,7 +54,7 @@ public:
     void setNStack(i64 nStack)
     { m_nStack = nStack; }
 
-    void setRotang(f64 rotang)
+    void setRotAng(f64 rotang)
     { m_rotang = rotang; }
 
 protected:

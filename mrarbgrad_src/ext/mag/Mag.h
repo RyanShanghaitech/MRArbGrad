@@ -15,9 +15,6 @@
 class Spline_TrajFunc: public TrajFunc
 {
 public:
-    typedef std::vector<v3> vv3;
-    typedef std::vector<f64> vf64;
-
     Spline_TrajFunc():
         TrajFunc(0,0)
     {}
@@ -87,16 +84,6 @@ protected:
 class Mag
 {
 public:
-    typedef std::vector<i64> vi64;
-    typedef std::vector<f64> vf64;
-    typedef std::list<i64> ll;
-    typedef std::list<f64> lf64;
-
-    typedef std::vector<v3> vv3;
-    typedef std::vector<vv3> vvv3;
-    typedef std::list<v3> lv3;
-    typedef std::list<vv3> lvv3;
-
     Mag();
     bool setup
     (

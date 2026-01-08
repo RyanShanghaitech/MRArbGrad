@@ -26,10 +26,10 @@ mag.setMagTrajRep(1) # enable trajectory reparameterization (experimental)
 mag.setDbgPrint(1) # enable debug info (for benchmark purpose)
 
 # calculate gradient
-# lstArrK0, lstArrGrad = mag.getG_Spiral(is3D=0, **argCom); nAx = 2
-# lstArrK0, lstArrGrad = mag.getG_VarDenSpiral(is3D=0, **argCom); nAx = 2
-# lstArrK0, lstArrGrad = mag.getG_VarDenSpiral_RT(is3D=0, **argCom); nAx = 2
-lstArrK0, lstArrGrad = mag.getG_Rosette(is3D=0, **argCom); nAx = 2
+# lstArrK0, lstArrGrad = mag.getG_Spiral(**argCom); nAx = 2
+# lstArrK0, lstArrGrad = mag.getG_VDSpiral(**argCom); nAx = 2
+# lstArrK0, lstArrGrad = mag.getG_VDSpiral_RT(**argCom); nAx = 2
+lstArrK0, lstArrGrad = mag.getG_Rosette(**argCom); nAx = 2
 # lstArrK0, lstArrGrad = mag.getG_Rosette_Trad(**argCom); nAx = 2
 # lstArrK0, lstArrGrad = mag.getG_Shell3d(**argCom); nAx = 3
 # lstArrK0, lstArrGrad = mag.getG_Yarnball(**argCom); nAx = 3

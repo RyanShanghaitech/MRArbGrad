@@ -9,7 +9,6 @@ goldang = getGoldang()
 
 def calGrad4ExFunc\
 (
-    is3D: bool = False,
     fov: float64 = 0.256,
     nPix: int64 = 256,
     
@@ -30,7 +29,6 @@ def calGrad4ExFunc\
     '''
     return ext.calGrad4ExFunc\
     (
-        int64(is3D),
         float64(fov),
         int64(nPix),
         
@@ -48,7 +46,6 @@ def calGrad4ExFunc\
 
 def calGrad4ExSamp\
 (
-    is3D: bool = False,
     fov: float64 = 0.256,
     nPix: int64 = 256,
     
@@ -64,7 +61,6 @@ def calGrad4ExSamp\
     '''
     return ext.calGrad4ExSamp\
     (
-        int64(is3D),
         float64(fov),
         int64(nPix),
         
@@ -77,7 +73,6 @@ def calGrad4ExSamp\
     
 def getG_Spiral\
 (
-    is3D: bool = False,
     fov: float64 = 0.256,
     nPix: int64 = 256,
     
@@ -85,6 +80,7 @@ def getG_Spiral\
     gLim: float64 = 50e-3 * 42.5756e6 * 0.256 / 256,
     dt: float64 = 10e-6,
     
+    nSlice: int64 = 1,
     kRhoPhi: float64 = 0.5 / (4 * pi)
 ) -> tuple[list[NDArray], list[NDArray]]:
     '''
@@ -93,7 +89,6 @@ def getG_Spiral\
     '''
     return ext.getG_Spiral\
     (
-        int64(is3D),
         float64(fov),
         int64(nPix),
         
@@ -101,19 +96,20 @@ def getG_Spiral\
         float64(gLim),
         float64(dt),
         
+        int64(nSlice),
         float64(kRhoPhi)
     )
 
-def getG_VarDenSpiral\
+def getG_VDSpiral\
 (
-    is3D: bool = False,
     fov: float64 = 0.256,
     nPix: int64 = 256,
     
     sLim: float64 = 50 * 42.5756e6 * 0.256 / 256,
     gLim: float64 = 50e-3 * 42.5756e6 * 0.256 / 256,
     dt: float64 = 10e-6,
-    
+
+    nSlice: int64 = 1,
     kRhoPhi0: float64 = 0.5 / (8 * pi),
     kRhoPhi1: float64 = 0.5 / (2 * pi),
 ) -> tuple[list[NDArray], list[NDArray]]:
@@ -121,9 +117,8 @@ def getG_VarDenSpiral\
     :return: list of trajectory start, list of gradient waveforms
     :rtype: tuple[list[NDArray], list[NDArray]]
     '''
-    return ext.getG_VarDenSpiral\
+    return ext.getG_VDSpiral\
     (
-        int64(is3D),
         float64(fov),
         int64(nPix),
         
@@ -131,13 +126,13 @@ def getG_VarDenSpiral\
         float64(gLim),
         float64(dt),
         
+        int64(nSlice),
         float64(kRhoPhi0),
         float64(kRhoPhi1)
     )
 
-def getG_VarDenSpiral_RT\
+def getG_VDSpiral_RT\
 (
-    is3D: bool = False,
     fov: float64 = 0.256,
     nPix: int64 = 256,
     
@@ -153,9 +148,8 @@ def getG_VarDenSpiral_RT\
     :return: list of trajectory start, list of gradient waveforms
     :rtype: tuple[list[NDArray], list[NDArray]]
     '''
-    return ext.getG_VarDenSpiral_RT\
+    return ext.getG_VDSpiral_RT\
     (
-        int64(is3D),
         float64(fov),
         int64(nPix),
         
@@ -171,7 +165,6 @@ def getG_VarDenSpiral_RT\
 
 def getG_Rosette\
 (
-    is3D: bool = False,
     fov: float64 = 0.256,
     nPix: int64 = 256,
     
@@ -179,6 +172,7 @@ def getG_Rosette\
     gLim: float64 = 50e-3 * 42.5756e6 * 0.256 / 256,
     dt: float64 = 10e-6,
     
+    nSlice: int64 = 1,
     om1: float64 = 5*pi, 
     om2: float64 = 3*pi, 
     tMax: float64 = 1e0,
@@ -189,7 +183,6 @@ def getG_Rosette\
     '''
     return ext.getG_Rosette\
     (
-        int64(is3D),
         float64(fov),
         int64(nPix),
         
@@ -197,6 +190,7 @@ def getG_Rosette\
         float64(gLim),
         float64(dt),
         
+        int64(nSlice),
         float64(om1),
         float64(om2),
         float64(tMax)
@@ -204,7 +198,6 @@ def getG_Rosette\
 
 def getG_Rosette_Trad\
 (
-    is3D: bool = False,
     fov: float64 = 0.256,
     nPix: int64 = 256,
     
@@ -212,6 +205,7 @@ def getG_Rosette_Trad\
     gLim: float64 = 50e-3 * 42.5756e6 * 0.256 / 256,
     dt: float64 = 10e-6,
     
+    nSlice: int64 = 1,
     om1: float64 = 5*pi, 
     om2: float64 = 3*pi, 
     tMax: float64 = 1e0,
@@ -223,7 +217,6 @@ def getG_Rosette_Trad\
     '''
     return ext.getG_Rosette_Trad\
     (
-        int64(is3D),
         float64(fov),
         int64(nPix),
         
@@ -231,6 +224,7 @@ def getG_Rosette_Trad\
         float64(gLim),
         float64(dt),
         
+        int64(nSlice),
         float64(om1),
         float64(om2),
         float64(tMax),
@@ -239,7 +233,6 @@ def getG_Rosette_Trad\
 
 def getG_Shell3d\
 (
-    is3D: bool = False,
     fov: float64 = 0.256,
     nPix: int64 = 256,
     
@@ -255,7 +248,6 @@ def getG_Shell3d\
     '''
     return ext.getG_Shell3d\
     (
-        int64(is3D),
         float64(fov),
         int64(nPix),
         
@@ -268,7 +260,6 @@ def getG_Shell3d\
 
 def getG_Yarnball\
 (
-    is3D: bool = False,
     fov: float64 = 0.256,
     nPix: int64 = 256,
     
@@ -284,7 +275,6 @@ def getG_Yarnball\
     '''
     return ext.getG_Yarnball\
     (
-        int64(is3D),
         float64(fov),
         int64(nPix),
         
@@ -297,7 +287,6 @@ def getG_Yarnball\
 
 def getG_Seiffert\
 (
-    is3D: bool = False,
     fov: float64 = 0.256,
     nPix: int64 = 256,
     
@@ -314,7 +303,6 @@ def getG_Seiffert\
     '''
     return ext.getG_Seiffert\
     (
-        int64(is3D),
         float64(fov),
         int64(nPix),
         
@@ -328,7 +316,6 @@ def getG_Seiffert\
 
 def getG_Cones\
 (
-    is3D: bool = False,
     fov: float64 = 0.256,
     nPix: int64 = 256,
     
@@ -344,7 +331,6 @@ def getG_Cones\
     '''
     return ext.getG_Cones\
     (
-        int64(is3D),
         float64(fov),
         int64(nPix),
         
@@ -361,7 +347,6 @@ def setGoldAng(x): ext.setGoldAng(x)
 def setShuf(x): ext.setShuf(x)
 def setMaxG0(x): ext.setMaxG0(x)
 def setMaxG1(x): ext.setMaxG1(x)
-def setExGEnd(x): ext.setExGEnd(x)
 def setMagOverSamp(x): ext.setMagOverSamp(x)
 def setMagSFS(x): ext.setMagSFS(x)
 def setMagGradRep(x): ext.setMagGradRep(x)

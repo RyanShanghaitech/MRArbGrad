@@ -1,5 +1,9 @@
+rm -r ./mrarbgrad_src
 cp -r ../MRArbGrad_Private/mrarbgrad_src ./
+
+rm -r ./example
 cp -r ../MRArbGrad_Private/example ./
+
 cp ../MRArbGrad_Private/LICENSE ./
 cp ../MRArbGrad_Private/MANIFEST.in ./
 cp ../MRArbGrad_Private/pyproject.toml ./

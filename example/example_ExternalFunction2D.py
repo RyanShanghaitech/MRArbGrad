@@ -6,8 +6,8 @@ import mrarbgrad as mag
 gamma = 42.5756e6
 fov = 0.256
 nPix = 256
-dtGrad = 10e-6 * 1e-1
-dtADC = 2.5e-6 * 1e-1
+dtGrad = 10e-6
+dtADC = 1e-6
 sLim = 50 * gamma * fov/nPix
 gLim = 20e-3 * gamma * fov/nPix
 # gLim = 1/nPix/dtADC
@@ -28,7 +28,9 @@ def Rosette(t):
 pLim = [0,1]
 
 # derive slew-rate constrained trajectory
-arrGrad = mag.calGrad4ExFunc(False, fov, nPix, sLim, gLim, dtGrad, Rosette, None, None, pLim[0], pLim[1])[0]
+mag.setMaxG0(0)
+mag.setMaxG1(0)
+arrGrad = mag.calGrad4ExFunc(fov, nPix, sLim, gLim, dtGrad, Rosette, None, None, pLim[0], pLim[1])[0]
 # arrGrad = mag.gradClip(arrGrad, dtGrad, sLim, gLim) # clip slew/grad amp with hardware constraint
 nRO = arrGrad.shape[0]
 

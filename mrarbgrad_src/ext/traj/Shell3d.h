@@ -45,12 +45,12 @@ protected:
 class Shell3d: public MrTraj
 {
 public:
-    Shell3d(const GeoPara& sGeoPara, const GradPara& sGradPara, f64 kRhoTht):
-        MrTraj(sGeoPara,sGradPara,0,0)
+    Shell3d(const GeoPara& objGeoPara, const GradPara& objGradPara, f64 kRhoTht):
+        MrTraj(objGeoPara,objGradPara,0,0)
     {
-        m_sGeoPara = sGeoPara;
-        m_sGradPara = sGradPara;
-        m_nRot = calNRot(kRhoTht, m_sGeoPara.nPix);
+        m_objGeoPara = objGeoPara;
+        m_objGradPara = objGradPara;
+        m_nRot = calNRot(kRhoTht, m_objGeoPara.nPix);
         m_rotang = calRotAng(m_nRot);
         m_nAcq = m_nRot*m_nRot;
         
@@ -65,7 +65,7 @@ public:
             m_vptfBaseTraj[i] = new Shell3d_TrajFunc(kRhoTht, tht0);
             if(!m_vptfBaseTraj[i]) throw std::runtime_error("out of memory");
 
-            calGrad(&m_vv3BaseM0PE[i], &m_vvv3BaseGRO[i], NULL, *m_vptfBaseTraj[i], m_sGradPara);
+            calGrad(&m_vv3BaseM0PE[i], &m_vvv3BaseGRO[i], NULL, *m_vptfBaseTraj[i], m_objGradPara);
             m_nSampMax = std::max(m_nSampMax, (i64)m_vvv3BaseGRO[i].size());
         }
     }

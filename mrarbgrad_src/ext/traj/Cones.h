@@ -39,12 +39,10 @@ protected:
 class Cones: public MrTraj
 {
 public:
-    typedef std::list<i64> ll;
-
-    Cones(const GeoPara& sGeoPara, const GradPara& sGradPara, f64 kRhoPhi):
-        MrTraj(sGeoPara,sGradPara,0,0)
+    Cones(const GeoPara& objGeoPara, const GradPara& objGradPara, f64 kRhoPhi):
+        MrTraj(objGeoPara,objGradPara,0,0)
     {
-        const i64& nPix = m_sGeoPara.nPix;
+        const i64& nPix = m_objGeoPara.nPix;
 
         // caluclate gradient
         m_nSet = getNLayer_Cones(nPix);
@@ -59,7 +57,7 @@ public:
             m_vptfBaseTraj[i] = new Cones_TrajFun(kRhoPhi, tht0);
             if(!m_vptfBaseTraj[i]) throw std::runtime_error("out of memory");
 
-            calGrad(&m_vv3BaseM0PE[i], &m_vvv3BaseGRO[i], NULL, *m_vptfBaseTraj[i], m_sGradPara);
+            calGrad(&m_vv3BaseM0PE[i], &m_vvv3BaseGRO[i], NULL, *m_vptfBaseTraj[i], m_objGradPara);
             m_nSampMax = std::max(m_nSampMax, (i64)m_vvv3BaseGRO[i].size());
         }
         

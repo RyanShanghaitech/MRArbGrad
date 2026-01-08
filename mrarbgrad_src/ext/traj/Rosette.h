@@ -43,18 +43,18 @@ protected:
 class Rosette: public MrTraj_2D
 {
 public:
-    Rosette(const GeoPara& sGeoPara, const GradPara& sGradPara, f64 om1, f64 om2, f64 tMax):
-        MrTraj_2D(sGeoPara,sGradPara,0,0,0,0,v3(),vv3())
+    Rosette(const GeoPara& objGeoPara, const GradPara& objGradPara, i64 nStack, f64 om1, f64 om2, f64 tMax):
+        MrTraj_2D(objGeoPara,objGradPara,0,0,0,0,v3(),vv3())
     {
         m_ptfBaseTraj = new Rosette_TrajFunc(om1, om2, tMax);
         if(!m_ptfBaseTraj) throw std::runtime_error("out of memory");
-        m_nStack = m_sGeoPara.is3D ? m_sGeoPara.nPix : 1;
+        m_nStack = nStack;
 
-        i64 nRot = calNRot(m_ptfBaseTraj, 0e0, (M_PI/2e0)/om1, m_sGeoPara.nPix);
+        i64 nRot = calNRot(m_ptfBaseTraj, 0e0, (M_PI/2e0)/om1, m_objGeoPara.nPix);
         m_rotang = calRotAng(nRot);
         m_nAcq = nRot*m_nStack;
         
-        calGrad(&m_v3BaseM0PE, &m_vv3BaseGRO, NULL, *m_ptfBaseTraj, m_sGradPara);
+        calGrad(&m_v3BaseM0PE, &m_vv3BaseGRO, NULL, *m_ptfBaseTraj, m_objGradPara);
         m_nSampMax = m_vv3BaseGRO.size();
     }
     
@@ -70,22 +70,22 @@ protected:
 class Rosette_Trad: public MrTraj_2D
 {
 public:
-    Rosette_Trad(const GeoPara& sGeoPara, const GradPara& sGradPara, f64 om1, f64 om2, f64 tMax, f64 dTE):
-        MrTraj_2D(sGeoPara,sGradPara,0,0,0,0,v3(),vv3())
+    Rosette_Trad(const GeoPara& objGeoPara, const GradPara& objGradPara, i64 nStack, f64 om1, f64 om2, f64 tMax, f64 dTE):
+        MrTraj_2D(objGeoPara,objGradPara,0,0,0,0,v3(),vv3())
     {
-        m_sGeoPara = sGeoPara;
-        m_sGradPara = sGradPara;
+        m_objGeoPara = objGeoPara;
+        m_objGradPara = objGradPara;
 
         m_ptfBaseTraj = new Rosette_TrajFunc(om1, om2, tMax);
         if(!m_ptfBaseTraj) throw std::runtime_error("out of memory");
-        m_nStack = m_sGeoPara.is3D ? m_sGeoPara.nPix : 1;
-        i64 nRot = calNRot(m_ptfBaseTraj, 0e0, (M_PI/2e0)/om1, m_sGeoPara.nPix);
+        m_nStack = nStack;
+        i64 nRot = calNRot(m_ptfBaseTraj, 0e0, (M_PI/2e0)/om1, m_objGeoPara.nPix);
         m_nAcq = nRot*m_nStack;
         m_rotang = calRotAng(nRot);
 
         // readout
         f64 tAcq = dTE*om1/M_PI;
-        m_nSampMax = tAcq/m_sGradPara.dt;
+        m_nSampMax = tAcq/m_objGradPara.dt;
         m_vv3BaseGRO.reserve(m_nSampMax);
         for(i64 i = 0; i < m_nSampMax; ++i)
         {
