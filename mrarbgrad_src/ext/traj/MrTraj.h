@@ -77,15 +77,6 @@ public:
     void setGyoMagRat(f64 x)
     { m_gamma = x; }
 
-    void setUseMtg(bool x)
-    { gMrTraj_enMtg = x; }
-
-    void setGNorm0(f64 x)
-    { gMrTraj_g0Norm = x; }
-
-    void setGNorm1(f64 x)
-    { gMrTraj_g1Norm = x; }
-
     // a deterministic random number generator
     static bool genRand3d(v3* v3Res, i64 lIdx)
     {
@@ -327,6 +318,8 @@ protected:
             ret &= calGRO_MTG(pvv3G, pvf64P, vf64C, objGradPara);
         }
 
+        intpGrad(pvv3G, pvf64P, objGradPara.sLim, objGradPara.dt);
+
         return ret;
     }
 
@@ -357,6 +350,8 @@ protected:
             ret &= calGRO_MTG(pvv3G, pvf64P, vf64C, objGradPara);
         }
 
+        intpGrad(pvv3G, pvf64P, objGradPara.sLim, objGradPara.dt);
+
         return ret;
     }
 
@@ -371,7 +366,15 @@ protected:
         ret &= calGRO(pvv3GRO, pvf64P, tfTraj, objGradPara, oversamp);
         TOC;
 
-        // if GEnd needs to be fixed
+        if (pv3M0PE) ret &= tfTraj.getK0(pv3M0PE);
+
+        return ret;
+    }
+
+    bool intpGrad(vv3* pvv3GRO, vf64* pvf64P, f64 sLim, f64 dt)
+    {
+        bool ret = true;
+
         if (gMrTraj_g0Norm==0e0 && pvv3GRO)
         {
             // add ramp gradient to satisfy desired Gstart and Gfinal
@@ -380,7 +383,7 @@ protected:
             pvv3GRO->insert(pvv3GRO->begin(), vv3GRampFront.begin(), vv3GRampFront.end());
             
             // corresponding parameter sequence
-            if (pvf64P && !pvf64P->empty()) // null: user does not need p seq, empty: q seq not supported
+            if (pvf64P && !pvf64P->empty()) // null: user does not need p seq, empty: p seq not supported
             {
                 vf64 vf64PInsert = vf64(vv3GRampFront.size(), pvf64P->front());
                 pvf64P->insert(pvf64P->begin(), vf64PInsert.begin(), vf64PInsert.end());
@@ -394,14 +397,12 @@ protected:
             pvv3GRO->insert(pvv3GRO->end(), vv3GRampBack.begin(), vv3GRampBack.end());
             
             // corresponding parameter sequence
-            if (pvf64P && !pvf64P->empty()) // null: user does not need p seq, empty: q seq not supported
+            if (pvf64P && !pvf64P->empty()) // null: user does not need p seq, empty: p seq not supported
             {
                 vf64 vf64PInsert = vf64(vv3GRampBack.size(), pvf64P->back());
                 pvf64P->insert(pvf64P->end(), vf64PInsert.begin(), vf64PInsert.end());
             }
         }
-
-        if (pv3M0PE) ret &= tfTraj.getK0(pv3M0PE);
 
         return ret;
     }

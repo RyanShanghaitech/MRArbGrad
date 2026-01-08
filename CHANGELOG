@@ -1,3 +1,6 @@
+3.0.1 (Jan 8, 2026)
+Fix API inconsistency between Python and C-API, and fix bug that interpolation is not performed in Python interface.
+
 3.0.0 (Jan 8, 2026)
 Delete `is3D` parameter - it's useless and confusing now in practice. We also rename `VarDenSpiral` to `VDSpiral` to make the naming more concise.
 

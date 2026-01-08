@@ -634,6 +634,7 @@ PyObject* setMaxG0(PyObject* self, PyObject* const* args, Py_ssize_t narg)
     bool enMaxG0 = PyLong_AsLong(args[0]);
     if (enMaxG0) gMrTraj_g0Norm = 1e6;
     else gMrTraj_g0Norm = 0e0;
+    PRINT(gMrTraj_g0Norm); // test
     Py_INCREF(Py_None);
     return Py_None;
 }
@@ -645,6 +646,7 @@ PyObject* setMaxG1(PyObject* self, PyObject* const* args, Py_ssize_t narg)
     bool enMaxG1 = PyLong_AsLong(args[0]);
     if (enMaxG1) gMrTraj_g1Norm = 1e6;
     else gMrTraj_g1Norm = 0e0;
+    PRINT(gMrTraj_g1Norm); // test
     Py_INCREF(Py_None);
     return Py_None;
 }

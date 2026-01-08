@@ -33,10 +33,10 @@ mag.setDbgPrint(1)
 # lstArrK0, lstArrGrad = mag.getG_Spiral(**argCom); nAx = 2
 # lstArrK0, lstArrGrad = mag.getG_VDSpiral(**argCom); nAx = 2
 # lstArrK0, lstArrGrad = mag.getG_VDSpiral_RT(**argCom); nAx = 2
-lstArrK0, lstArrGrad = mag.getG_Rosette(**argCom); nAx = 2
+# lstArrK0, lstArrGrad = mag.getG_Rosette(**argCom); nAx = 2
 # lstArrK0, lstArrGrad = mag.getG_Rosette_Trad(**argCom, om1=10*pi, om2=8*pi, tMax=1, tAcq=2e-03); nAx = 2
-# lstArrK0, lstArrGrad = mag.getG_Shell3d(**argCom, kRhoTht = 0.5 / (4 * pi)); nAx = 3
-# lstArrK0, lstArrGrad = mag.getG_Yarnball(**argCom, kRhoPhi = 0.5 / (1 * pi)); nAx = 3
+# lstArrK0, lstArrGrad = mag.getG_Shell3d(**argCom, kRhoTht = 0.5 / (2 * pi)); nAx = 3
+lstArrK0, lstArrGrad = mag.getG_Yarnball(**argCom, kRhoPhi = 0.5 / (2 * pi)); nAx = 3
 # lstArrK0, lstArrGrad = mag.getG_Seiffert(**argCom); nAx = 3
 # lstArrK0, lstArrGrad = mag.getG_Cones(**argCom, kRhoPhi = 0.5 / (16 * pi)); nAx = 3
 
