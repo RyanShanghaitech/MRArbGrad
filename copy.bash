@@ -11,5 +11,6 @@ cp ../MRArbGrad_Private/README.md ./
 cp ../MRArbGrad_Private/setup.py ./
 cp ../MRArbGrad_Private/install.bash ./
 cp ../MRArbGrad_Private/.gitignore ./
+cp ../MRArbGrad_Private/CHANGELOG ./
 
 rm -r ./mrarbgrad_src/ext/mtg # remove the baseline method to respect the copyright

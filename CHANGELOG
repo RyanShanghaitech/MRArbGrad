@@ -1,0 +1,23 @@
+3.1.0 (Jan 17, 2026)
+Move most memory allocation to constrcutor. Add Yarnball_RT,
+
+3.0.1 (Jan 8, 2026)
+Fix API inconsistency between Python and C-API, and fix bug that interpolation is not performed in Python interface.
+
+3.0.0 (Jan 8, 2026)
+Delete `is3D` parameter - it's useless and confusing now in practice. We also rename `VarDenSpiral` to `VDSpiral` to make the naming more concise.
+
+2.1.1 (Jan 8, 2026)
+move all typedef to global.h.
+
+2.1.0 (Jan 4, 2026)
+add a helper function `gradClip()`.
+
+2.0.0 (Jan 3, 2026)
+We do not support `getNWait()` and `getNSamp()` in the C++ layer anymore, which previously accounted for the samples to wait before the ADC window and the length of the ADC window in samples, as sometimes gradient waveform may contain ramp-up and ramp-down. We decide to leave ramping in sequence design stage outside of this package's scope. So that we can make this package concise.
+
+Instead, we add `getMaxNSamp()` interface in `MrTraj()` class, as pulse programmer needs this to decide the TR.
+
+We also plan to drop out `bMaxG0` and `bMaxG1` in `GradPara` interface. These parameters are used to let users choose whether to generate a gradient waveform has maximum start amplitude and maximum end amplitude, which might be benefit to minimize the lenghth of the gradient waveform so to minimize the off-resonance artifacts. However, based on our test, doing so takes minor effect. We still permit user to achieve "Maximized G0/G1" through global flags.
+
+We drop out `g_FixGEnd` and `setExGEnd()`, but add `gMrTraj_gNorm0` and `gMrTraj_gNorm1` to let user control the end amplitude of the generated gradient waveform, if they are zero we will extrapolate the gradient waveform to make them end up with zero.
