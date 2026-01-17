@@ -1,3 +1,6 @@
+3.1.0 (Jan 17, 2026)
+Move most memory allocation to constrcutor. Add Yarnball_RT,
+
 3.0.1 (Jan 8, 2026)
 Fix API inconsistency between Python and C-API, and fix bug that interpolation is not performed in Python interface.
 
