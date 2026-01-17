@@ -55,7 +55,7 @@ public:
         {
             f64 tht0 = getTht0_Cones(i, m_nSet);
             m_vptfBaseTraj[i] = new Cones_TrajFun(kRhoPhi, tht0);
-            if(!m_vptfBaseTraj[i]) throw std::runtime_error("out of memory");
+            ASSERT(m_vptfBaseTraj[i]!=NULL);
 
             calGrad(&m_vv3BaseM0PE[i], &m_vvv3BaseGRO[i], NULL, *m_vptfBaseTraj[i], m_objGradPara);
             m_nSampMax = std::max(m_nSampMax, (i64)m_vvv3BaseGRO[i].size());
@@ -95,7 +95,7 @@ public:
         }
     }
     
-    virtual bool getGRO(vv3* pvv3GRO, i64 iAcq)
+    virtual bool getGrad(v3* pv3M0PE, vv3* pvv3GRO, i64 iAcq)
     {
         bool ret = true;
         iAcq %= m_nAcq;
@@ -103,22 +103,16 @@ public:
         i64 iRot = m_vi64RotIdx[iAcq];
         f64 phiStep = calRotAng(m_vi64NRot[iSet]);
 
-        *pvv3GRO = m_vvv3BaseGRO[iSet];
-        ret &= v3::rotate(pvv3GRO, 2, phiStep*iRot, *pvv3GRO);
-
-        return ret;
-    }
-
-    virtual bool getM0PE(v3* pv3M0PE, i64 iAcq)
-    {
-        bool ret = true;
-        iAcq %= m_nAcq;
-        i64 iSet = m_vi64SetIdx[iAcq];
-        i64 iRot = m_vi64RotIdx[iAcq];
-        f64 phiStep = calRotAng(m_vi64NRot[iSet]);
-
-        *pv3M0PE = m_vv3BaseM0PE[iSet];
-        ret &= v3::rotate(pv3M0PE, 2, phiStep*iRot, *pv3M0PE);
+        if (pv3M0PE)
+        {
+            *pv3M0PE = m_vv3BaseM0PE[iSet];
+            ret &= v3::rotate(pv3M0PE, 2, phiStep * iRot, *pv3M0PE);
+        }
+        if (pvv3GRO)
+        {
+            *pvv3GRO = m_vvv3BaseGRO[iSet];
+            ret &= v3::rotate(pvv3GRO, 2, phiStep * iRot, *pvv3GRO);
+        }
 
         return ret;
     }

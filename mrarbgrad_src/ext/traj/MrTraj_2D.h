@@ -17,19 +17,7 @@ public:
     virtual ~MrTraj_2D()
     {}
 
-    virtual bool getGRO(vv3* pvv3GRO, i64 iAcq)
-    {
-        bool ret = true;
-        i64 nStack = getNStack();
-        f64 rotang = getRotAng();
-        i64 iRot = iAcq/nStack;
-
-        ret &= v3::rotate(pvv3GRO, 2, rotang*iRot, m_vv3BaseGRO);
-
-        return ret;
-    }
-    
-    virtual bool getM0PE(v3* pv3M0PE, i64 iAcq)
+    virtual bool getGrad(v3* pv3M0PE, vv3* pvv3GRO, i64 iAcq)
     {
         bool ret = true;
         i64 nStack = getNStack();
@@ -37,10 +25,16 @@ public:
         i64 iStack = iAcq%nStack;
         i64 iRot = iAcq/nStack;
         
-        *pv3M0PE = m_v3BaseM0PE;
-        pv3M0PE->z += getK0z(iStack, nStack);
-        
-        ret &= v3::rotate(pv3M0PE, 2, rotang*iRot, *pv3M0PE);
+        if (pv3M0PE)
+        {
+            *pv3M0PE = m_v3BaseM0PE;
+            pv3M0PE->z += getK0z(iStack, nStack);
+            ret &= v3::rotate(pv3M0PE, 2, rotang * iRot, *pv3M0PE);
+        }
+        if (pvv3GRO)
+        {
+            ret &= v3::rotate(pvv3GRO, 2, rotang * iRot, m_vv3BaseGRO);
+        }
 
         return ret;
     }

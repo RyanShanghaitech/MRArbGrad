@@ -39,7 +39,7 @@ public:
         MrTraj_2D(objGeoPara,objGradPara,0,0,0,0,v3(),vv3())
     {
         m_ptfBaseTraj = new Spiral_TrajFunc(kRhoPhi);
-        if(!m_ptfBaseTraj) throw std::runtime_error("out of memory");
+        ASSERT(m_ptfBaseTraj!=NULL);
         m_nStack = nStack;
 
         i64 nRot = calNRot(kRhoPhi, m_objGeoPara.nPix);

@@ -45,12 +45,13 @@ public:
         if (kRhoPhi0==dRhoPhi1) throw std::invalid_argument("kRhoPhi0==dRhoPhi1");
 
         m_ptfBaseTraj = new VDSpiral_TrajFunc(kRhoPhi0, dRhoPhi1);
-        if(!m_ptfBaseTraj) throw std::runtime_error("out of memory");
+        ASSERT(m_ptfBaseTraj!=NULL);
         m_nStack = nStack;
 
         i64 nRot = calNRot(std::max(kRhoPhi0, dRhoPhi1), m_objGeoPara.nPix);
         m_rotang = calRotAng(nRot);
         m_nAcq = nRot*m_nStack;
+        PRINT(m_nAcq) // TEST
 
         calGrad(&m_v3BaseM0PE, &m_vv3BaseGRO, NULL, *m_ptfBaseTraj, m_objGradPara);
         m_nSampMax = m_vv3BaseGRO.size();
@@ -69,64 +70,38 @@ class VDSpiral_RT: public MrTraj
 {
     // TODO: Goldang sampling is incomplete, shuffled sampling is incomplete.
 public:
-    VDSpiral_RT(const GeoPara& objGeoPara, const GradPara& objGradPara, f64 kRhoPhi0, f64 dRhoPhi1, f64 nAcq):
-        MrTraj(objGeoPara,objGradPara,0,0)
+    VDSpiral_RT(const GeoPara& objGeoPara, const GradPara& objGradPara, f64 kRhoPhi0, f64 kRhoPhi1, i64 nAcq):
+    /*
+     * nAcq: Num of Acq, used to preallocate an array to store PE M0
+     */
+        MrTraj(objGeoPara,objGradPara,nAcq,0)
     {
-        m_nAcq = nAcq;
+        m_kRhoPhi0 = kRhoPhi0;
+        m_kRhoPhi1 = kRhoPhi1;
+        m_nRot = calNRot(kRhoPhi1, objGeoPara.nPix);
+        m_dRotAng = 2e0*M_PI/m_nRot;
+        genRandIdx(&m_vi64Idx, m_nRot);
 
-        m_dRhoPhi0 = kRhoPhi0;
-        m_dRhoPhi1 = dRhoPhi1;
-
-        m_vv3M0PE.resize(nAcq); std::fill(m_vv3M0PE.begin(), m_vv3M0PE.end(), v3(0));
+        VDSpiral_TrajFunc tf(m_kRhoPhi0, m_kRhoPhi1, 0);
+        vv3 vv3GRO; calGrad(NULL, &vv3GRO, NULL, tf, m_objGradPara, 4);
+        m_nSampMax = vv3GRO.size();
     }
 
     virtual ~VDSpiral_RT()
     {}
 
-    virtual bool getGRO(vv3* pvv3GRO, i64 iAcq)
+    virtual bool getGrad(v3* pv3M0PE, vv3* pvv3GRO, i64 iAcq)
     {
         bool ret = true;
-        TrajFunc* ptfTraj = new VDSpiral_TrajFunc(m_dRhoPhi0, m_dRhoPhi1, iAcq*GOLDANG);
-        if (!ptfTraj) throw std::runtime_error("out of memory");
-        if (iAcq>=m_nAcq) throw std::runtime_error("iAcq>=m_nAcq");
-        ret &= calGrad(&m_vv3M0PE[iAcq], pvv3GRO, NULL, *ptfTraj, m_objGradPara, 4);
-        delete ptfTraj;
+        VDSpiral_TrajFunc tf(m_kRhoPhi0, m_kRhoPhi1, m_vi64Idx[iAcq]*m_dRotAng);
+        ASSERT(iAcq < m_nAcq);
+        ret &= calGrad(pv3M0PE, pvv3GRO, NULL, tf, m_objGradPara, 4);
         return ret;
     }
 
-    virtual bool getM0PE(v3* pv3M0PE, i64 iAcq)
-    {
-        if (iAcq>=m_nAcq)
-        {
-            throw std::runtime_error("iAcq>=m_nAcq");
-        }
-        *pv3M0PE = m_vv3M0PE[iAcq];
-        return true;
-    }
-
-    virtual i64 getNWait(i64 iAcq)
-    {
-        if (iAcq>=m_nAcq)
-        {
-            throw std::runtime_error("iAcq>=m_nAcq");
-        }
-        return m_vlNWait[iAcq];
-    }
-
-    virtual i64 getNSamp(i64 iAcq)
-    {
-        if (iAcq>=m_nAcq)
-        {
-            throw std::runtime_error("iAcq>=m_nAcq");
-        }
-        return m_vlNSamp[iAcq];
-    }
-
 protected:
-    f64 m_dRhoPhi0;
-    f64 m_dRhoPhi1;
-
-    vv3 m_vv3M0PE;
-    vi64 m_vlNWait;
-    vi64 m_vlNSamp;
+    f64 m_kRhoPhi0;
+    f64 m_kRhoPhi1;
+    i64 m_nRot; f64 m_dRotAng;
+    vi64 m_vi64Idx;
 };

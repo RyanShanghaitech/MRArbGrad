@@ -228,6 +228,7 @@ v3 v3::pow(const v3& v3In, f64 exp)
 
 bool v3::genRotMat(std::array<v3,3>* pav3RotMat, int iAx, f64 ang)
 {
+    if (!pav3RotMat) return false;
     switch (iAx)
     {
     case 0:
@@ -259,6 +260,7 @@ bool v3::rotate
     const v3& v3Src
 )
 {
+    if (!pv3Dst) return false;
     bool ret = true;
 
     std::array<v3,3> av3RotMat;
@@ -281,6 +283,7 @@ bool v3::rotate
     const vv3& vv3Src
 )
 {
+    if (!pvv3Dst) return false;
     std::array<v3, 3> av3RotMat;
     if (!genRotMat(&av3RotMat, iAx, ang)) return false;
 
@@ -309,6 +312,7 @@ bool v3::rotate
     const lv3& lv3Src
 )
 {
+    if (!plv3Dst) return false;
     bool ret = true;
 
     std::array<v3,3> av3RotMat;

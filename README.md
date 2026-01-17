@@ -13,13 +13,13 @@ $ conda install python==3.12 -y
 
 This package is **NOT** restricted to use `Python 3.12`. Feel free to adjust at your convenience, just if the package works.
 
-To install the pip package of the proposed algorithm (including the trajectory library built on it):
-```bash
-$ bash install.bash
-```
-or
+To install this package from PyPI:
 ```bash
 $ pip install mrarbgrad
+```
+To install this package from a local repository:
+```bash
+$ bash install.bash
 ```
 
 You can also install via `pip install .` but remember to delete `*.egg-info` or pip will run into bug when uninstalling this package in current folder (see comments in `install.bash`).
@@ -28,6 +28,7 @@ You can also install via `pip install .` but remember to delete `*.egg-info` or 
 Examples for generating gradient waveforms for either built-in trajectory (trajectory library) or external trajectory (expressed by trajectory function or trajectory samples) can be found in the `example` folder.
 
 ## Citation
-If this project helps you, please cite [our paper](https://arxiv.org/abs/2507.21625):
+If this project helps you, please cite [our paper](https://ieeexplore.ieee.org/document/11352950):
 
-[1] R. Luo, H. Huang, Q. Miao, J. Xu, P. Hu, and H. Qi, “Real-Time Gradient Waveform Design for Arbitrary k-Space Trajectories,” Sep 9, 2025, arXiv preprint arXiv:2507.21625.
+[1] Luo R, Huang H, Miao Q, Xu J, Hu P, Qi H. Real-Time Gradient Waveform Design for Arbitrary k-Space Trajectories. IEEE Transactions on Biomedical Engineering. 2026;1–12. 
+

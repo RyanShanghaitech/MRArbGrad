@@ -10,45 +10,58 @@
 #include "../utility/v3.h"
 #include "../traj/TrajFunc.h"
 #include "../utility/SplineIntp.h"
+#include "../utility/LinIntp.h"
+
+extern i64 gMag_oversamp;
+extern bool gMag_enSFS;
+extern bool gMag_enGradRep;
+extern bool gMag_enTrajRep;
+extern i64 gMag_nTrajSamp;
 
 // virtual TrajFunc, take in discrete samples and construct a Segmentied Cubic Polynomial function
 class Spline_TrajFunc: public TrajFunc
 {
 public:
     Spline_TrajFunc():
-        TrajFunc(0,0)
+        TrajFunc(0,0),
+        m_intpX(gMag_nTrajSamp),
+        m_intpY(gMag_nTrajSamp),
+        m_intpZ(gMag_nTrajSamp)
     {}
 
     Spline_TrajFunc(const vv3& vv3K):
-        TrajFunc(0,0)
+        TrajFunc(0,0),
+        m_intpX(vv3K.size()),
+        m_intpY(vv3K.size()),
+        m_intpZ(vv3K.size())
     {
         i64 lNTrajSamp = vv3K.size();
 
-        vf64 vdP(lNTrajSamp);
-        vdP[0] = 0;
+        vf64 vf64P(lNTrajSamp);
+        vf64P[0] = 0;
         for (i64 i = 1; i < lNTrajSamp; ++i)
         {
-            vdP[i] = vdP[i-1] + v3::norm(vv3K[i] - vv3K[i-1]);
+            vf64P[i] = vf64P[i-1] + v3::norm(vv3K[i] - vv3K[i-1]);
         }
 
-        vf64 vdX(lNTrajSamp), vdY(lNTrajSamp), vdZ(lNTrajSamp);
+        vf64 vf64X(lNTrajSamp), vf64Y(lNTrajSamp), vf64Z(lNTrajSamp);
         for (i64 i = 0; i < lNTrajSamp; ++i)
         {
-           vdX[i] =  vv3K[i].x;
-           vdY[i] =  vv3K[i].y;
-           vdZ[i] =  vv3K[i].z;
+           vf64X[i] =  vv3K[i].x;
+           vf64Y[i] =  vv3K[i].y;
+           vf64Z[i] =  vv3K[i].z;
         }
 
         m_intpX.m_eSearchMode = Intp::ECached;
         m_intpY.m_eSearchMode = Intp::ECached;
         m_intpZ.m_eSearchMode = Intp::ECached;
 
-        m_intpX.fit(vdP, vdX); 
-        m_intpY.fit(vdP, vdY);
-        m_intpZ.fit(vdP, vdZ);
+        m_intpX.fit(vf64P, vf64X); 
+        m_intpY.fit(vf64P, vf64Y);
+        m_intpZ.fit(vf64P, vf64Z);
 
-        m_p0 = *vdP.begin();
-        m_p1 = *vdP.rbegin();
+        m_p0 = *vf64P.begin();
+        m_p1 = *vf64P.rbegin();
     }
     
     bool getK(v3* k, f64 p)
@@ -60,20 +73,20 @@ public:
         return true;
     }
 
-    bool getDkDp(v3* pv3K, f64 p) const
+    bool getDkDp(v3* dkdp, f64 p) const
     {
-        pv3K->x = m_intpX.eval(p, 1);
-        pv3K->y = m_intpY.eval(p, 1);
-        pv3K->z = m_intpZ.eval(p, 1);
+        dkdp->x = m_intpX.eval(p, 1);
+        dkdp->y = m_intpY.eval(p, 1);
+        dkdp->z = m_intpZ.eval(p, 1);
 
         return true;
     }
 
-    bool getD2kDp2(v3* pv3K, f64 p) const
+    bool getD2kDp2(v3* d2kdp2, f64 p) const
     {
-        pv3K->x = m_intpX.eval(p, 2);
-        pv3K->y = m_intpY.eval(p, 2);
-        pv3K->z = m_intpZ.eval(p, 2);
+        d2kdp2->x = m_intpX.eval(p, 2);
+        d2kdp2->y = m_intpY.eval(p, 2);
+        d2kdp2->z = m_intpZ.eval(p, 2);
 
         return true;
     }
@@ -85,14 +98,14 @@ class Mag
 {
 public:
     Mag();
-    bool setup
+    bool init
     (
         TrajFunc* ptTraj,
         f64 sLim, f64 gLim,
         f64 dt=10e-6, i64 oversamp=10, 
         f64 dG0Norm=0e0, f64 dG1Norm=0e0
     );
-    bool setup
+    bool init
     (
         const vv3& vv3TrajSamp,
         f64 sLim, f64 gLim,
@@ -129,9 +142,12 @@ private:
     vf64 m_vf64P_Bac;
     vv3 m_vv3G_Bac;
     vf64 m_vf64GNorm_Bac;
-
     vf64 m_vf64P_For;
     vv3 m_vv3G_For;
+    vf64 m_vf64P;
+    vv3 m_vv3G;
+    vv3 m_vv3TrajSamp;
+    LinIntp m_intp; // SplineIntp m_intp;
 
     bool sovQDE(f64* psol0, f64* psol1, f64 a, f64 b, f64 c);
     f64 getCurRad(f64 p);
