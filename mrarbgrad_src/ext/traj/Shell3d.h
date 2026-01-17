@@ -48,8 +48,6 @@ public:
     Shell3d(const GeoPara& objGeoPara, const GradPara& objGradPara, f64 kRhoTht):
         MrTraj(objGeoPara,objGradPara,0,0)
     {
-        m_objGeoPara = objGeoPara;
-        m_objGradPara = objGradPara;
         m_nRot = calNRot(kRhoTht, m_objGeoPara.nPix);
         m_rotang = calRotAng(m_nRot);
         m_nAcq = m_nRot*m_nRot;
@@ -63,7 +61,7 @@ public:
         {
             f64 tht0 = i*m_rotang;
             m_vptfBaseTraj[i] = new Shell3d_TrajFunc(kRhoTht, tht0);
-            if(!m_vptfBaseTraj[i]) throw std::runtime_error("out of memory");
+            ASSERT(m_vptfBaseTraj[i]!=NULL);
 
             calGrad(&m_vv3BaseM0PE[i], &m_vvv3BaseGRO[i], NULL, *m_vptfBaseTraj[i], m_objGradPara);
             m_nSampMax = std::max(m_nSampMax, (i64)m_vvv3BaseGRO[i].size());
@@ -78,28 +76,23 @@ public:
         }
     }
 
-    virtual bool getGRO(vv3* pvv3GRO, i64 iAcq)
+    virtual bool getGrad(v3* pv3M0PE, vv3* pvv3GRO, i64 iAcq)
     {
         bool ret = true;
         const f64& rotang = m_rotang;
         i64 iSet = iAcq%m_nRot;
         i64 iRot = iAcq/m_nRot;
 
-        *pvv3GRO = m_vvv3BaseGRO[iSet];
-        ret &= v3::rotate(pvv3GRO, 2, rotang*iRot, *pvv3GRO);
-        
-        return ret;
-    }
-
-    virtual bool getM0PE(v3* pv3M0PE, i64 iAcq)
-    {
-        bool ret = true;
-        const f64& rotang = m_rotang;
-        i64 iSet = iAcq%m_nRot;
-        i64 iRot = iAcq/m_nRot;
-
-        *pv3M0PE = m_vv3BaseM0PE[iSet];
-        ret &= v3::rotate(pv3M0PE, 2, rotang*iRot, *pv3M0PE);
+        if (pv3M0PE)
+        {
+            *pv3M0PE = m_vv3BaseM0PE[iSet];
+            ret &= v3::rotate(pv3M0PE, 2, rotang * iRot, *pv3M0PE);
+        }
+        if (pvv3GRO)
+        {
+            *pvv3GRO = m_vvv3BaseGRO[iSet];
+            ret &= v3::rotate(pvv3GRO, 2, rotang * iRot, *pvv3GRO);
+        }
 
         return ret;
     }

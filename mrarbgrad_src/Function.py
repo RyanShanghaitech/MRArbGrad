@@ -142,7 +142,7 @@ def getG_VDSpiral_RT\
     
     kRhoPhi0: float64 = 0.5 / (8 * pi),
     kRhoPhi1: float64 = 0.5 / (2 * pi),
-    nAcq: int64 = 1000,
+    nAcq: int64 = 128,
 ) -> tuple[list[NDArray], list[NDArray]]:
     '''
     :return: list of trajectory start, list of gradient waveforms
@@ -283,6 +283,35 @@ def getG_Yarnball\
         float64(dt),
         
         float64(kRhoPhi),
+    )
+
+def getG_Yarnball_RT\
+(
+    fov: float64 = 0.256,
+    nPix: int64 = 256,
+    
+    sLim: float64 = 50 * 42.5756e6 * 0.256 / 256,
+    gLim: float64 = 50e-3 * 42.5756e6 * 0.256 / 256,
+    dt: float64 = 10e-6,
+    
+    kRhoPhi: float64 = 0.5 / (2 * pi),
+    nAcq: int64 = 16384,
+) -> tuple[list[NDArray], list[NDArray]]:
+    '''
+    :return: list of trajectory start, list of gradient waveforms
+    :rtype: tuple[list[NDArray], list[NDArray]]
+    '''
+    return ext.getG_Yarnball_RT\
+    (
+        float64(fov),
+        int64(nPix),
+        
+        float64(sLim),
+        float64(gLim),
+        float64(dt),
+        
+        float64(kRhoPhi),
+        int64(nAcq),
     )
 
 def getG_Seiffert\

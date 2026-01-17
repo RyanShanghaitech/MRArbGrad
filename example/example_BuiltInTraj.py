@@ -29,10 +29,10 @@ mag.setDbgPrint(1) # enable debug info (for benchmark purpose)
 # lstArrK0, lstArrGrad = mag.getG_Spiral(**argCom); nAx = 2
 # lstArrK0, lstArrGrad = mag.getG_VDSpiral(**argCom); nAx = 2
 # lstArrK0, lstArrGrad = mag.getG_VDSpiral_RT(**argCom); nAx = 2
-lstArrK0, lstArrGrad = mag.getG_Rosette(**argCom); nAx = 2
+# lstArrK0, lstArrGrad = mag.getG_Rosette(**argCom); nAx = 2
 # lstArrK0, lstArrGrad = mag.getG_Rosette_Trad(**argCom); nAx = 2
 # lstArrK0, lstArrGrad = mag.getG_Shell3d(**argCom); nAx = 3
-# lstArrK0, lstArrGrad = mag.getG_Yarnball(**argCom); nAx = 3
+lstArrK0, lstArrGrad = mag.getG_Yarnball(**argCom); nAx = 3
 # lstArrK0, lstArrGrad = mag.getG_Seiffert(**argCom); nAx = 3
 # lstArrK0, lstArrGrad = mag.getG_Cones(**argCom); nAx = 3
 

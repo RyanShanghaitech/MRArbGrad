@@ -48,8 +48,6 @@ public:
     Yarnball(const GeoPara& objGeoPara, const GradPara& objGradPara, f64 kRhoPhi):
         MrTraj(objGeoPara,objGradPara,0,0)
     {
-        m_objGeoPara = objGeoPara;
-        m_objGradPara = objGradPara;
         m_nRot = calNRot(kRhoPhi, m_objGeoPara.nPix);
         m_rotang = calRotAng(m_nRot);
         m_nAcq = m_nRot*m_nRot;
@@ -63,7 +61,7 @@ public:
         {
             f64 tht0 = i*m_rotang;
             m_vptfBaseTraj[i] = new Yarnball_TrajFunc(kRhoPhi, tht0);
-            if(!m_vptfBaseTraj[i]) throw std::runtime_error("out of memory");
+            ASSERT(m_vptfBaseTraj[i]!=NULL);
 
             calGrad(&m_vv3BaseM0PE[i], &m_vvv3BaseGRO[i], NULL, *m_vptfBaseTraj[i], m_objGradPara);
             m_nSampMax = std::max(m_nSampMax, (i64)m_vvv3BaseGRO[i].size());
@@ -78,20 +76,7 @@ public:
         }
     }
 
-    virtual bool getGRO(vv3* pvv3GRO, i64 iAcq)
-    {
-        bool ret = true;
-        const f64& rotang = m_rotang;
-        i64 iSet = iAcq%m_nRot;
-        i64 iRot = iAcq/m_nRot;
-
-        *pvv3GRO = m_vvv3BaseGRO[iSet];
-        ret &= v3::rotate(pvv3GRO, 2, rotang*iRot, *pvv3GRO);
-        
-        return ret;
-    }
-
-    virtual bool getM0PE(v3* pv3M0PE, i64 iAcq)
+    virtual bool getGrad(v3* pv3M0PE, vv3* pvv3GRO, i64 iAcq)
     {
         bool ret = true;
         const f64& rotang = m_rotang;
@@ -99,8 +84,10 @@ public:
         i64 iRot = iAcq/m_nRot;
 
         *pv3M0PE = m_vv3BaseM0PE[iSet];
+        *pvv3GRO = m_vvv3BaseGRO[iSet];
         ret &= v3::rotate(pv3M0PE, 2, rotang*iRot, *pv3M0PE);
-
+        ret &= v3::rotate(pvv3GRO, 2, rotang*iRot, *pvv3GRO);
+        
         return ret;
     }
 
@@ -113,83 +100,41 @@ protected:
     vvv3 m_vvv3BaseGRO;
 };
 
-/* incomplete - we plan to test 2D real-time first before 3D
-class AxrollYarnball_RT: public MrTraj
+/* incomplete - we plan to test 2D real-time first before 3D */
+class Yarnball_RT: public MrTraj
 {
 public:
-    AxrollYarnball_RT(const GeoPara& objGeoPara, const GradPara& objGradPara, f64 dRhoPhi, i64 lNAcq)
+    Yarnball_RT(const GeoPara& objGeoPara, const GradPara& objGradPara, f64 kRhoPhi, i64 nAcq):
+        MrTraj(objGeoPara, objGradPara, nAcq, 0)
     {
-        m_objGeoPara = objGeoPara;
-        m_objGradPara = objGradPara;
-        m_nAcq = lNAcq;
-
-        m_dRhoPhi = dRhoPhi;
-
-        m_vv3M0PE.resize(lNAcq); std::fill(m_vv3M0PE.begin(), m_vv3M0PE.end(), v3(-1,-1,-1));
-        m_vlNWait.resize(lNAcq); std::fill(m_vlNWait.begin(), m_vlNWait.end(), -1);
-        m_vlNSamp.resize(lNAcq); std::fill(m_vlNSamp.begin(), m_vlNSamp.end(), -1);
+        m_kRhoPhi = kRhoPhi;
+        m_nRot = calNRot(kRhoPhi, objGeoPara.nPix);
+        m_dRotAng = 2e0*M_PI/m_nRot;
+        genRandIdx(&m_vi64Idx, m_nRot);
+        
+        Yarnball_TrajFunc tf(m_kRhoPhi, M_PI/2e0, 0);
+        vv3 vv3GRO; calGrad(NULL, &vv3GRO, NULL, tf, m_objGradPara, 4);
+        m_nSampMax = vv3GRO.size();
     }
 
-    virtual ~AxrollYarnball_RT()
-    {
-        ;
-    }
+    virtual ~Yarnball_RT()
+    {}
     
-    virtual bool getGRO(vv3* pvv3GRO, i64 iAcq) const
+    virtual bool getGrad(v3* pv3M0PE, vv3* pvv3GRO, i64 iAcq)
     {
         bool ret = true;
-        v3 v3Tht0Phi0; genRand3d(&v3Tht0Phi0, iAcq);
-        v3Tht0Phi0 *= 2*M_PI;
-        v3Tht0Phi0 -= M_PI;
-        TrajFunc* ptfTraj = new Yarnball_TrajFunc(m_dRhoPhi, v3Tht0Phi0.x, v3Tht0Phi0.y);
-        if (!ptfTraj) throw std::runtime_error("out of memory");
-        if (iAcq>=m_nAcq) throw std::runtime_error("iAcq>=m_nAcq");
-        ret &= calGrad(&m_vv3M0PE[iAcq], plv3GRO, NULL, &m_vlNWait[iAcq], &m_vlNSamp[iAcq], *ptfTraj, m_objGradPara, 4);
-        m_vv3M0PE[iAcq] = v3::axisroll(m_vv3M0PE[iAcq], iAcq%3);
-        {
-            lv3::iterator ilv3GRO = plv3GRO->begin();
-            while (ilv3GRO!=plv3GRO->end())
-            {
-                *ilv3GRO = v3::axisroll(*ilv3GRO, iAcq % 3);
-            }
-        }
-        delete ptfTraj;
+        i64 iTht = iAcq%m_nRot;
+        i64 iPhi = iAcq/m_nRot;
+        f64 tht = m_dRotAng*m_vi64Idx[iTht];
+        f64 phi = m_dRotAng*m_vi64Idx[iPhi];
+        Yarnball_TrajFunc tf(m_kRhoPhi, tht, phi);
+        ASSERT(iAcq<m_nAcq);
+        ret &= calGrad(pv3M0PE, pvv3GRO, NULL, tf, m_objGradPara, 4);
         return ret;
     }
 
-    virtual bool getM0PE(v3* pv3M0PE, i64 iAcq) const
-    {
-        if (iAcq>=m_nAcq)
-        {
-            throw std::runtime_error("iAcq>=m_nAcq");
-        }
-        *pv3M0PE = m_vv3M0PE[iAcq];
-        return true;
-    }
-
-    virtual i64 getNWait(i64 iAcq) const
-    {
-        if (iAcq>=m_nAcq)
-        {
-            throw std::runtime_error("iAcq>=m_nAcq");
-        }
-        return m_vlNWait[iAcq];
-    }
-
-    virtual i64 getNSamp(i64 iAcq) const
-    {
-        if (iAcq>=m_nAcq)
-        {
-            throw std::runtime_error("iAcq>=m_nAcq");
-        }
-        return m_vlNSamp[iAcq];
-    }
-
 protected:
-    f64 m_dRhoPhi;
-
-    vv3 m_vv3M0PE;
-    vl m_vlNWait;
-    vl m_vlNSamp;
-}
-*/
+    f64 m_kRhoPhi;
+    i64 m_nRot; f64 m_dRotAng;
+    vi64 m_vi64Idx;
+};

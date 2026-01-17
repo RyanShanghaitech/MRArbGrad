@@ -21,7 +21,7 @@ f64 gMrTraj_g1Norm = 0e0; // final gradient amplitude
  * 2. a acquisition plan which decides which Base trajectory to use,
  *    and how to transform to the desired gradient of a particular acquisition.
  * Or, do nothing in the constructor and compute the gradient on the fly
- * in getGRO() function.
+ * in getGrad() function.
  * 
  * notice:
  * 1. Different Base trajectoires share the same traj. func. getK(),
@@ -50,14 +50,16 @@ public:
         m_objGradPara(m_objGradPara),
         m_nAcq(m_nAcq),
         m_nSampMax(m_nSampMax)
-    { mag = Mag(); }
+    {
+        m_mag = Mag();
+        m_vv3GRampFront.reserve(1000);
+        m_vv3GRampBack.reserve(1000);
+    }
     
     virtual ~MrTraj()
     {}
     
-    virtual bool getGRO(vv3* pvv3GRO, i64 iAcq) = 0;
-    
-    virtual bool getM0PE(v3* pv3M0PE, i64 iAcq) = 0;
+    virtual bool getGrad(v3* pv3M0PE, vv3* pvv3GRO, i64 iAcq) = 0;
 
     const GeoPara& getGeoPara()
     { return m_objGeoPara; }
@@ -93,25 +95,20 @@ public:
     }
 
     // a deterministic shuffle sequence generator
-    static bool genRandIdx(vi64* pvi64Idx, i64 num)
+    static bool genRandIdx(vi64* pvi64Idx, i64 len)
     {
         // resize target container rationally
         pvi64Idx->clear();
-        pvi64Idx->reserve(num);
+        pvi64Idx->reserve(len);
 
-        // generate sequantial index
-        vi64 vi64SeqIdx; vi64SeqIdx.reserve(num);
-        for(i64 i = 0; i < num; ++i)
-        { vi64SeqIdx.push_back(i); }
-        
         // decide step size, make step size and num of idx coprime
-        i64 inc = (i64)(num*(GOLDRAT-1));
-        while (gcd(inc, num)!=1)
-        { ++inc; }
+        i64 inc = (i64)round(len*(GOLDRAT-1));
+        while (gcd(inc, len)!=1)
+        { --inc; }
 
         // generate random index
-        for(i64 i = 0; i < num; ++i)
-        { pvi64Idx->push_back(i*inc%num); }
+        for(i64 i = 0; i < len; ++i)
+        { pvi64Idx->push_back(i*inc%len); }
 
         return true;
     }
@@ -150,7 +147,9 @@ protected:
     i64 m_nSampMax;
 
     // solver settings
-    Mag mag;
+    Mag m_mag;
+
+    vv3 m_vv3GRampFront, m_vv3GRampBack;
     
     // calculate required num. of rot. to satisfy Nyquist sampling (for spiral only)
     static i64 calNRot(f64 kRhoPhi, i64 nPix)
@@ -215,8 +214,8 @@ protected:
         const f64& gLim = objGradPara.gLim;
         const f64& dt = objGradPara.dt;
 
-        mag.setup(&tf, sLim, gLim, dt, oversamp, gMrTraj_g0Norm, gMrTraj_g1Norm);
-        ret &= mag.solve(pvv3G, pvf64P);
+        m_mag.init(&tf, sLim, gLim, dt, oversamp, gMrTraj_g0Norm, gMrTraj_g1Norm);
+        ret &= m_mag.solve(pvv3G, pvf64P);
 
         return ret;
     }
@@ -228,8 +227,8 @@ protected:
         const f64& gLim = objGradPara.gLim;
         const f64& dt = objGradPara.dt;
 
-        mag.setup(vv3TrajSamp, sLim, gLim, dt, oversamp, gMrTraj_g0Norm, gMrTraj_g1Norm);
-        ret &= mag.solve(pvv3G, pvf64P);
+        m_mag.init(vv3TrajSamp, sLim, gLim, dt, oversamp, gMrTraj_g0Norm, gMrTraj_g1Norm);
+        ret &= m_mag.solve(pvv3G, pvf64P);
 
         return ret;
     }
@@ -264,10 +263,14 @@ protected:
             &size_interpolated, &size_sdot, &size_st, gfin_empty, ds_empty);
 
         // Copy results to C++ outputs
-        pvv3G->clear();
-        for (i64 i = 0; i < size_interpolated; ++i)
+        if (pvv3G)
         {
-            pvv3G->push_back(v3(p_gx[i], p_gy[i], p_gz[i]));
+            pvv3G->clear();
+            pvv3G->reserve(size_interpolated);
+            for (i64 i = 0; i < size_interpolated; ++i)
+            {
+                pvv3G->push_back(v3(p_gx[i], p_gy[i], p_gz[i]));
+            }
         }
         
         free(p_Cx);    free(p_Cy);    free(p_Cz);
@@ -378,29 +381,27 @@ protected:
         if (gMrTraj_g0Norm==0e0 && pvv3GRO)
         {
             // add ramp gradient to satisfy desired Gstart and Gfinal
-            vv3 vv3GRampFront;
-            ret &= Mag::ramp_front(&vv3GRampFront, pvv3GRO->front(), v3(), sLim, dt);
-            pvv3GRO->insert(pvv3GRO->begin(), vv3GRampFront.begin(), vv3GRampFront.end());
+            m_vv3GRampFront.clear();
+            ret &= Mag::ramp_front(&m_vv3GRampFront, pvv3GRO->front(), v3(), sLim, dt);
+            pvv3GRO->insert(pvv3GRO->begin(), m_vv3GRampFront.begin(), m_vv3GRampFront.end());
             
             // corresponding parameter sequence
             if (pvf64P && !pvf64P->empty()) // null: user does not need p seq, empty: p seq not supported
             {
-                vf64 vf64PInsert = vf64(vv3GRampFront.size(), pvf64P->front());
-                pvf64P->insert(pvf64P->begin(), vf64PInsert.begin(), vf64PInsert.end());
+                pvf64P->insert(pvf64P->begin(), m_vv3GRampFront.size(), pvf64P->front());
             }
         }
         if (gMrTraj_g1Norm==0e0 && pvv3GRO)
         {
             // add ramp gradient to satisfy desired Gstart and Gfinal
-            vv3 vv3GRampBack;
-            ret &= Mag::ramp_back(&vv3GRampBack, pvv3GRO->back(), v3(), sLim, dt);
-            pvv3GRO->insert(pvv3GRO->end(), vv3GRampBack.begin(), vv3GRampBack.end());
+            m_vv3GRampBack.clear();
+            ret &= Mag::ramp_back(&m_vv3GRampBack, pvv3GRO->back(), v3(), sLim, dt);
+            pvv3GRO->insert(pvv3GRO->end(), m_vv3GRampBack.begin(), m_vv3GRampBack.end());
             
             // corresponding parameter sequence
             if (pvf64P && !pvf64P->empty()) // null: user does not need p seq, empty: p seq not supported
             {
-                vf64 vf64PInsert = vf64(vv3GRampBack.size(), pvf64P->back());
-                pvf64P->insert(pvf64P->end(), vf64PInsert.begin(), vf64PInsert.end());
+                pvf64P->insert(pvf64P->end(), m_vv3GRampBack.size(), pvf64P->back());
             }
         }
 

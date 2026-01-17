@@ -304,15 +304,10 @@ public:
         }
     }
 
-    virtual bool getGRO(vv3* pvv3G, i64 iAcq)
+    virtual bool getGrad(v3* pv3M0PE, vv3* pvv3G, i64 iAcq)
     {
-        *pvv3G = m_vv3G;
-        return true;
-    }
-
-    virtual bool getM0PE(v3* pv3M0PE, i64 iAcq)
-    {
-        ptfTrajFunc->getK0(pv3M0PE);
+        if (pv3M0PE) ptfTrajFunc->getK0(pv3M0PE);
+        if (pvv3G) *pvv3G = m_vv3G;
         return true;
     }
 
@@ -347,7 +342,7 @@ PyObject* calGrad4ExFunc(PyObject* self, PyObject* const* args, Py_ssize_t narg)
     );
 
     vv3 vv3G;
-    traj.getGRO(&vv3G, 0);
+    traj.getGrad(NULL, &vv3G, 0);
     vf64 vf64P;
     traj.getPRO(&vf64P, 0);
 
@@ -373,7 +368,7 @@ PyObject* calGrad4ExSamp(PyObject* self, PyObject* const* args, Py_ssize_t narg)
         );
         
         vv3 vv3G;
-        traj.getGRO(&vv3G, 0);
+        traj.getGrad(NULL, &vv3G, 0);
         vf64 vf64P;
         traj.getPRO(&vf64P, 0);
 
@@ -400,8 +395,9 @@ bool getG(MrTraj* pmt, vv3* pvv3M0PE, vvv3* pvvv3GRO)
         i64 _i = enShuf?vi64ShufSeq[i]:i;
         
         // get M0PE and GRO
-        vv3 vv3GRO; ret &= pmt->getGRO(&vv3GRO, _i);
-        v3 v3M0PE; ret &= pmt->getM0PE(&v3M0PE, _i);
+        vv3 vv3GRO;
+        v3 v3M0PE;
+        ret &= pmt->getGrad(&v3M0PE, &vv3GRO, _i);
 
         // reverse gradient if needed
         if (gMain_enTrajRev) ret &= Mag::revGrad(&v3M0PE, &vv3GRO, v3M0PE, vv3GRO, dt);
@@ -557,6 +553,25 @@ PyObject* getG_Yarnball(PyObject* self, PyObject* const* args, Py_ssize_t narg)
     return Py_BuildValue("OO", cvtVv3toList(vv3K0), cvtVvv3toList(vvv3G));
 }
 
+PyObject* getG_Yarnball_RT(PyObject* self, PyObject* const* args, Py_ssize_t narg)
+{
+    checkNarg(narg, 7);
+
+    MrTraj::GeoPara objGeoPara;
+    MrTraj::GradPara objGradPara;
+    getGeoGradPara(args, &objGeoPara, &objGradPara);
+
+    f64 kRhoPhi = (f64)PyFloat_AsDouble(args[5]);
+    i64 nAcq = (i64)PyLong_AsLong(args[6]);
+    Yarnball_RT traj(objGeoPara, objGradPara, kRhoPhi, nAcq);
+
+    vv3 vv3K0;
+    vvv3 vvv3G;
+    getG(&traj, &vv3K0, &vvv3G);
+
+    return Py_BuildValue("OO", cvtVv3toList(vv3K0), cvtVvv3toList(vvv3G));
+}
+
 PyObject* getG_Seiffert(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 {
     checkNarg(narg, 7);
@@ -634,7 +649,6 @@ PyObject* setMaxG0(PyObject* self, PyObject* const* args, Py_ssize_t narg)
     bool enMaxG0 = PyLong_AsLong(args[0]);
     if (enMaxG0) gMrTraj_g0Norm = 1e6;
     else gMrTraj_g0Norm = 0e0;
-    PRINT(gMrTraj_g0Norm); // test
     Py_INCREF(Py_None);
     return Py_None;
 }
@@ -646,7 +660,6 @@ PyObject* setMaxG1(PyObject* self, PyObject* const* args, Py_ssize_t narg)
     bool enMaxG1 = PyLong_AsLong(args[0]);
     if (enMaxG1) gMrTraj_g1Norm = 1e6;
     else gMrTraj_g1Norm = 0e0;
-    PRINT(gMrTraj_g1Norm); // test
     Py_INCREF(Py_None);
     return Py_None;
 }
@@ -714,6 +727,7 @@ static PyMethodDef aMeth[] =
     {"getG_Rosette_Trad", (PyCFunction)getG_Rosette_Trad, METH_FASTCALL, ""},
     {"getG_Shell3d", (PyCFunction)getG_Shell3d, METH_FASTCALL, ""},
     {"getG_Yarnball", (PyCFunction)getG_Yarnball, METH_FASTCALL, ""},
+    {"getG_Yarnball_RT", (PyCFunction)getG_Yarnball_RT, METH_FASTCALL, ""},
     {"getG_Seiffert", (PyCFunction)getG_Seiffert, METH_FASTCALL, ""},
     {"getG_Cones", (PyCFunction)getG_Cones, METH_FASTCALL, ""},
     {"setSolverMtg", (PyCFunction)setSolverMtg, METH_FASTCALL, ""},

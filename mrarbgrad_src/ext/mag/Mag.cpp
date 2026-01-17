@@ -2,9 +2,7 @@
 #include <algorithm>
 #include <cstdio>
 #include "../utility/global.h"
-#include "../utility/LinIntp.h"
 #include "Mag.h"
-#include "../utility/SplineIntp.h"
 
 i64 gMag_oversamp = -1; // oversample ratio, overwrite the set value
 bool gMag_enSFS = false; // Single Forward Sweep flag
@@ -14,18 +12,28 @@ i64 gMag_nTrajSamp = 1000; // num. of samp. when doing Traj. Rep.
 
 Mag::Mag()
 {
+    // for solver
     m_dt = 10e-6; m_oversamp = 8;
-    i64 nSampReserve = i64(100e-3/m_dt*m_oversamp); // reserve for 100ms
+    i64 nSampReserve = i64(100e-3/m_dt); // reserve for 100ms
 
-    m_vf64P_Bac.reserve(nSampReserve);
-    m_vv3G_Bac.reserve(nSampReserve);
-    m_vf64GNorm_Bac.reserve(nSampReserve);
+    m_vf64P_Bac.reserve(nSampReserve*m_oversamp);
+    m_vv3G_Bac.reserve(nSampReserve*m_oversamp);
+    m_vf64GNorm_Bac.reserve(nSampReserve*m_oversamp);
 
-    m_vf64P_For.reserve(nSampReserve);
-    m_vv3G_For.reserve(nSampReserve);
+    m_vf64P_For.reserve(nSampReserve*m_oversamp);
+    m_vv3G_For.reserve(nSampReserve*m_oversamp);
+
+    m_vf64P.reserve(nSampReserve);
+    m_vv3G.reserve(nSampReserve);
+    
+    // for trajectory reparameterization
+    m_vv3TrajSamp.resize(gMag_nTrajSamp);
+
+    m_intp.init(nSampReserve*m_oversamp);
+    m_intp.m_eSearchMode = Intp::ECached;
 }
 
-bool Mag::setup
+bool Mag::init
     (
         TrajFunc* ptTraj,
         f64 sLim, f64 gLim,
@@ -42,15 +50,14 @@ bool Mag::setup
 
     if (gMag_enTrajRep)
     {
-        vv3 vv3TrajSamp(gMag_nTrajSamp);
         f64 p0 = ptTraj->getP0();
         f64 p1 = ptTraj->getP1();
         for (i64 i = 0; i < gMag_nTrajSamp; ++i)
         {
             f64 p = p0 + (p1-p0) * (i)/f64(gMag_nTrajSamp-1);
-            ptTraj->getK(&vv3TrajSamp[i], p);
+            ptTraj->getK(&m_vv3TrajSamp[i], p);
         }
-        m_sptfTraj = Spline_TrajFunc(vv3TrajSamp);
+        m_sptfTraj = Spline_TrajFunc(m_vv3TrajSamp);
         m_ptfTraj = &m_sptfTraj;
     }
     else
@@ -61,7 +68,7 @@ bool Mag::setup
     return true;
 }
 
-bool Mag::setup
+bool Mag::init
     (
         const vv3& vv3TrajSamp,
         f64 sLim, f64 gLim,
@@ -166,8 +173,8 @@ bool Mag::solve(vv3* pvv3G, vf64* pvf64P)
     bool ret = true;
     f64 p0 = m_ptfTraj->getP0();
     f64 p1 = m_ptfTraj->getP1();
-    vv3 vv3G; if (!pvv3G) pvv3G = &vv3G;
-    vf64 vf64P; if (!pvf64P) pvf64P = &vf64P;
+    m_vv3G.clear(); if (!pvv3G) pvv3G = &m_vv3G;
+    m_vf64P.clear(); if (!pvf64P) pvf64P = &m_vf64P;
     bool isQDESucc = true; (void)isQDESucc;
     i64 nIter = 0;
 
@@ -217,10 +224,7 @@ bool Mag::solve(vv3* pvv3G, vf64* pvf64P)
     std::reverse(m_vf64P_Bac.begin(), m_vf64P_Bac.end());
     std::reverse(m_vf64GNorm_Bac.begin(), m_vf64GNorm_Bac.end());
 
-    LinIntp intp;
-    // SplineIntp intp;
-    intp.m_eSearchMode = Intp::ECached;
-    if (!gMag_enSFS) intp.fit(m_vf64P_Bac, m_vf64GNorm_Bac);
+    if (!gMag_enSFS) m_intp.fit(m_vf64P_Bac, m_vf64GNorm_Bac);
     
     nIter += m_vf64P_Bac.size();
 
@@ -231,7 +235,7 @@ bool Mag::solve(vv3* pvv3G, vf64* pvf64P)
     f64 g0Norm = m_g0Norm;
     g0Norm = std::min(g0Norm, m_gLim);
     g0Norm = std::min(g0Norm, std::sqrt(m_sLim*getCurRad(p0)));
-    g0Norm = std::min(g0Norm, gMag_enSFS?1e15:intp.eval(p0));
+    g0Norm = std::min(g0Norm, gMag_enSFS?1e15:m_intp.eval(p0));
     v3 g0 = g0Unit * g0Norm;
 
     m_vf64P_For.clear(); m_vf64P_For.push_back(p0);
@@ -252,7 +256,7 @@ bool Mag::solve(vv3* pvv3G, vf64* pvf64P)
         }
         else
         {
-            f64 gNormBac = intp.eval(p);
+            f64 gNormBac = m_intp.eval(p);
             gNorm = std::min(gNorm, gNormBac);
             if (gNormBac<=0)
             {
@@ -410,17 +414,19 @@ f64 Mag::ramp_back(vv3* pvv3GRamp, const v3& g1, const v3& g1Des, i64 nSamp, f64
 bool Mag::revGrad(v3* pv3M0Dst, vv3* pvv3Dst, const v3& v3M0Src, const vv3& vv3Src, f64 dt)
 {
     bool ret = true;
+    i64 nSamp = vv3Src.size();
 
-    if(vv3Src.size() <= 1) ret = false;
+    ASSERT(nSamp > 1);
+    ASSERT((i64)pvv3Dst->capacity() >= nSamp);
 
     // derive Total M0
     *pv3M0Dst = v3M0Src + calM0(vv3Src, dt);
     
     // reverse gradient
-    *pvv3Dst = vv3(vv3Src.rbegin(), vv3Src.rend());
-    for (int64_t i = 0; i < (i64)pvv3Dst->size(); ++i)
+    pvv3Dst->resize(nSamp);
+    for (int64_t i = 0; i < nSamp; ++i)
     {
-        (*pvv3Dst)[i] *= -1;
+        (*pvv3Dst)[i] = vv3Src[nSamp-1-i]*(-1);
     }
 
     return ret;

@@ -119,7 +119,7 @@ public:
         m_nAcq = (i64)round(-2.53819233e-03*nPix*nPix + 8.53447761e+01*nPix); // fitted
 
         m_ptfBaseTraj = new Seiffert_Trajfunc(dM, dUMax);
-        if(!m_ptfBaseTraj) throw std::runtime_error("out of memory");
+        ASSERT(m_ptfBaseTraj!=NULL);
 
         calGrad(&m_v3BaseM0PE, &m_vv3BaseGRO, NULL, *m_ptfBaseTraj, m_objGradPara);
         m_nSampMax = m_vv3BaseGRO.size();
@@ -130,22 +130,13 @@ public:
         delete m_ptfBaseTraj;
     }
     
-    virtual bool getGRO(vv3* pvv3GRO, i64 iAcq)
+    virtual bool getGrad(v3* pv3M0PE, vv3* pvv3GRO, i64 iAcq)
     {
         bool ret = true;
         vi64 vi64Ax; vf64 vf64Ang;
         ret &= getRotAng(&vi64Ax, &vf64Ang, iAcq);
-        ret &= appRotAng(pvv3GRO, m_vv3BaseGRO, vi64Ax, vf64Ang);
-
-        return ret;
-    }
-
-    virtual bool getM0PE(v3* pv3M0PE, i64 iAcq)
-    {
-        bool ret = true;
-        vi64 vi64Ax; vf64 vf64Ang;
-        ret &= getRotAng(&vi64Ax, &vf64Ang, iAcq);
-        ret &= appRotAng(pv3M0PE, m_v3BaseM0PE, vi64Ax, vf64Ang);
+        if (pv3M0PE) ret &= appRotAng(pv3M0PE, m_v3BaseM0PE, vi64Ax, vf64Ang);
+        if (pvv3GRO) ret &= appRotAng(pvv3GRO, m_vv3BaseGRO, vi64Ax, vf64Ang);
 
         return ret;
     }

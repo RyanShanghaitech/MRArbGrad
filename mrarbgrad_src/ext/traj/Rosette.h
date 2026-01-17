@@ -47,7 +47,7 @@ public:
         MrTraj_2D(objGeoPara,objGradPara,0,0,0,0,v3(),vv3())
     {
         m_ptfBaseTraj = new Rosette_TrajFunc(om1, om2, tMax);
-        if(!m_ptfBaseTraj) throw std::runtime_error("out of memory");
+        ASSERT(m_ptfBaseTraj!=NULL);
         m_nStack = nStack;
 
         i64 nRot = calNRot(m_ptfBaseTraj, 0e0, (M_PI/2e0)/om1, m_objGeoPara.nPix);
@@ -73,11 +73,8 @@ public:
     Rosette_Trad(const GeoPara& objGeoPara, const GradPara& objGradPara, i64 nStack, f64 om1, f64 om2, f64 tMax, f64 dTE):
         MrTraj_2D(objGeoPara,objGradPara,0,0,0,0,v3(),vv3())
     {
-        m_objGeoPara = objGeoPara;
-        m_objGradPara = objGradPara;
-
         m_ptfBaseTraj = new Rosette_TrajFunc(om1, om2, tMax);
-        if(!m_ptfBaseTraj) throw std::runtime_error("out of memory");
+        ASSERT(m_ptfBaseTraj!=NULL);
         m_nStack = nStack;
         i64 nRot = calNRot(m_ptfBaseTraj, 0e0, (M_PI/2e0)/om1, m_objGeoPara.nPix);
         m_nAcq = nRot*m_nStack;
