@@ -27,7 +27,7 @@ You can also install via `pip install .` but remember to delete `*.egg-info` or 
 ## Examples & Usages
 Examples for generating gradient waveforms for either built-in trajectory (trajectory library) or external trajectory (expressed by trajectory function or trajectory samples) can be found in the `example` folder.
 
-## Citation
+## Reference
 If this project helps you, please cite [our paper](https://ieeexplore.ieee.org/document/11352950):
 
 [1] Luo R, Huang H, Miao Q, Xu J, Hu P, Qi H. Real-Time Gradient Waveform Design for Arbitrary k-Space Trajectories. IEEE Transactions on Biomedical Engineering. 2026;1–12. 

@@ -70,20 +70,21 @@ class VDSpiral_RT: public MrTraj
 {
     // TODO: Goldang sampling is incomplete, shuffled sampling is incomplete.
 public:
-    VDSpiral_RT(const GeoPara& objGeoPara, const GradPara& objGradPara, f64 kRhoPhi0, f64 kRhoPhi1, i64 nAcq):
+    VDSpiral_RT(const GeoPara& objGeoPara, const GradPara& objGradPara, f64 kRhoPhi0, f64 kRhoPhi1):
     /*
      * nAcq: Num of Acq, used to preallocate an array to store PE M0
      */
-        MrTraj(objGeoPara,objGradPara,nAcq,0)
+        MrTraj(objGeoPara,objGradPara,0,0)
     {
         m_kRhoPhi0 = kRhoPhi0;
         m_kRhoPhi1 = kRhoPhi1;
         m_nRot = calNRot(kRhoPhi1, objGeoPara.nPix);
         m_dRotAng = 2e0*M_PI/m_nRot;
         genRandIdx(&m_vi64Idx, m_nRot);
+        m_nAcq = m_nRot;
 
         VDSpiral_TrajFunc tf(m_kRhoPhi0, m_kRhoPhi1, 0);
-        vv3 vv3GRO; calGrad(NULL, &vv3GRO, NULL, tf, m_objGradPara, 4);
+        vv3 vv3GRO; calGrad(NULL, &vv3GRO, NULL, tf, m_objGradPara, 2);
         m_nSampMax = vv3GRO.size();
     }
 
@@ -93,9 +94,9 @@ public:
     virtual bool getGrad(v3* pv3M0PE, vv3* pvv3GRO, i64 iAcq)
     {
         bool ret = true;
-        VDSpiral_TrajFunc tf(m_kRhoPhi0, m_kRhoPhi1, m_vi64Idx[iAcq]*m_dRotAng);
-        ASSERT(iAcq < m_nAcq);
-        ret &= calGrad(pv3M0PE, pvv3GRO, NULL, tf, m_objGradPara, 4);
+        ASSERT(iAcq >= 0);
+        VDSpiral_TrajFunc tf(m_kRhoPhi0, m_kRhoPhi1, m_vi64Idx[iAcq%m_nRot]*m_dRotAng);
+        ret &= calGrad(pv3M0PE, pvv3GRO, NULL, tf, m_objGradPara, 2);
         return ret;
     }
 

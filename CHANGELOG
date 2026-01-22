@@ -1,3 +1,6 @@
+4.0.0 (Jan 22, 2026)
+Remove `nAcq` in the real-time trajectory interface as it no longer needed.
+
 3.1.0 (Jan 17, 2026)
 Move most memory allocation to constrcutor. Add Yarnball_RT,
 
