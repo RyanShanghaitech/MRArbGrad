@@ -80,18 +80,18 @@ public:
     {
         bool ret = true;
         const f64& rotang = m_rotang;
-        i64 iSet = iAcq%m_nRot;
-        i64 iRot = iAcq/m_nRot;
+        i64 iPhi = iAcq%m_nRot;
+        i64 iTht = iAcq/m_nRot%m_nRot;
 
         if (pv3M0PE)
         {
-            *pv3M0PE = m_vv3BaseM0PE[iSet];
-            ret &= v3::rotate(pv3M0PE, 2, rotang * iRot, *pv3M0PE);
+            *pv3M0PE = m_vv3BaseM0PE[iTht];
+            ret &= v3::rotate(pv3M0PE, 2, rotang*iPhi, *pv3M0PE);
         }
         if (pvv3GRO)
         {
-            *pvv3GRO = m_vvv3BaseGRO[iSet];
-            ret &= v3::rotate(pvv3GRO, 2, rotang * iRot, *pvv3GRO);
+            *pvv3GRO = m_vvv3BaseGRO[iTht];
+            ret &= v3::rotate(pvv3GRO, 2, rotang*iPhi, *pvv3GRO);
         }
 
         return ret;

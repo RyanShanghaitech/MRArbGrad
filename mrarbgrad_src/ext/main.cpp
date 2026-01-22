@@ -451,7 +451,7 @@ PyObject* getG_VDSpiral(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 
 PyObject* getG_VDSpiral_RT(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 {
-    checkNarg(narg, 8);
+    checkNarg(narg, 7);
 
     MrTraj::GeoPara objGeoPara;
     MrTraj::GradPara objGradPara;
@@ -459,8 +459,7 @@ PyObject* getG_VDSpiral_RT(PyObject* self, PyObject* const* args, Py_ssize_t nar
 
     f64 kRhoPhi0 = (f64)PyFloat_AsDouble(args[5]);
     f64 kRhoPhi1 = (f64)PyFloat_AsDouble(args[6]);
-    i64 nAcq = (i64)PyLong_AsLong(args[7]);
-    VDSpiral_RT traj(objGeoPara, objGradPara, kRhoPhi0, kRhoPhi1, nAcq);
+    VDSpiral_RT traj(objGeoPara, objGradPara, kRhoPhi0, kRhoPhi1);
 
     vv3 vv3K0;
     vvv3 vvv3G;
@@ -555,15 +554,14 @@ PyObject* getG_Yarnball(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 
 PyObject* getG_Yarnball_RT(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 {
-    checkNarg(narg, 7);
+    checkNarg(narg, 6);
 
     MrTraj::GeoPara objGeoPara;
     MrTraj::GradPara objGradPara;
     getGeoGradPara(args, &objGeoPara, &objGradPara);
 
     f64 kRhoPhi = (f64)PyFloat_AsDouble(args[5]);
-    i64 nAcq = (i64)PyLong_AsLong(args[6]);
-    Yarnball_RT traj(objGeoPara, objGradPara, kRhoPhi, nAcq);
+    Yarnball_RT traj(objGeoPara, objGradPara, kRhoPhi);
 
     vv3 vv3K0;
     vvv3 vvv3G;
