@@ -95,7 +95,7 @@ public:
     }
 
     // a deterministic shuffle sequence generator
-    static bool genRandIdx(vi64* pvi64Idx, i64 len)
+    static bool genPermTab(vi64* pvi64Idx, i64 len)
     {
         // resize target container rationally
         pvi64Idx->clear();

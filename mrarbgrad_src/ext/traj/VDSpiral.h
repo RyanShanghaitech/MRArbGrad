@@ -78,14 +78,13 @@ public:
     {
         m_kRhoPhi0 = kRhoPhi0;
         m_kRhoPhi1 = kRhoPhi1;
-        m_nRot = calNRot(kRhoPhi1, objGeoPara.nPix);
-        m_dRotAng = 2e0*M_PI/m_nRot;
-        genRandIdx(&m_vi64Idx, m_nRot);
-        m_nAcq = m_nRot;
+        m_nAcq = calNRot(kRhoPhi1, objGeoPara.nPix);
+        m_dRotAng = 2e0*M_PI/m_nAcq;
+        genPermTab(&m_vi64PermTab, m_nAcq);
 
         VDSpiral_TrajFunc tf(m_kRhoPhi0, m_kRhoPhi1, 0);
-        vv3 vv3GRO; calGrad(NULL, &vv3GRO, NULL, tf, m_objGradPara, 2);
-        m_nSampMax = vv3GRO.size();
+        vv3 vv3GRO; calGrad(NULL, &vv3GRO, NULL, tf, m_objGradPara, 4);
+        m_nSampMax = vv3GRO.size() + 0;
     }
 
     virtual ~VDSpiral_RT()
@@ -95,7 +94,9 @@ public:
     {
         bool ret = true;
         ASSERT(iAcq >= 0);
-        VDSpiral_TrajFunc tf(m_kRhoPhi0, m_kRhoPhi1, m_vi64Idx[iAcq%m_nRot]*m_dRotAng);
+        i64 iPhi = m_vi64PermTab[iAcq%m_nAcq];
+        f64 phi = iPhi*m_dRotAng;
+        VDSpiral_TrajFunc tf(m_kRhoPhi0, m_kRhoPhi1, phi);
         ret &= calGrad(pv3M0PE, pvv3GRO, NULL, tf, m_objGradPara, 2);
         return ret;
     }
@@ -103,6 +104,6 @@ public:
 protected:
     f64 m_kRhoPhi0;
     f64 m_kRhoPhi1;
-    i64 m_nRot; f64 m_dRotAng;
-    vi64 m_vi64Idx;
+    f64 m_dRotAng;
+    vi64 m_vi64PermTab;
 };
