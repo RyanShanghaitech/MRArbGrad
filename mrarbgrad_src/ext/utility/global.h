@@ -24,6 +24,10 @@ typedef std::vector<i64> vi64;
 typedef std::vector<f64> vf64;
 typedef std::list<i64> li64;
 typedef std::list<f64> lf64;
+typedef std::vector<i32> vi32;
+typedef std::vector<f32> vf32;
+typedef std::list<i32> li32;
+typedef std::list<f32> lf32;
 
 typedef std::string str;
 
@@ -49,7 +53,7 @@ inline T gcd(T x, T y)
 #define GOLDRAT (1.6180339887498949e0) // ((1e0+std::sqrt(5e0))/2e0)
 #define GOLDANG (2.3999632297286531e0) // ((3e0-std::sqrt(5e0))*M_PI)
 
-#define PRINT(X) {printf("%s: %ld\n", #X, (i64)(X));}
+#define PRINT(X) {printf("%s: %ld\n", #X, (long)(X));}
 #define PRINT_F(X) {printf("%s: %.3lf\n", #X, (f64)(X));}
 #define PRINT_E(X) {printf("%s: %.3e\n", #X, (f64)(X));}
 #define ASSERT(X) {if(!(X)) throw std::runtime_error(#X);}
@@ -62,4 +66,3 @@ inline T gcd(T x, T y)
     if (glob_enDbgPrint) printf("Elapsed time: %.3lf ms\n", 1e3*cTick/CLOCKS_PER_SEC);
 
 extern bool glob_enDbgPrint;
-    

@@ -376,3 +376,29 @@ def setMagSFS(x): ext.setMagSFS(x)
 def setMagGradRep(x): ext.setMagGradRep(x)
 def setMagTrajRep(x): ext.setMagTrajRep(x)
 def setDbgPrint(x): ext.setDbgPrint(x)
+
+def loadF64(hdr:str, bin:str) -> list[NDArray]:
+    """
+    load saved vector file (float64)
+
+    Args:
+        hdr (str): header (hdr) file path
+        bin (str): bin file path
+
+    Returns:
+        list[NDArray]: list of loaded array
+    """
+    return ext.loadF64(str(hdr), str(bin))
+
+def loadF32(hdr:str, bin:str) -> list[NDArray]:
+    """
+    load saved vector file (float32)
+
+    Args:
+        hdr (str): header (hdr) file path
+        bin (str): bin file path
+
+    Returns:
+        list[NDArray]: list of loaded array
+    """
+    return ext.loadF32(str(hdr), str(bin))

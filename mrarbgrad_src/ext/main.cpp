@@ -137,7 +137,7 @@ bool inline checkNarg(i64 nArg, i64 nArgExp)
 {
     if (nArg != nArgExp)
     {
-        printf("wrong num. of arg, narg=%ld, %ld expected\n", nArg, nArgExp);
+        printf("wrong num. of arg, narg=%ld, %ld expected\n", (long)nArg, (long)nArgExp);
         abort();
         return false;
     }
@@ -389,7 +389,7 @@ bool getG(MrTraj* pmt, vv3* pvv3M0PE, vvv3* pvvv3GRO)
     pvvv3GRO->resize(nAcq);
 
     bool& enShuf = gMain_enShuffle;
-	vi64 vi64ShufSeq; MrTraj::genRandIdx(&vi64ShufSeq, nAcq);
+	vi64 vi64ShufSeq; MrTraj::genPermTab(&vi64ShufSeq, nAcq);
     for (i64 i = 0; i < nAcq; ++i)
     {
         i64 _i = enShuf?vi64ShufSeq[i]:i;
@@ -707,11 +707,46 @@ PyObject* setDbgPrint(PyObject* self, PyObject* const* args, Py_ssize_t narg)
     return Py_None;
 }
 
-vv3 vv3Test;
-PyObject* getTestVal(PyObject* self, PyObject* const* args, Py_ssize_t narg)
+PyObject* loadF64(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 {
-    checkNarg(narg, 0);
-    return Py_BuildValue("O", cvtVv3toNpa(vv3Test));
+    checkNarg(narg, 2);
+    const char* strHdr = PyUnicode_AsUTF8(args[0]);
+    const char* strBin = PyUnicode_AsUTF8(args[1]);
+    typedef std::list<vv3> lvv3;
+    FILE* fHdr = fopen(strHdr, "r");
+    FILE* fBin = fopen(strHdr, "rb");
+
+    lvv3 lvv3Data;
+    bool ret; vv3 vv3Data;
+    while (1)
+    {
+        ret = v3::loadF64(fHdr, fBin, &vv3Data);
+        if (vv3Data.empty() || !ret) break;
+        lvv3Data.push_back(vv3Data);
+    }
+    vvv3 vvv3Data(lvv3Data.begin(), lvv3Data.end());
+    Py_BuildValue("%O", cvtVvv3toList(vvv3Data));
+}
+
+PyObject* loadF32(PyObject* self, PyObject* const* args, Py_ssize_t narg)
+{
+    checkNarg(narg, 2);
+    const char* strHdr = PyUnicode_AsUTF8(args[0]);
+    const char* strBin = PyUnicode_AsUTF8(args[1]);
+    typedef std::list<vv3> lvv3;
+    FILE* fHdr = fopen(strHdr, "r");
+    FILE* fBin = fopen(strHdr, "rb");
+
+    lvv3 lvv3Data;
+    bool ret; vv3 vv3Data;
+    while (1)
+    {
+        ret = v3::loadF32(fHdr, fBin, &vv3Data);
+        if (vv3Data.empty() || !ret) break;
+        lvv3Data.push_back(vv3Data);
+    }
+    vvv3 vvv3Data(lvv3Data.begin(), lvv3Data.end());
+    Py_BuildValue("%O", cvtVvv3toList(vvv3Data));
 }
 
 static PyMethodDef aMeth[] = 
@@ -734,12 +769,13 @@ static PyMethodDef aMeth[] =
     {"setShuf", (PyCFunction)setShuf, METH_FASTCALL, ""},
     {"setMaxG0", (PyCFunction)setMaxG0, METH_FASTCALL, ""},
     {"setMaxG1", (PyCFunction)setMaxG1, METH_FASTCALL, ""},
-    {"getTestVal", (PyCFunction)getTestVal, METH_FASTCALL, ""},
     {"setMagOverSamp", (PyCFunction)setMagOverSamp, METH_FASTCALL, ""},
     {"setMagSFS", (PyCFunction)setMagSFS, METH_FASTCALL, ""},
     {"setMagGradRep", (PyCFunction)setMagGradRep, METH_FASTCALL, ""},
     {"setMagTrajRep", (PyCFunction)setMagTrajRep, METH_FASTCALL, ""},
     {"setDbgPrint", (PyCFunction)setDbgPrint, METH_FASTCALL, ""},
+    {"loadF64", (PyCFunction)loadF64, METH_FASTCALL, ""},
+    {"loadF32", (PyCFunction)loadF32, METH_FASTCALL, ""},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 

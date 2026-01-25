@@ -1,3 +1,6 @@
+4.1.0 (Jan 26, 2026)
+Add loadF64() and loadF32() interface.
+
 4.0.0 (Jan 22, 2026)
 Remove `nAcq` in the real-time trajectory interface as it no longer needed.
 

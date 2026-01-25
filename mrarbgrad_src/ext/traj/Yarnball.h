@@ -115,12 +115,12 @@ public:
         m_kRhoPhi = kRhoPhi;
         m_nRot = calNRot(kRhoPhi, objGeoPara.nPix);
         m_dRotAng = 2e0*M_PI/m_nRot;
-        genRandIdx(&m_vi64Idx, m_nRot);
         m_nAcq = m_nRot*m_nRot;
+        genPermTab(&m_vi64PermTab, m_nAcq);
         
         Yarnball_TrajFunc tf(m_kRhoPhi, M_PI/2e0, 0);
-        vv3 vv3GRO; calGrad(NULL, &vv3GRO, NULL, tf, m_objGradPara, 2);
-        m_nSampMax = vv3GRO.size();
+        vv3 vv3GRO; calGrad(NULL, &vv3GRO, NULL, tf, m_objGradPara, 4);
+        m_nSampMax = vv3GRO.size() + 1; // 1 for redundance
     }
 
     virtual ~Yarnball_RT()
@@ -130,10 +130,10 @@ public:
     {
         bool ret = true;
         ASSERT(iAcq >= 0);
-        i64 iPhi = iAcq%m_nRot;
-        i64 iTht = iAcq/m_nRot%m_nRot;
-        f64 phi = m_dRotAng*m_vi64Idx[iPhi];
-        f64 tht = m_dRotAng*m_vi64Idx[iTht];
+        i64 iPhi = m_vi64PermTab[iAcq%m_nAcq]%m_nRot;
+        i64 iTht = m_vi64PermTab[iAcq%m_nAcq]/m_nRot;
+        f64 phi = m_dRotAng*iPhi;
+        f64 tht = m_dRotAng*iTht;
         Yarnball_TrajFunc tf(m_kRhoPhi, tht, phi);
         ret &= calGrad(pv3M0PE, pvv3GRO, NULL, tf, m_objGradPara, 2);
         return ret;
@@ -142,5 +142,5 @@ public:
 protected:
     f64 m_kRhoPhi;
     i64 m_nRot; f64 m_dRotAng;
-    vi64 m_vi64Idx;
+    vi64 m_vi64PermTab;
 };
