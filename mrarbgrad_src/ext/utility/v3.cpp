@@ -1,6 +1,7 @@
 #include "v3.h"
 #include <array>
 #include <cinttypes>
+#include <cstring> // test
 
 v3::v3() :x(0e0), y(0e0), z(0e0) {}
 v3::v3(f64 _) :x(_), y(_), z(_) {}
@@ -371,14 +372,14 @@ bool v3::saveF64(FILE* pfHdr, FILE* pfBin, const vv3& vv3Data)
     i64 lenData = vv3Data.size();
     fprintf(pfHdr, "float64[%ld][3];\n", (long)lenData);
 
-    f64* bufFile = new f64[lenData*3];
+    f64* bufFile = (f64*)malloc(lenData*3*sizeof(f64));
     for(i64 i=0; i<(i64)lenData; ++i)
     {
         for(i64 j=0; j<3; ++j)
         { bufFile[3*i+j] = (f64)vv3Data[i][j]; }
     }
     ret &= (i64)fwrite(bufFile, sizeof(f64), lenData*3, pfBin)==lenData*3;
-    delete[] bufFile;
+    free(bufFile);
     return ret;
 }
 
@@ -392,14 +393,14 @@ bool v3::loadF64(FILE* pfHdr, FILE* pfBin, vv3* pvv3Data)
     else if (nRead!=1) return false;
     pvv3Data->resize(lenData);
 
-    f64* bufFile = new f64[lenData*3];
+    f64* bufFile = (f64*)malloc(lenData*3*sizeof(f64));
     ret &= (i64)fread(bufFile, sizeof(f64), lenData*3, pfBin)==lenData*3;
-    for(i64 i=0; i<(i64)pvv3Data->size(); ++i)
+    for(i64 i=0; i<lenData; ++i)
     {
         for(i64 j=0; j<3; ++j)
         { (*pvv3Data)[i][j] = (f64)bufFile[3*i+j]; }
     }
-    delete[] bufFile;
+    free(bufFile);
     return ret;
 }
 
@@ -409,14 +410,14 @@ bool v3::saveF32(FILE* pfHdr, FILE* pfBin, const vv3& vv3Data)
     i64 lenData = vv3Data.size();
     fprintf(pfHdr, "float32[%ld][3];\n", (long)lenData);
 
-    f32* bufFile = new f32[lenData*3];
+    f32* bufFile = (f32*)malloc(lenData*3*sizeof(f32));
     for(i64 i=0; i<(i64)lenData; ++i)
     {
         for(i64 j=0; j<3; ++j)
         { bufFile[3*i+j] = (f32)vv3Data[i][j]; }
     }
     ret &= (i64)fwrite(bufFile, sizeof(f32), lenData*3, pfBin)==lenData*3;
-    delete[] bufFile;
+    free(bufFile);
     return ret;
 }
 
@@ -430,13 +431,13 @@ bool v3::loadF32(FILE* pfHdr, FILE* pfBin, vv3* pvv3Data)
     else if (nRead!=1) return false;
     pvv3Data->resize(lenData);
 
-    f32* bufFile = new f32[lenData*3];
+    f32* bufFile = (f32*)malloc(lenData*3*sizeof(f32));
     ret &= (i64)fread(bufFile, sizeof(f32), lenData*3, pfBin)==lenData*3;
-    for(i64 i=0; i<(i64)pvv3Data->size(); ++i)
+    for(i64 i=0; i<lenData; ++i)
     {
         for(i64 j=0; j<3; ++j)
         { (*pvv3Data)[i][j] = (f64)bufFile[3*i+j]; }
     }
-    delete[] bufFile;
+    free(bufFile);
     return ret;
 }

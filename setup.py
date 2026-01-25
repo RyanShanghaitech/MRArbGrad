@@ -4,7 +4,6 @@ from os.path import exists
 from ctypes.util import find_library
 
 useMtg = exists("./mrarbgrad_src/ext/mtg/")
-useJemalloc = find_library("jemalloc") is not None
 
 _sources = \
 [
@@ -23,7 +22,6 @@ modExt = Extension\
 (
     "mrarbgrad.ext", 
     sources = _sources,
-    libraries = ['jemalloc'] if useJemalloc else [],
     include_dirs = ["./mrarbgrad_src/ext/", numpy.get_include()],
     define_macros = [("USE_MTG", None)] if useMtg else None,
     language = 'c++'
