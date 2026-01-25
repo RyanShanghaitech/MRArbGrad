@@ -377,9 +377,23 @@ def setMagGradRep(x): ext.setMagGradRep(x)
 def setMagTrajRep(x): ext.setMagTrajRep(x)
 def setDbgPrint(x): ext.setDbgPrint(x)
 
-def loadF64(hdr:str, bin:str) -> list[NDArray]:
+def saveF64(hdr:str, bin:str, arr:NDArray) -> bool:
     """
-    load saved vector file (float64)
+    save vector file (float64)
+
+    Args:
+        hdr (str): header (hdr) file path
+        bin (str): bin file path
+        arr (NDarray): array to be saved
+
+    Returns:
+        bool: True for success
+    """
+    return ext.saveF64(str(hdr), str(bin), arr)
+
+def loadF64(hdr:str, bin:str) -> list[NDArray]|None:
+    """
+    load vector file (float64)
 
     Args:
         hdr (str): header (hdr) file path
@@ -390,9 +404,23 @@ def loadF64(hdr:str, bin:str) -> list[NDArray]:
     """
     return ext.loadF64(str(hdr), str(bin))
 
-def loadF32(hdr:str, bin:str) -> list[NDArray]:
+def saveF32(hdr:str, bin:str, arr:NDArray) -> bool:
     """
-    load saved vector file (float32)
+    save vector file (float32)
+
+    Args:
+        hdr (str): header (hdr) file path
+        bin (str): bin file path
+        arr (NDarray): array to be saved
+
+    Returns:
+        bool: True for success
+    """
+    return ext.saveF32(str(hdr), str(bin), arr)
+
+def loadF32(hdr:str, bin:str) -> list[NDArray]|None:
+    """
+    load vector file (float32)
 
     Args:
         hdr (str): header (hdr) file path

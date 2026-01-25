@@ -17,6 +17,8 @@
 #include "traj/Cones.h"
 #include "utility/SplineIntp.h"
 
+typedef std::list<vv3> lvv3;
+
 bool gMain_enTrajRev (0);
 bool gMain_enGoldAng (0);
 bool gMain_enShuffle (0);
@@ -133,14 +135,9 @@ bool cvtNpa2Vf64(PyObject* pNumpyArray, vf64* pvf64Out)
     return true;
 }
 
-bool inline checkNarg(i64 nArg, i64 nArgExp)
+bool inline chkNarg(i64 nArg, i64 nArgExp)
 {
-    if (nArg != nArgExp)
-    {
-        printf("wrong num. of arg, narg=%ld, %ld expected\n", (long)nArg, (long)nArgExp);
-        abort();
-        return false;
-    }
+    ASSERT (nArg == nArgExp);
     return true;
 }
 
@@ -187,18 +184,13 @@ public:
         PyObject* _pPyObj_v3 = pPyObj_v3;
         pPyObj_v3 = PyArray_FROM_OTF(pPyObj_v3, NPY_FLOAT64, NPY_ARRAY_CARRAY);
         Py_DECREF(_pPyObj_v3);
-        if (PyArray_SIZE((PyArrayObject*)pPyObj_v3) != 3)
-        {
-            PyErr_SetString(PyExc_RuntimeError, "the return value of getK / getDkDp / getD2kDp2 must be size-3.\n");
-            PyErr_PrintEx(-1);
-            std::abort();
-            return false;
-        }
+        ASSERT (PyArray_SIZE((PyArrayObject*)pPyObj_v3) == 3);
 
         k->x = *(f64*)PyArray_GETPTR1((PyArrayObject*)pPyObj_v3, 0);
         k->y = *(f64*)PyArray_GETPTR1((PyArrayObject*)pPyObj_v3, 1);
         k->z = *(f64*)PyArray_GETPTR1((PyArrayObject*)pPyObj_v3, 2);
-
+        
+        Py_DECREF(pPyObj_v3);
         return true;
     }
 
@@ -215,18 +207,13 @@ public:
         PyObject* _pPyObj_v3 = pPyObj_v3;
         pPyObj_v3 = PyArray_FROM_OTF(pPyObj_v3, NPY_FLOAT64, NPY_ARRAY_CARRAY);
         Py_DECREF(_pPyObj_v3);
-        if (PyArray_SIZE((PyArrayObject*)pPyObj_v3) != 3)
-        {
-            PyErr_SetString(PyExc_RuntimeError, "the return value of getK / getDkDp / getD2kDp2 must be size-3.\n");
-            PyErr_PrintEx(-1);
-            std::abort();
-            return false;
-        }
+        ASSERT (PyArray_SIZE((PyArrayObject*)pPyObj_v3) == 3);
 
         k->x = *(f64*)PyArray_GETPTR1((PyArrayObject*)pPyObj_v3, 0);
         k->y = *(f64*)PyArray_GETPTR1((PyArrayObject*)pPyObj_v3, 1);
         k->z = *(f64*)PyArray_GETPTR1((PyArrayObject*)pPyObj_v3, 2);
 
+        Py_DECREF(pPyObj_v3);
         return true;
     }
 
@@ -243,18 +230,13 @@ public:
         PyObject* _pPyObj_v3 = pPyObj_v3;
         pPyObj_v3 = PyArray_FROM_OTF(pPyObj_v3, NPY_FLOAT64, NPY_ARRAY_CARRAY);
         Py_DECREF(_pPyObj_v3);
-        if (PyArray_SIZE((PyArrayObject*)pPyObj_v3) != 3)
-        {
-            PyErr_SetString(PyExc_RuntimeError, "the return value of getK / getDkDp / getD2kDp2 must be size-3.\n");
-            PyErr_PrintEx(-1);
-            std::abort();
-            return false;
-        }
+        ASSERT (PyArray_SIZE((PyArrayObject*)pPyObj_v3) != 3);
 
         k->x = *(f64*)PyArray_GETPTR1((PyArrayObject*)pPyObj_v3, 0);
         k->y = *(f64*)PyArray_GETPTR1((PyArrayObject*)pPyObj_v3, 1);
         k->z = *(f64*)PyArray_GETPTR1((PyArrayObject*)pPyObj_v3, 2);
 
+        Py_DECREF(pPyObj_v3);
         return true;
     }
 protected:
@@ -325,7 +307,7 @@ private:
 
 PyObject* calGrad4ExFunc(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 {
-    checkNarg(narg, 10);
+    chkNarg(narg, 10);
 
     MrTraj::GeoPara objGeoPara;
     MrTraj::GradPara objGradPara;
@@ -353,7 +335,7 @@ PyObject* calGrad4ExSamp(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 {
     try
     {
-        checkNarg(narg, 6);
+        chkNarg(narg, 6);
 
         MrTraj::GeoPara objGeoPara;
         MrTraj::GradPara objGradPara;
@@ -410,7 +392,7 @@ bool getG(MrTraj* pmt, vv3* pvv3M0PE, vvv3* pvvv3GRO)
 
 PyObject* getG_Spiral(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 {
-    checkNarg(narg, 7);
+    chkNarg(narg, 7);
     
     MrTraj::GeoPara objGeoPara;
     MrTraj::GradPara objGradPara;
@@ -430,7 +412,7 @@ PyObject* getG_Spiral(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 
 PyObject* getG_VDSpiral(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 {
-    checkNarg(narg, 8);
+    chkNarg(narg, 8);
 
     MrTraj::GeoPara objGeoPara;
     MrTraj::GradPara objGradPara;
@@ -451,7 +433,7 @@ PyObject* getG_VDSpiral(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 
 PyObject* getG_VDSpiral_RT(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 {
-    checkNarg(narg, 7);
+    chkNarg(narg, 7);
 
     MrTraj::GeoPara objGeoPara;
     MrTraj::GradPara objGradPara;
@@ -470,7 +452,7 @@ PyObject* getG_VDSpiral_RT(PyObject* self, PyObject* const* args, Py_ssize_t nar
 
 PyObject* getG_Rosette(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 {
-    checkNarg(narg, 9);
+    chkNarg(narg, 9);
 
     MrTraj::GeoPara objGeoPara;
     MrTraj::GradPara objGradPara;
@@ -494,7 +476,7 @@ PyObject* getG_Rosette(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 
 PyObject* getG_Rosette_Trad(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 {
-    checkNarg(narg, 10);
+    chkNarg(narg, 10);
 
     MrTraj::GeoPara objGeoPara;
     MrTraj::GradPara objGradPara;
@@ -518,7 +500,7 @@ PyObject* getG_Rosette_Trad(PyObject* self, PyObject* const* args, Py_ssize_t na
 
 PyObject* getG_Shell3d(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 {
-    checkNarg(narg, 6);
+    chkNarg(narg, 6);
 
     MrTraj::GeoPara objGeoPara;
     MrTraj::GradPara objGradPara;
@@ -536,7 +518,7 @@ PyObject* getG_Shell3d(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 
 PyObject* getG_Yarnball(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 {
-    checkNarg(narg, 6);
+    chkNarg(narg, 6);
 
     MrTraj::GeoPara objGeoPara;
     MrTraj::GradPara objGradPara;
@@ -554,7 +536,7 @@ PyObject* getG_Yarnball(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 
 PyObject* getG_Yarnball_RT(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 {
-    checkNarg(narg, 6);
+    chkNarg(narg, 6);
 
     MrTraj::GeoPara objGeoPara;
     MrTraj::GradPara objGradPara;
@@ -572,7 +554,7 @@ PyObject* getG_Yarnball_RT(PyObject* self, PyObject* const* args, Py_ssize_t nar
 
 PyObject* getG_Seiffert(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 {
-    checkNarg(narg, 7);
+    chkNarg(narg, 7);
 
     MrTraj::GeoPara objGeoPara;
     MrTraj::GradPara objGradPara;
@@ -591,7 +573,7 @@ PyObject* getG_Seiffert(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 
 PyObject* getG_Cones(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 {
-    checkNarg(narg, 6);
+    chkNarg(narg, 6);
 
     MrTraj::GeoPara objGeoPara;
     MrTraj::GradPara objGradPara;
@@ -610,7 +592,7 @@ PyObject* getG_Cones(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 PyObject* setSolverMtg(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 {
     extern bool gMrTraj_enMtg;
-    checkNarg(narg, 1);
+    chkNarg(narg, 1);
     gMrTraj_enMtg = PyLong_AsLong(args[0]);
     Py_INCREF(Py_None);
     return Py_None;
@@ -618,7 +600,7 @@ PyObject* setSolverMtg(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 
 PyObject* setTrajRev(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 {
-    checkNarg(narg, 1);
+    chkNarg(narg, 1);
     gMain_enTrajRev = PyLong_AsLong(args[0]);
     Py_INCREF(Py_None);
     return Py_None;
@@ -626,7 +608,7 @@ PyObject* setTrajRev(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 
 PyObject* setGoldAng(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 {
-    checkNarg(narg, 1);
+    chkNarg(narg, 1);
     gMain_enGoldAng = PyLong_AsLong(args[0]);
     Py_INCREF(Py_None);
     return Py_None;
@@ -634,7 +616,7 @@ PyObject* setGoldAng(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 
 PyObject* setShuf(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 {
-    checkNarg(narg, 1);
+    chkNarg(narg, 1);
     gMain_enShuffle = PyLong_AsLong(args[0]);
     Py_INCREF(Py_None);
     return Py_None;
@@ -643,7 +625,7 @@ PyObject* setShuf(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 PyObject* setMaxG0(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 {
     extern f64 gMrTraj_g0Norm;
-    checkNarg(narg, 1);
+    chkNarg(narg, 1);
     bool enMaxG0 = PyLong_AsLong(args[0]);
     if (enMaxG0) gMrTraj_g0Norm = 1e6;
     else gMrTraj_g0Norm = 0e0;
@@ -654,7 +636,7 @@ PyObject* setMaxG0(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 PyObject* setMaxG1(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 {
     extern f64 gMrTraj_g1Norm;
-    checkNarg(narg, 1);
+    chkNarg(narg, 1);
     bool enMaxG1 = PyLong_AsLong(args[0]);
     if (enMaxG1) gMrTraj_g1Norm = 1e6;
     else gMrTraj_g1Norm = 0e0;
@@ -665,7 +647,7 @@ PyObject* setMaxG1(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 PyObject* setMagOverSamp(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 {
     extern i64 gMag_oversamp;
-    checkNarg(narg, 1);
+    chkNarg(narg, 1);
     gMag_oversamp = PyLong_AsLong(args[0]);
     Py_INCREF(Py_None);
     return Py_None;
@@ -674,7 +656,7 @@ PyObject* setMagOverSamp(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 PyObject* setMagSFS(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 {
     extern bool gMag_enSFS;
-    checkNarg(narg, 1);
+    chkNarg(narg, 1);
     gMag_enSFS = PyLong_AsLong(args[0]);
     Py_INCREF(Py_None);
     return Py_None;
@@ -683,7 +665,7 @@ PyObject* setMagSFS(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 PyObject* setMagGradRep(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 {
     extern bool gMag_enGradRep;
-    checkNarg(narg, 1);
+    chkNarg(narg, 1);
     gMag_enGradRep = PyLong_AsLong(args[0]);
     Py_INCREF(Py_None);
     return Py_None;
@@ -692,7 +674,7 @@ PyObject* setMagGradRep(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 PyObject* setMagTrajRep(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 {
     extern bool gMag_enTrajRep;
-    checkNarg(narg, 1);
+    chkNarg(narg, 1);
     gMag_enTrajRep = PyLong_AsLong(args[0]);
     Py_INCREF(Py_None);
     return Py_None;
@@ -701,20 +683,53 @@ PyObject* setMagTrajRep(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 PyObject* setDbgPrint(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 {
     extern bool glob_enDbgPrint;
-    checkNarg(narg, 1);
+    chkNarg(narg, 1);
     glob_enDbgPrint = PyLong_AsLong(args[0]);
     Py_INCREF(Py_None);
     return Py_None;
 }
 
-PyObject* loadF64(PyObject* self, PyObject* const* args, Py_ssize_t narg)
+PyObject* saveF64(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 {
-    checkNarg(narg, 2);
+    chkNarg(narg, 3);
     const char* strHdr = PyUnicode_AsUTF8(args[0]);
     const char* strBin = PyUnicode_AsUTF8(args[1]);
-    typedef std::list<vv3> lvv3;
+    FILE* fHdr = fopen(strHdr, "w");
+    FILE* fBin = fopen(strBin, "wb");
+    if (fHdr==NULL || fBin==NULL)
+    {
+        if (fHdr) fclose(fHdr);
+        if (fBin) fclose(fBin);
+        Py_INCREF(Py_False);
+        return Py_False;
+    }
+
+    vv3 vv3Data;
+    i64 n = PyList_GET_SIZE(args[2]);
+    for (i64 i=0; i<n; ++i)
+    {
+        cvtNpa2Vv3(PyList_GET_ITEM(args[2], i), &vv3Data);
+        v3::saveF64(fHdr, fBin, vv3Data);
+    }
+
+    Py_INCREF(Py_True);
+    return Py_True;
+}
+
+PyObject* loadF64(PyObject* self, PyObject* const* args, Py_ssize_t narg)
+{
+    chkNarg(narg, 2);
+    const char* strHdr = PyUnicode_AsUTF8(args[0]);
+    const char* strBin = PyUnicode_AsUTF8(args[1]);
     FILE* fHdr = fopen(strHdr, "r");
-    FILE* fBin = fopen(strHdr, "rb");
+    FILE* fBin = fopen(strBin, "rb");
+    if (fHdr==NULL || fBin==NULL)
+    {
+        if (fHdr) fclose(fHdr);
+        if (fBin) fclose(fBin);
+        Py_INCREF(Py_None);
+        return Py_None;
+    }
 
     lvv3 lvv3Data;
     bool ret; vv3 vv3Data;
@@ -724,18 +739,54 @@ PyObject* loadF64(PyObject* self, PyObject* const* args, Py_ssize_t narg)
         if (vv3Data.empty() || !ret) break;
         lvv3Data.push_back(vv3Data);
     }
+    if (fHdr) fclose(fHdr);
+    if (fBin) fclose(fBin);
     vvv3 vvv3Data(lvv3Data.begin(), lvv3Data.end());
-    Py_BuildValue("%O", cvtVvv3toList(vvv3Data));
+    return cvtVvv3toList(vvv3Data);
+}
+
+PyObject* saveF32(PyObject* self, PyObject* const* args, Py_ssize_t narg)
+{
+    chkNarg(narg, 3);
+    const char* strHdr = PyUnicode_AsUTF8(args[0]);
+    const char* strBin = PyUnicode_AsUTF8(args[1]);
+    FILE* fHdr = fopen(strHdr, "w");
+    FILE* fBin = fopen(strBin, "wb");
+    if (fHdr==NULL || fBin==NULL)
+    {
+        if (fHdr) fclose(fHdr);
+        if (fBin) fclose(fBin);
+        Py_INCREF(Py_False);
+        return Py_False;
+    }
+
+    vv3 vv3Data;
+    i64 n = PyList_GET_SIZE(args[2]);
+    for (i64 i=0; i<n; ++i)
+    {
+        cvtNpa2Vv3(PyList_GET_ITEM(args[2], i), &vv3Data);
+        v3::saveF32(fHdr, fBin, vv3Data);
+    }
+
+    Py_INCREF(Py_True);
+    return Py_True;
 }
 
 PyObject* loadF32(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 {
-    checkNarg(narg, 2);
+    chkNarg(narg, 2);
     const char* strHdr = PyUnicode_AsUTF8(args[0]);
     const char* strBin = PyUnicode_AsUTF8(args[1]);
     typedef std::list<vv3> lvv3;
     FILE* fHdr = fopen(strHdr, "r");
-    FILE* fBin = fopen(strHdr, "rb");
+    FILE* fBin = fopen(strBin, "rb");
+    if (fHdr==NULL || fBin==NULL)
+    {
+        if (fHdr) fclose(fHdr);
+        if (fBin) fclose(fBin);
+        Py_INCREF(Py_None);
+        return Py_None;
+    }
 
     lvv3 lvv3Data;
     bool ret; vv3 vv3Data;
@@ -745,8 +796,10 @@ PyObject* loadF32(PyObject* self, PyObject* const* args, Py_ssize_t narg)
         if (vv3Data.empty() || !ret) break;
         lvv3Data.push_back(vv3Data);
     }
+    if (fHdr) fclose(fHdr);
+    if (fBin) fclose(fBin);
     vvv3 vvv3Data(lvv3Data.begin(), lvv3Data.end());
-    Py_BuildValue("%O", cvtVvv3toList(vvv3Data));
+    return cvtVvv3toList(vvv3Data);
 }
 
 static PyMethodDef aMeth[] = 
@@ -774,7 +827,9 @@ static PyMethodDef aMeth[] =
     {"setMagGradRep", (PyCFunction)setMagGradRep, METH_FASTCALL, ""},
     {"setMagTrajRep", (PyCFunction)setMagTrajRep, METH_FASTCALL, ""},
     {"setDbgPrint", (PyCFunction)setDbgPrint, METH_FASTCALL, ""},
+    {"saveF64", (PyCFunction)saveF64, METH_FASTCALL, ""},
     {"loadF64", (PyCFunction)loadF64, METH_FASTCALL, ""},
+    {"saveF32", (PyCFunction)saveF32, METH_FASTCALL, ""},
     {"loadF32", (PyCFunction)loadF32, METH_FASTCALL, ""},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
