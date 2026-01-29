@@ -13,6 +13,8 @@
 bool gMrTraj_enMtg = false; // whether to use Lustig's minTimeGrad solver
 f64 gMrTraj_g0Norm = 0e0; // initial gradient amplitude
 f64 gMrTraj_g1Norm = 0e0; // final gradient amplitude
+i64 gMrTraj_nGradSampRsv = 10000; // buffer size of mag solver
+i64 gMrTraj_nTrajSampRsv = 10000; // num. of samp. when doing Traj. Rep.
 
 /* 
  * A set of trajectories sufficient to fully-sample the k-space
@@ -51,7 +53,11 @@ public:
         m_nAcq(m_nAcq),
         m_nSampMax(m_nSampMax)
     {
-        m_mag = Mag();
+        m_mag = Mag
+        (
+            gMrTraj_nGradSampRsv,
+            gMrTraj_nTrajSampRsv
+        );
         m_vv3GRampFront.reserve(1000);
         m_vv3GRampBack.reserve(1000);
     }

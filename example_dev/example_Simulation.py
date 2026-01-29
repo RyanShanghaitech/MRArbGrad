@@ -23,6 +23,8 @@ mag.setGoldAng(0)
 mag.setShuf(0)
 mag.setMaxG0(0)
 mag.setMaxG1(0)
+mag.setMagGradSamp(10000)
+mag.setMagTrajSamp(1000)
 mag.setMagOverSamp(4)
 mag.setMagSFS(0)
 mag.setMagGradRep(1)
@@ -32,7 +34,7 @@ mag.setDbgPrint(1)
 # calculate gradient
 # lstArrK0, lstArrGrad = mag.getG_Spiral(**argCom); nAx = 2
 # lstArrK0, lstArrGrad = mag.getG_VDSpiral(**argCom, kRhoPhi0=0.5/(16*pi), kRhoPhi1=0.5/(4*pi)); nAx = 2
-# lstArrK0, lstArrGrad = mag.getG_VDSpiral_RT(**argCom, kRhoPhi0=0.5/(16*pi), kRhoPhi1=0.5/(8*pi), nAcq=256//8+2); nAx = 2
+# lstArrK0, lstArrGrad = mag.getG_VDSpiral_RT(**argCom, kRhoPhi0=0.5/(16*pi), kRhoPhi1=0.5/(8*pi)); nAx = 2
 # lstArrK0, lstArrGrad = mag.getG_Rosette(**argCom); nAx = 2
 # lstArrK0, lstArrGrad = mag.getG_Rosette_Trad(**argCom, om1=10*pi, om2=8*pi, tMax=1, tAcq=2e-03); nAx = 2
 # lstArrK0, lstArrGrad = mag.getG_Shell3d(**argCom, kRhoTht = 0.5 / (2 * pi)); nAx = 3

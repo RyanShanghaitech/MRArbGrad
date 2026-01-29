@@ -644,6 +644,24 @@ PyObject* setMaxG1(PyObject* self, PyObject* const* args, Py_ssize_t narg)
     return Py_None;
 }
 
+PyObject* setMagGradSamp(PyObject* self, PyObject* const* args, Py_ssize_t narg)
+{
+    extern i64 gMrTraj_nGradSampRsv;
+    chkNarg(narg, 1);
+    gMrTraj_nGradSampRsv = PyLong_AsLong(args[0]);
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+PyObject* setMagTrajSamp(PyObject* self, PyObject* const* args, Py_ssize_t narg)
+{
+    extern i64 gMrTraj_nTrajSampRsv;
+    chkNarg(narg, 1);
+    gMrTraj_nTrajSampRsv = PyLong_AsLong(args[0]);
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
 PyObject* setMagOverSamp(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 {
     extern i64 gMag_oversamp;
@@ -822,6 +840,8 @@ static PyMethodDef aMeth[] =
     {"setShuf", (PyCFunction)setShuf, METH_FASTCALL, ""},
     {"setMaxG0", (PyCFunction)setMaxG0, METH_FASTCALL, ""},
     {"setMaxG1", (PyCFunction)setMaxG1, METH_FASTCALL, ""},
+    {"setMagGradSamp", (PyCFunction)setMagGradSamp, METH_FASTCALL, ""},
+    {"setMagTrajSamp", (PyCFunction)setMagTrajSamp, METH_FASTCALL, ""},
     {"setMagOverSamp", (PyCFunction)setMagOverSamp, METH_FASTCALL, ""},
     {"setMagSFS", (PyCFunction)setMagSFS, METH_FASTCALL, ""},
     {"setMagGradRep", (PyCFunction)setMagGradRep, METH_FASTCALL, ""},

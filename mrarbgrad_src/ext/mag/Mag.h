@@ -16,7 +16,7 @@ extern i64 gMag_oversamp;
 extern bool gMag_enSFS;
 extern bool gMag_enGradRep;
 extern bool gMag_enTrajRep;
-extern i64 gMag_nTrajSamp;
+extern i64 gMrTraj_nTrajSampRsv;
 
 // virtual TrajFunc, take in discrete samples and construct a Segmentied Cubic Polynomial function
 class Spline_TrajFunc: public TrajFunc
@@ -24,9 +24,9 @@ class Spline_TrajFunc: public TrajFunc
 public:
     Spline_TrajFunc():
         TrajFunc(0,0),
-        m_intpX(gMag_nTrajSamp),
-        m_intpY(gMag_nTrajSamp),
-        m_intpZ(gMag_nTrajSamp)
+        m_intpX(gMrTraj_nTrajSampRsv),
+        m_intpY(gMrTraj_nTrajSampRsv),
+        m_intpZ(gMrTraj_nTrajSampRsv)
     {}
 
     Spline_TrajFunc(const vv3& vv3K):
@@ -97,19 +97,19 @@ protected:
 class Mag
 {
 public:
-    Mag();
+    Mag(i64 nSampReserve=0, i64 nTrajSampRsv=0);
     bool init
     (
         TrajFunc* ptTraj,
         f64 sLim, f64 gLim,
-        f64 dt=10e-6, i64 oversamp=10, 
+        f64 dt=10e-6, i64 oversamp=8, 
         f64 dG0Norm=0e0, f64 dG1Norm=0e0
     );
     bool init
     (
         const vv3& vv3TrajSamp,
         f64 sLim, f64 gLim,
-        f64 dt=10e-6, i64 oversamp=10, 
+        f64 dt=10e-6, i64 oversamp=8, 
         f64 dG0Norm=0e0, f64 dG1Norm=0e0
     );
     ~Mag();
