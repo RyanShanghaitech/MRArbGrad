@@ -367,8 +367,6 @@ protected:
     bool calGrad(v3* pv3M0PE, vv3* pvv3GRO, vf64* pvf64P, TrajFunc& tfTraj, GradPara& objGradPara, i64 oversamp=8)
     {
         bool ret = true;
-        const f64& sLim = objGradPara.sLim;
-        const f64& dt = objGradPara.dt;
         
         // calculate GRO
         TIC;
