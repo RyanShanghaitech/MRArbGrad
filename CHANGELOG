@@ -1,3 +1,6 @@
+4.2.0 (Jan 29, 2026)
+Add interface to set gradient buffer and trajectory buffer.
+
 4.1.1 (Jan 26, 2026)
 Fix bugs in save/load F64/F32().
 

@@ -8,29 +8,31 @@ i64 gMag_oversamp = -1; // oversample ratio, overwrite the set value
 bool gMag_enSFS = false; // Single Forward Sweep flag
 bool gMag_enGradRep = true; // Gradient Reparameterization
 bool gMag_enTrajRep = true; // use trajectory reparameterization for MAG solver
-i64 gMag_nTrajSamp = 1000; // num. of samp. when doing Traj. Rep.
 
-Mag::Mag()
+Mag::Mag(i64 nGradSampRsv, i64 nTrajSampRsv)
 {
     // for solver
-    m_dt = 10e-6; m_oversamp = 8;
-    i64 nSampReserve = i64(100e-3/m_dt); // reserve for 100ms
+    if (nGradSampRsv)
+    {
+        m_vf64P_Bac.reserve(nGradSampRsv * 8);
+        m_vv3G_Bac.reserve(nGradSampRsv * 8);
+        m_vf64GNorm_Bac.reserve(nGradSampRsv * 8);
 
-    m_vf64P_Bac.reserve(nSampReserve*m_oversamp);
-    m_vv3G_Bac.reserve(nSampReserve*m_oversamp);
-    m_vf64GNorm_Bac.reserve(nSampReserve*m_oversamp);
+        m_vf64P_For.reserve(nGradSampRsv * 8);
+        m_vv3G_For.reserve(nGradSampRsv * 8);
 
-    m_vf64P_For.reserve(nSampReserve*m_oversamp);
-    m_vv3G_For.reserve(nSampReserve*m_oversamp);
+        m_vf64P.reserve(nGradSampRsv);
+        m_vv3G.reserve(nGradSampRsv);
 
-    m_vf64P.reserve(nSampReserve);
-    m_vv3G.reserve(nSampReserve);
-    
+        m_intp.init(nGradSampRsv * 8);
+        m_intp.m_eSearchMode = Intp::ECached;
+    }
+
     // for trajectory reparameterization
-    m_vv3TrajSamp.resize(gMag_nTrajSamp);
-
-    m_intp.init(nSampReserve*m_oversamp);
-    m_intp.m_eSearchMode = Intp::ECached;
+    if (gMrTraj_nTrajSampRsv)
+    {
+        m_vv3TrajSamp.resize(gMrTraj_nTrajSampRsv);
+    }
 }
 
 bool Mag::init
@@ -52,9 +54,9 @@ bool Mag::init
     {
         f64 p0 = ptTraj->getP0();
         f64 p1 = ptTraj->getP1();
-        for (i64 i = 0; i < gMag_nTrajSamp; ++i)
+        for (i64 i = 0; i < gMrTraj_nTrajSampRsv; ++i)
         {
-            f64 p = p0 + (p1-p0) * (i)/f64(gMag_nTrajSamp-1);
+            f64 p = p0 + (p1-p0) * (i)/f64(gMrTraj_nTrajSampRsv-1);
             ptTraj->getK(&m_vv3TrajSamp[i], p);
         }
         m_sptfTraj = Spline_TrajFunc(m_vv3TrajSamp);

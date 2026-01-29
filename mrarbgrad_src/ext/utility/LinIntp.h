@@ -27,8 +27,6 @@ public:
 
     virtual bool fit(const vf64& vf64X, const vf64& vf64Y)
     {
-        ASSERT((i64)vf64X.size() <= m_sizCache);
-        ASSERT((i64)vf64Y.size() <= m_sizCache);
         ASSERT(vf64X.size() == vf64Y.size());
         const i64 nSamp = vf64X.size();
         ASSERT(nSamp >= 2);

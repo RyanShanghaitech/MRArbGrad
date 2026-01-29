@@ -1,6 +1,5 @@
 #include "v3.h"
 #include <array>
-#include <cinttypes>
 #include <cstring> // test
 
 v3::v3() :x(0e0), y(0e0), z(0e0) {}
@@ -386,11 +385,15 @@ bool v3::saveF64(FILE* pfHdr, FILE* pfBin, const vv3& vv3Data)
 bool v3::loadF64(FILE* pfHdr, FILE* pfBin, vv3* pvv3Data)
 {
     bool ret = true;
-    i64 lenData = 0;
     pvv3Data->clear();
-    int nRead = fscanf(pfHdr, "float64[%" SCNi64 "][3];\n", &lenData);
-    if (nRead==EOF) return true; // EOF
-    else if (nRead!=1) return false;
+    i64 lenData = 0;
+    {
+        long _;
+        int nRead = fscanf(pfHdr, "float64[%ld][3];\n", &_);
+        lenData = (i64)_;
+        if (nRead == EOF) return true; // EOF
+        else if (nRead != 1) return false;
+    }
     pvv3Data->resize(lenData);
 
     f64* bufFile = (f64*)malloc(lenData*3*sizeof(f64));
@@ -424,11 +427,15 @@ bool v3::saveF32(FILE* pfHdr, FILE* pfBin, const vv3& vv3Data)
 bool v3::loadF32(FILE* pfHdr, FILE* pfBin, vv3* pvv3Data)
 {
     bool ret = true;
-    i64 lenData = 0;
     pvv3Data->clear();
-    int nRead = fscanf(pfHdr, "float32[%" SCNi64 "][3];\n", &lenData);
-    if (nRead==EOF) return true; // EOF
-    else if (nRead!=1) return false;
+    i64 lenData = 0;
+    {
+        long _;
+        int nRead = fscanf(pfHdr, "float32[%ld][3];\n", &_);
+        lenData = (i64)_;
+        if (nRead == EOF) return true; // EOF
+        else if (nRead != 1) return false;
+    }
     pvv3Data->resize(lenData);
 
     f32* bufFile = (f32*)malloc(lenData*3*sizeof(f32));
