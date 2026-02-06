@@ -5,8 +5,8 @@ from numpy.typing import *
 goldrat = (1+sqrt(5))/2
 goldang = (2*pi)/(1+goldrat)
 
-getGoldrat = lambda: goldrat
-getGoldang = lambda: goldang
+def getGoldrat()->float: return goldrat
+def getGoldang()->float: return goldang
 
 def gradClip(lstArrGrad:list[NDArray]|NDArray, dt:float, sLim:float, gLim:float) -> list[NDArray]|NDArray:
     """
@@ -55,6 +55,14 @@ def rand3d(i:int|NDArray, nAx:int=3, kx=sqrt(2), ky=sqrt(3), kz=sqrt(7)) -> NDAr
         (i**2 * 1/(1+ky))%1,
         (i**3 * 1/(1+kz))%1
     ][:nAx]).T
+    
+def genPermTab(n:int) -> list[int]:
+    inc = around(n*(goldrat-1)).astype(int64)
+    while gcd(inc,n)!=1: inc-=1
+    lstIdx = []
+    for i in range(n):
+        lstIdx.append(i*inc%n)
+    return lstIdx
 
 def cvtGrad2Traj(arrG:NDArray, dtGrad:int|float, dtADC:int|float, nShift:int|float=1.0) -> tuple[NDArray, NDArray]:
     """
