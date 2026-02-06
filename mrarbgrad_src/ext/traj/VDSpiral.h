@@ -14,7 +14,10 @@ public:
         m_phi0 = phi0;
 
         m_p0 = 0e0;
-        m_p1 = (std::log(m_kRhoPhi1)-std::log(m_kRhoPhi0)) / (2e0*(m_kRhoPhi1-m_kRhoPhi0));
+        if (m_kRhoPhi0!=m_kRhoPhi1)
+        { m_p1 = (std::log(kRhoPhi1)-std::log(kRhoPhi0)) / (2e0*(kRhoPhi1-kRhoPhi0)); }
+        else
+        { m_p1 = 0.5e0/kRhoPhi0; }
     }
 
     virtual bool getK(v3* k, f64 p)
@@ -22,7 +25,11 @@ public:
         if (k==NULL) return false;
         
         f64& phi = p;
-        f64 rho = m_kRhoPhi0*(std::exp(2e0*(m_kRhoPhi1 - m_kRhoPhi0)*phi) - 1e0) / (2e0*(m_kRhoPhi1 - m_kRhoPhi0));
+        f64 rho;
+        if (m_kRhoPhi0!=m_kRhoPhi1)
+        { rho = m_kRhoPhi0*(std::exp(2e0*(m_kRhoPhi1 - m_kRhoPhi0)*phi) - 1e0) / (2e0*(m_kRhoPhi1 - m_kRhoPhi0)); }
+        else
+        { rho = m_kRhoPhi0*phi; }
         k->x = rho * std::cos(phi + m_phi0);
         k->y = rho * std::sin(phi + m_phi0);
         k->z = 0e0;
@@ -39,19 +46,16 @@ protected:
 class VDSpiral: public MrTraj_2D
 {
 public:
-    VDSpiral(const GeoPara& objGeoPara, const GradPara& objGradPara, i64 nStack, f64 kRhoPhi0, f64 dRhoPhi1):
+    VDSpiral(const GeoPara& objGeoPara, const GradPara& objGradPara, i64 nStack, f64 kRhoPhi0, f64 kRhoPhi1):
         MrTraj_2D(objGeoPara,objGradPara,0,0,0,0,v3(),vv3())
     {
-        if (kRhoPhi0==dRhoPhi1) throw std::invalid_argument("kRhoPhi0==dRhoPhi1");
-
-        m_ptfBaseTraj = new VDSpiral_TrajFunc(kRhoPhi0, dRhoPhi1);
+        m_ptfBaseTraj = new VDSpiral_TrajFunc(kRhoPhi0, kRhoPhi1);
         ASSERT(m_ptfBaseTraj!=NULL);
         m_nStack = nStack;
 
-        i64 nRot = calNRot(std::max(kRhoPhi0, dRhoPhi1), m_objGeoPara.nPix);
+        i64 nRot = calNRot(std::max(kRhoPhi0, kRhoPhi1), m_objGeoPara.nPix);
         m_rotang = calRotAng(nRot);
         m_nAcq = nRot*m_nStack;
-        PRINT(m_nAcq) // TEST
 
         calGrad(&m_v3BaseM0PE, &m_vv3BaseGRO, NULL, *m_ptfBaseTraj, m_objGradPara);
         m_nSampMax = m_vv3BaseGRO.size();
@@ -78,7 +82,7 @@ public:
     {
         m_kRhoPhi0 = kRhoPhi0;
         m_kRhoPhi1 = kRhoPhi1;
-        m_nAcq = calNRot(kRhoPhi1, objGeoPara.nPix);
+        m_nAcq = calNRot(std::max(kRhoPhi0, kRhoPhi1), objGeoPara.nPix);
         m_dRotAng = 2e0*M_PI/m_nAcq;
         genPermTab(&m_vi64PermTab, m_nAcq);
 

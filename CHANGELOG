@@ -1,3 +1,6 @@
+4.3.0 (Feb 6, 2026)
+Ensure compatibility in VDSpiral when kRhoPhi0==kRhoPhi1; Add `genPermTab` Python function.
+
 4.2.0 (Jan 29, 2026)
 Add interface to set gradient buffer and trajectory buffer.
 
