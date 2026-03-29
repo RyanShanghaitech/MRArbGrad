@@ -1,3 +1,6 @@
+4.4.0 (March 29, 2026)
+Add unit conversion helper function, and Cartesian/Radial trajectory for simulation use. Fix some typos and standardized terminology.
+
 4.3.0 (Feb 6, 2026)
 Ensure compatibility in VDSpiral when kRhoPhi0==kRhoPhi1; Add `genPermTab` Python function.
 

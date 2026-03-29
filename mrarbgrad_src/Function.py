@@ -23,10 +23,24 @@ def calGrad4ExFunc\
     p0:float64 = 0e0, 
     p1:float64 = 1e0, 
 ) -> tuple[NDArray, NDArray]:
-    '''
-    :return: gradient waveform, corresponding parameter
-    :rtype: tuple[NDArray, NDArray]
-    '''
+    """
+    Generate gradient waveforms for external functions.
+
+    Args:
+        fov (float64, optional): Field of view, unit: `m`.
+        nPix (int64, optional): Number of pixel, unit: `a.u.`.
+        sLim (float64, optional): l2 Slew limit, unit: `Hz/pix/s`.
+        gLim (float64, optional): l2 Gradient limit, unit: `Hz/pix`.
+        dt (float64, optional): Time step, unit: `s`.
+        getK (Callable | None, optional): Trajectory function.
+        getDkDp (Callable | None, optional): 1st order derivative to trajectory function.
+        getD2kDp2 (Callable | None, optional): 2nd order derivative to trajectory function.
+        p0 (float64, optional): Lower bound of the trajectory parameter.
+        p1 (float64, optional): Upper bound of the trajectory parameter.
+
+    Returns:
+        tuple[NDArray, NDArray]: Gradient waveform (in `Hz/pix`); Corresponding parameter
+    """
     return ext.calGrad4ExFunc\
     (
         float64(fov),
@@ -55,10 +69,20 @@ def calGrad4ExSamp\
     
     arrK: NDArray = np.empty((0,3)),
 ) -> tuple[NDArray, NDArray]:
-    '''
-    :return: gradient waveform, corresponding parameter
-    :rtype: tuple[NDArray, NDArray]
-    '''
+    """
+    Generate gradient waveforms for external trajectory samples.
+
+    Args:
+        fov (float64, optional): Field of view, unit: `m`.
+        nPix (int64, optional): Number of pixel, unit: `a.u.`.
+        sLim (float64, optional): l2 Slew limit, unit: `Hz/pix/s`.
+        gLim (float64, optional): l2 Gradient limit, unit: `Hz/pix`.
+        dt (float64, optional): Time step, unit: `s`.
+        arrK (NDArray, optional): External trajectory samples, shape: `[nK,nAx]`
+
+    Returns:
+        tuple[NDArray, NDArray]: Gradient waveform (in `Hz/pix`); Corresponding parameter
+    """
     return ext.calGrad4ExSamp\
     (
         float64(fov),
@@ -83,10 +107,21 @@ def getG_Spiral\
     nSlice: int64 = 1,
     kRhoPhi: float64 = 0.5 / (4 * pi)
 ) -> tuple[list[NDArray], list[NDArray]]:
-    '''
-    :return: list of trajectory start, list of gradient waveforms
-    :rtype: tuple[list[NDArray], list[NDArray]]
-    '''
+    """
+    Generate gradient waveforms for a standard spiral trajectory.
+
+    Args:
+        fov (float64, optional): Field of view, unit: `m`.
+        nPix (int64, optional): Number of pixel, unit: `a.u.`.
+        sLim (float64, optional): l2 Slew limit, unit: `Hz/pix/s`.
+        gLim (float64, optional): l2 Gradient limit, unit: `Hz/pix`.
+        dt (float64, optional): Time step, unit: `s`.
+        nSlice (int64, optional): Number of slices.
+        kRhoPhi (float64, optional): Shape parameter.
+
+    Returns:
+        tuple[list[NDArray], list[NDArray]]: List of trajectory start points (in `/pix`); List of gradient waveforms (in `Hz/pix`)
+    """
     return ext.getG_Spiral\
     (
         float64(fov),
@@ -113,10 +148,22 @@ def getG_VDSpiral\
     kRhoPhi0: float64 = 0.5 / (8 * pi),
     kRhoPhi1: float64 = 0.5 / (2 * pi),
 ) -> tuple[list[NDArray], list[NDArray]]:
-    '''
-    :return: list of trajectory start, list of gradient waveforms
-    :rtype: tuple[list[NDArray], list[NDArray]]
-    '''
+    """
+    Generate gradient waveforms for a variable density (VD) spiral trajectory.
+
+    Args:
+        fov (float64, optional): Field of view, unit: `m`.
+        nPix (int64, optional): Number of pixel, unit: `a.u.`.
+        sLim (float64, optional): l2 Slew limit, unit: `Hz/pix/s`.
+        gLim (float64, optional): l2 Gradient limit, unit: `Hz/pix`.
+        dt (float64, optional): Time step, unit: `s`.
+        nSlice (int64, optional): Number of slices.
+        kRhoPhi0 (float64, optional): Inner shape parameter.
+        kRhoPhi1 (float64, optional): Outer shape parameter.
+
+    Returns:
+        tuple[list[NDArray], list[NDArray]]: List of trajectory start points (in `/pix`); List of gradient waveforms (in `Hz/pix`)
+    """
     return ext.getG_VDSpiral\
     (
         float64(fov),
@@ -143,10 +190,21 @@ def getG_VDSpiral_RT\
     kRhoPhi0: float64 = 0.5 / (8 * pi),
     kRhoPhi1: float64 = 0.5 / (2 * pi),
 ) -> tuple[list[NDArray], list[NDArray]]:
-    '''
-    :return: list of trajectory start, list of gradient waveforms
-    :rtype: tuple[list[NDArray], list[NDArray]]
-    '''
+    """
+    Generate gradient waveforms for a real-time variable density spiral trajectory.
+
+    Args:
+        fov (float64, optional): Field of view, unit: `m`.
+        nPix (int64, optional): Number of pixel, unit: `a.u.`.
+        sLim (float64, optional): l2 Slew limit, unit: `Hz/pix/s`.
+        gLim (float64, optional): l2 Gradient limit, unit: `Hz/pix`.
+        dt (float64, optional): Time step, unit: `s`.
+        kRhoPhi0 (float64, optional): Inner shape parameter.
+        kRhoPhi1 (float64, optional): Outer shape parameter.
+
+    Returns:
+        tuple[list[NDArray], list[NDArray]]: List of trajectory start points (in `/pix`); List of gradient waveforms (in `Hz/pix`)
+    """
     return ext.getG_VDSpiral_RT\
     (
         float64(fov),
@@ -174,10 +232,23 @@ def getG_Rosette\
     om2: float64 = 3*pi, 
     tMax: float64 = 1e0,
 ) -> tuple[list[NDArray], list[NDArray]]:
-    '''
-    :return: list of trajectory start, list of gradient waveforms
-    :rtype: tuple[list[NDArray], list[NDArray]]
-    '''
+    """
+    Generate gradient waveforms for a rosette trajectory.
+
+    Args:
+        fov (float64, optional): Field of view, unit: `m`.
+        nPix (int64, optional): Number of pixel, unit: `a.u.`.
+        sLim (float64, optional): l2 Slew limit, unit: `Hz/pix/s`.
+        gLim (float64, optional): l2 Gradient limit, unit: `Hz/pix`.
+        dt (float64, optional): Time step, unit: `s`.
+        nSlice (int64, optional): Number of slices.
+        om1 (float64, optional): Shape parameter.
+        om2 (float64, optional): Shape parameter.
+        tMax (float64, optional): Shape parameter.
+
+    Returns:
+        tuple[list[NDArray], list[NDArray]]: List of trajectory start points (in `/pix`); List of gradient waveforms (in `Hz/pix`)
+    """
     return ext.getG_Rosette\
     (
         float64(fov),
@@ -208,10 +279,24 @@ def getG_Rosette_Trad\
     tMax: float64 = 1e0,
     tAcq: float64 = 2.523e-3,
 ) -> tuple[list[NDArray], list[NDArray]]:
-    '''
-    :return: list of trajectory start, list of gradient waveforms
-    :rtype: tuple[list[NDArray], list[NDArray]]
-    '''
+    """
+    Generate gradient waveforms for a traditional rosette trajectory.
+
+    Args:
+        fov (float64, optional): Field of view, unit: `m`.
+        nPix (int64, optional): Number of pixel, unit: `a.u.`.
+        sLim (float64, optional): l2 Slew limit, unit: `Hz/pix/s`.
+        gLim (float64, optional): l2 Gradient limit, unit: `Hz/pix`.
+        dt (float64, optional): Time step, unit: `s`.
+        nSlice (int64, optional): Number of slices.
+        om1 (float64, optional): Shape parameter.
+        om2 (float64, optional): Shape parameter.
+        tMax (float64, optional): Shape parameter.
+        tAcq (float64, optional): Acquisition duration.
+
+    Returns:
+        tuple[list[NDArray], list[NDArray]]: List of trajectory start points (in `/pix`); List of gradient waveforms (in `Hz/pix`)
+    """
     return ext.getG_Rosette_Trad\
     (
         float64(fov),
@@ -239,10 +324,20 @@ def getG_Shell3d\
     
     kRhoTht: float64 = 0.5 / (2 * pi),
 ) -> tuple[list[NDArray], list[NDArray]]:
-    '''
-    :return: list of trajectory start, list of gradient waveforms
-    :rtype: tuple[list[NDArray], list[NDArray]]
-    '''
+    """
+    Generate gradient waveforms for a 3D shell trajectory.
+
+    Args:
+        fov (float64, optional): Field of view, unit: `m`.
+        nPix (int64, optional): Number of pixel, unit: `a.u.`.
+        sLim (float64, optional): l2 Slew limit, unit: `Hz/pix/s`.
+        gLim (float64, optional): l2 Gradient limit, unit: `Hz/pix`.
+        dt (float64, optional): Time step, unit: `s`.
+        kRhoTht (float64, optional): Shape parameter.
+
+    Returns:
+        tuple[list[NDArray], list[NDArray]]: List of trajectory start points (in `/pix`); List of gradient waveforms (in `Hz/pix`)
+    """
     return ext.getG_Shell3d\
     (
         float64(fov),
@@ -266,10 +361,20 @@ def getG_Yarnball\
     
     kRhoPhi: float64 = 0.5 / (2 * pi),
 ) -> tuple[list[NDArray], list[NDArray]]:
-    '''
-    :return: list of trajectory start, list of gradient waveforms
-    :rtype: tuple[list[NDArray], list[NDArray]]
-    '''
+    """
+    Generate gradient waveforms for a yarnball trajectory.
+
+    Args:
+        fov (float64, optional): Field of view, unit: `m`.
+        nPix (int64, optional): Number of pixel, unit: `a.u.`.
+        sLim (float64, optional): l2 Slew limit, unit: `Hz/pix/s`.
+        gLim (float64, optional): l2 Gradient limit, unit: `Hz/pix`.
+        dt (float64, optional): Time step, unit: `s`.
+        kRhoPhi (float64, optional): Shape parameter.
+
+    Returns:
+        tuple[list[NDArray], list[NDArray]]: List of trajectory start points (in `/pix`); List of gradient waveforms (in `Hz/pix`)
+    """
     return ext.getG_Yarnball\
     (
         float64(fov),
@@ -293,10 +398,20 @@ def getG_Yarnball_RT\
     
     kRhoPhi: float64 = 0.5 / (2 * pi)
 ) -> tuple[list[NDArray], list[NDArray]]:
-    '''
-    :return: list of trajectory start, list of gradient waveforms
-    :rtype: tuple[list[NDArray], list[NDArray]]
-    '''
+    """
+    Generate gradient waveforms for a real-time yarnball trajectory.
+
+    Args:
+        fov (float64, optional): Field of view, unit: `m`.
+        nPix (int64, optional): Number of pixel, unit: `a.u.`.
+        sLim (float64, optional): l2 Slew limit, unit: `Hz/pix/s`.
+        gLim (float64, optional): l2 Gradient limit, unit: `Hz/pix`.
+        dt (float64, optional): Time step, unit: `s`.
+        kRhoPhi (float64, optional): Shape parameter.
+
+    Returns:
+        tuple[list[NDArray], list[NDArray]]: List of trajectory start points (in `/pix`); List of gradient waveforms (in `Hz/pix`)
+    """
     return ext.getG_Yarnball_RT\
     (
         float64(fov),
@@ -321,10 +436,21 @@ def getG_Seiffert\
     m: float64 = 0.07, 
     uMax: float64 = 20.0, 
 ) -> tuple[list[NDArray], list[NDArray]]:
-    '''
-    :return: list of trajectory start, list of gradient waveforms
-    :rtype: tuple[list[NDArray], list[NDArray]]
-    '''
+    """
+    Generate gradient waveforms for a Seiffert spiral trajectory.
+
+    Args:
+        fov (float64, optional): Field of view, unit: `m`.
+        nPix (int64, optional): Number of pixel, unit: `a.u.`.
+        sLim (float64, optional): l2 Slew limit, unit: `Hz/pix/s`.
+        gLim (float64, optional): l2 Gradient limit, unit: `Hz/pix`.
+        dt (float64, optional): Time step, unit: `s`.
+        m (float64, optional): Shape parameter.
+        uMax (float64, optional): Shape parameter.
+
+    Returns:
+        tuple[list[NDArray], list[NDArray]]: List of trajectory start points (in `/pix`); List of gradient waveforms (in `Hz/pix`)
+    """
     return ext.getG_Seiffert\
     (
         float64(fov),
@@ -349,10 +475,20 @@ def getG_Cones\
     
     kRhoPhi: float64 = 0.5 / (4 * pi),
 ) -> tuple[list[NDArray], list[NDArray]]:
-    '''
-    :return: list of trajectory start, list of gradient waveforms
-    :rtype: tuple[list[NDArray], list[NDArray]]
-    '''
+    """
+    Generate gradient waveforms for a 3D cones trajectory.
+
+    Args:
+        fov (float64, optional): Field of view, unit: `m`.
+        nPix (int64, optional): Number of pixel, unit: `a.u.`.
+        sLim (float64, optional): l2 Slew limit, unit: `Hz/pix/s`.
+        gLim (float64, optional): l2 Gradient limit, unit: `Hz/pix`.
+        dt (float64, optional): Time step, unit: `s`.
+        kRhoPhi (float64, optional): Shape parameter.
+
+    Returns:
+        tuple[list[NDArray], list[NDArray]]: List of trajectory start points (in `/pix`); List of gradient waveforms (in `Hz/pix`)
+    """
     return ext.getG_Cones\
     (
         float64(fov),

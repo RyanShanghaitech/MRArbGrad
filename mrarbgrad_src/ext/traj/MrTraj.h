@@ -13,7 +13,7 @@
 bool gMrTraj_enMtg = false; // whether to use Lustig's minTimeGrad solver
 f64 gMrTraj_g0Norm = 0e0; // initial gradient amplitude
 f64 gMrTraj_g1Norm = 0e0; // final gradient amplitude
-i64 gMrTraj_nGradSampRsv = 10000; // buffer size of mag solver
+i64 gMrTraj_nGradSampRsv = 10000; // buffer size of MAG solver
 i64 gMrTraj_nTrajSampRsv = 10000; // num. of samp. when doing Traj. Rep.
 
 /* 
@@ -204,7 +204,7 @@ protected:
             minRotang = std::min(minRotang, rotang);
         }
 
-        // ensure the rot. Num. is a integer
+        // ensure the rot. Num. is an integer
         return (i64)std::ceil(2e0*M_PI/minRotang);
     }
     
