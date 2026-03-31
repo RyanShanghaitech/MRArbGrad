@@ -79,9 +79,8 @@ for arrK0, arrGrad in zip(lstArrK0, lstArrGrad):
 arrI = Enum2M0(genPhant(nAx, nPix)).squeeze()
 arrK = concatenate(lstArrK, axis=0)
 
-mad.setNumStep(2)
 t = time()
-lstArrDcf = mad.sovDcf(nPix, lstArrK, sWind="cos", pShape=1.0)
+lstArrDcf = mad.solve(nPix, lstArrK)
 t = time() - t
 arrDcf = hstack(lstArrDcf).astype(complex64)
 print(f"sovDcf: {t:.2f} s")
