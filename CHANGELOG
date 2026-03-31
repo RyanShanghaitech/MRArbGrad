@@ -1,3 +1,6 @@
+4.4.1 (March 31, 2026)
+Expose interfaces of the functions in 4.4.0.
+
 4.4.0 (March 29, 2026)
 Add unit conversion helper function, and Cartesian/Radial trajectory for simulation use. Fix some typos and standardized terminology.
 
