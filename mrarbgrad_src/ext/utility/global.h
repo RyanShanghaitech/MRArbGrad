@@ -31,6 +31,7 @@ typedef std::list<f32> lf32;
 
 typedef std::string str;
 
+using namespace std;
 template<typename T>
 inline T round(T x)
 { return (x >= 0) ? std::floor(x + T(0.5)) : std::ceil(x - T(0.5)); }
@@ -63,6 +64,5 @@ inline T gcd(T x, T y)
 
 #define TOC \
     cTick = std::clock() - cTick;\
-    if (glob_enDbgPrint) printf("Elapsed time: %.3lf ms\n", 1e3*cTick/CLOCKS_PER_SEC);
+    printf("Elapsed time: %.3lf ms\n", 1e3*cTick/CLOCKS_PER_SEC);
 
-extern bool glob_enDbgPrint;

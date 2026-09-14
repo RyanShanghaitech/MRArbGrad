@@ -1,0 +1,10 @@
+CompileFlags:
+  Compiler: /home/ryan/miniconda3/envs/default/bin/g++
+  Add:
+    - -std=c++11
+
+    # python and numpy library
+    - -isystem
+    - /home/ryan/miniconda3/envs/default/include/python3.14
+    - -isystem
+    - /home/ryan/miniconda3/envs/default/lib/python3.14/site-packages/numpy/_core/include

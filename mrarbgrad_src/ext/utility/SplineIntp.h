@@ -10,125 +10,128 @@ public:
         if (sizCache) init(sizCache);
     }
 
-    SplineIntp(const vf64& vf64X, const vf64& vf64Y)
+    SplineIntp(const vf64& xs, const vf64& ys)
     {
-        init(vf64X.size());
-        fit(vf64X, vf64Y);
+        init(xs.size());
+        fit(xs, ys);
     }
 
-    void init(i64 sizCache)
+    bool init(i64 sizCache)
     {
-        m_sizCache = sizCache;
+        if (sizCache<=0) return false;
 
-        m_vf64X.reserve(sizCache);
-        m_vf64Y.reserve(sizCache);
+        xs.reserve(sizCache);
+        ys.reserve(sizCache);
 
-        m_vf64H.reserve(sizCache-1);
-        m_vf64Alpha.reserve(sizCache);
-        m_vf64L.reserve(sizCache);
-        m_vf64Mu.reserve(sizCache);
-        m_vf64Z.reserve(sizCache);
+        vH.reserve(sizCache-1);
+        vAlpha.reserve(sizCache);
+        vL.reserve(sizCache);
+        vMu.reserve(sizCache);
+        vZ.reserve(sizCache);
 
-        m_vf64A.reserve(sizCache);
-        m_vf64B.reserve(sizCache-1);
-        m_vf64C.reserve(sizCache);
-        m_vf64D.reserve(sizCache-1);
+        vA.reserve(sizCache);
+        vB.reserve(sizCache-1);
+        vC.reserve(sizCache);
+        vD.reserve(sizCache-1);
+        
+        return true;
     }
 
-    virtual bool fit(const vf64& vf64X, const vf64& vf64Y)
+    virtual bool fit(const vf64& xs, const vf64& ys)
     {
-        ASSERT(vf64X.size() == vf64Y.size());
-        const i64 nSamp = vf64X.size();
+        ASSERT(xs.size() == ys.size());
+        const i64 nSamp = xs.size();
         ASSERT(nSamp >= 2);
 
-        m_idxCache = 0;
+        idxCache = 0;
 
-        m_vf64X = vf64X;
-        m_vf64Y = vf64Y;
+        this->xs = xs;
+        this->ys = ys;
 
-        m_vf64H.resize(nSamp-1);
-        m_vf64Alpha.resize(nSamp);
-        m_vf64L.resize(nSamp);
-        m_vf64Mu.resize(nSamp);
-        m_vf64Z.resize(nSamp);
+        vH.resize(nSamp-1);
+        vAlpha.resize(nSamp);
+        vL.resize(nSamp);
+        vMu.resize(nSamp);
+        vZ.resize(nSamp);
 
-        m_vf64A = vf64Y;
-        m_vf64B.resize(nSamp-1);
-        m_vf64C.resize(nSamp);
-        m_vf64D.resize(nSamp-1);
+        vA = ys;
+        vB.resize(nSamp-1);
+        vC.resize(nSamp);
+        vD.resize(nSamp-1);
 
-        m_vf64L[0]  = 1.0;
-        m_vf64Mu[0] = 0.0;
-        m_vf64Z[0]  = 0.0;
-        m_vf64Alpha[0] = 0.0;
-        m_vf64Alpha[nSamp-1] = 0.0;
+        vL[0]  = 1.0;
+        vMu[0] = 0.0;
+        vZ[0]  = 0.0;
+        vAlpha[0] = 0.0;
+        vAlpha[nSamp-1] = 0.0;
 
         for (i64 i = 0; i < nSamp-1; ++i)
         {
-            m_vf64H[i] = m_vf64X[i+1] - m_vf64X[i];
+            vH[i] = xs[i+1] - xs[i];
         }
 
         // Step 1: Set up the tridiagonal system
         for (i64 i = 1; i < nSamp-1; ++i)
-            m_vf64Alpha[i] = (3e0 / m_vf64H[i]) * (m_vf64Y[i+1] - m_vf64Y[i]) - (3e0 / m_vf64H[i-1]) * (m_vf64Y[i] - m_vf64Y[i-1]);
+            vAlpha[i] = (3e0 / vH[i]) * (ys[i+1] - ys[i]) - (3e0 / vH[i-1]) * (ys[i] - ys[i-1]);
 
         // Step 2: Solve tridiagonal system for c (second derivatives)
         for (i64 i = 1; i < nSamp-1; ++i)
         {
-            m_vf64L[i] = 2e0 * (m_vf64X[i+1] - m_vf64X[i-1]) - m_vf64H[i-1] * m_vf64Mu[i-1];
-            m_vf64Mu[i] = m_vf64H[i] / m_vf64L[i];
-            m_vf64Z[i] = (m_vf64Alpha[i] - m_vf64H[i-1] * m_vf64Z[i-1]) / m_vf64L[i];
+            vL[i] = 2e0 * (xs[i+1] - xs[i-1]) - vH[i-1] * vMu[i-1];
+            vMu[i] = vH[i] / vL[i];
+            vZ[i] = (vAlpha[i] - vH[i-1] * vZ[i-1]) / vL[i];
         }
 
         // Natural spline boundary conditions
-        m_vf64L[nSamp-1] = 1.0;
-        m_vf64Z[nSamp-1] = 0.0;
-        m_vf64C[nSamp-1] = 0.0;
+        vL[nSamp-1] = 1.0;
+        vZ[nSamp-1] = 0.0;
+        vC[nSamp-1] = 0.0;
 
         // Back substitution
         for (i64 i=nSamp-2; i>=0; --i)
         {
-            m_vf64C[i] = m_vf64Z[i] - m_vf64Mu[i] * m_vf64C[i+1];
-            m_vf64B[i] = (m_vf64A[i+1] - m_vf64A[i]) / m_vf64H[i] - m_vf64H[i] * (m_vf64C[i+1] + 2e0 * m_vf64C[i]) / 3e0;
-            m_vf64D[i] = (m_vf64C[i+1] - m_vf64C[i]) / (3e0 * m_vf64H[i]);
+            vC[i] = vZ[i] - vMu[i] * vC[i+1];
+            vB[i] = (vA[i+1] - vA[i]) / vH[i] - vH[i] * (vC[i+1] + 2e0 * vC[i]) / 3e0;
+            vD[i] = (vC[i+1] - vC[i]) / (3e0 * vH[i]);
         }
 
         return true;
     }
 
-    virtual f64 eval(f64 x, i64 ord=0) const // order: order of derivation, default is 0 (function value)
+    virtual f64 eval(f64 x, i64 ord=0) const
     {
-        i64 idx = getIdx(x);
+        i64 idx = Intp::floor(x);
 
-        f64 dx = x - m_vf64X[idx];
+        f64 dx = x - xs[idx];
+        f64 dx2 = dx * dx;
+        f64 dx3 = dx2 * dx;
         if (ord == 0) return
         (
-            m_vf64A[idx]
-            + m_vf64B[idx] * dx
-            + m_vf64C[idx] * dx * dx
-            + m_vf64D[idx] * dx * dx * dx
+            vA[idx]
+            + vB[idx] * dx
+            + vC[idx] * dx2
+            + vD[idx] * dx3
         );
         if (ord == 1) return
         (
-            m_vf64B[idx]
-            + m_vf64C[idx] * 2e0 * dx
-            + m_vf64D[idx] * 3e0 * dx * dx
+            vB[idx]
+            + vC[idx] * 2e0 * dx
+            + vD[idx] * 3e0 * dx2
         );
         if (ord == 2) return
         (
-            m_vf64C[idx] * 2e0
-            + m_vf64D[idx] * 6e0 * dx
+            vC[idx] * 2e0
+            + vD[idx] * 6e0 * dx
         );
         if (ord == 3) return
         (
-            m_vf64D[idx] * 6e0
+            vD[idx] * 6e0
         );
         return 0e0;
     }
 
 private:
-    i64 m_sizCache;
-    vf64 m_vf64H, m_vf64Alpha, m_vf64L;
-    vf64 m_vf64Mu, m_vf64Z;
-    vf64 m_vf64A, m_vf64B, m_vf64C, m_vf64D;
+    vf64 vH, vAlpha, vL;
+    vf64 vMu, vZ;
+    vf64 vA, vB, vC, vD;
 };

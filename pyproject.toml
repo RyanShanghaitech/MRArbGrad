@@ -4,12 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "MRArbGrad"
-version = "4.4.1"
+version = "5.0.0"
 dependencies = ["numpy"]
 
 description = "Gradient waveform design tool for arbitrary k-space trajectories."
-keywords = ["mri", "pulse-sequence", "gradient-waveform", "non-Cartesian", "real-time"]
-authors = [{name = "Ryan", email = "ryan_shanghaitech@proton.me"}]
+keywords = ["mri", "pulse-sequence", "gradient-waveform", "trajectory", "non-Cartesian", "real-time"]
+authors = [{name = "Rui", email = "Rui.1002@proton.me"}]
 
 license = "MIT"
 license-files = ["LICENSE"]

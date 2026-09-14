@@ -1,13 +1,13 @@
 #pragma once
 
 #include "TrajFunc.h"
-#include "MrTraj_2D.h"
+#include "ScanPlan.h"
 
-class Rosette_TrajFunc: public TrajFunc
+class RosetteFunc: public TrajFunc
 {
 public:
-    Rosette_TrajFunc(f64 om1, f64 om2, f64 tMax=1e0):
-        TrajFunc(0,0)
+    RosetteFunc(f64 om1, f64 om2, f64 tMax, f64 phi0):
+        TrajFunc(0,tMax), om1(om1), om2(om2), tMax(tMax), phi0(phi0)
     {
         /*
          * NOTE:
@@ -15,91 +15,115 @@ public:
          * there will be N petal because om1
          * controls how fast the rho changes.
          */
-        m_om1 = om1;
-        m_om2 = om2;
-        m_tMax = tMax;
-
-        m_p0 = 0e0;
-        m_p1 = m_tMax;
     }
 
-    virtual bool getK(v3* k, f64 p)
+    virtual bool getK(v3* k, f64 p) const
     {
         if (k==NULL) return false;
         
         f64& t = p;
-        f64 dRho = 0.5e0*std::sin(m_om1*t);
-        k->x = dRho * std::cos(m_om2*t);
-        k->y = dRho * std::sin(m_om2*t);
+        f64 rho = 0.5e0 * std::sin(om1*t);
+        k->x = rho * std::cos(om2*t+phi0);
+        k->y = rho * std::sin(om2*t+phi0);
         k->z = 0e0;
 
         return true;
     }
 
+    virtual bool getDkDp(v3* k, f64 p) const
+    {
+        if (k==NULL) return false;
+        
+        f64& t = p;
+        f64 rho = 0.5e0 * std::sin(om1*t);
+        f64 drho = 0.5e0 * om1 * std::cos(om1*t);
+        f64 cos_phi = std::cos(om2*t+phi0);
+        f64 dcos_phi = -om2 * std::sin(om2*t+phi0);
+        f64 sin_phi = std::sin(om2*t+phi0);
+        f64 dsin_phi = om2 * std::cos(om2*t+phi0);
+        k->x = rho * dcos_phi + drho * cos_phi;
+        k->y = rho * dsin_phi + drho * sin_phi;
+        k->z = 0e0;
+
+        return true;
+    }
+
+    using TrajFunc::getDkDp;
+
 protected:
-    f64 m_om1, m_om2, m_tMax;
+    f64 om1, om2, tMax, phi0;
 };
 
-class Rosette: public MrTraj_2D
+class RosettePlan: public ScanPlan
 {
 public:
-    Rosette(const GeoPara& objGeoPara, const GradPara& objGradPara, i64 nStack, f64 om1, f64 om2, f64 tMax):
-        MrTraj_2D(objGeoPara,objGradPara,0,0,0,0,v3(),vv3())
+    RosettePlan(i64 nPix, i64 lenRampFront=0, i64 lenRampBack=0, f64 om1=5e0*M_PI, f64 om2=3e0*M_PI, f64 tMax=1e0):
+        ScanPlan(nPix, 0, 0, lenRampFront, lenRampBack), om1(om1), om2(om2), tMax(tMax)
     {
-        m_ptfBaseTraj = new Rosette_TrajFunc(om1, om2, tMax);
-        ASSERT(m_ptfBaseTraj!=NULL);
-        m_nStack = nStack;
+        // derive nAcqRef, rot
+        RosetteFunc func = RosetteFunc(om1, om2, tMax, 0e0);
+        i64 nRot = calNRot(func, 0e0, (M_PI/2e0)/om1, nPix);
+        nAcqRef = nRot;
+	rotAng = 2e0*M_PI / (f64)nRot;
 
-        i64 nRot = calNRot(m_ptfBaseTraj, 0e0, (M_PI/2e0)/om1, m_objGeoPara.nPix);
-        m_rotang = calRotAng(nRot);
-        m_nAcq = nRot*m_nStack;
-        
-        calGrad(&m_v3BaseM0PE, &m_vv3BaseGRO, NULL, *m_ptfBaseTraj, m_objGradPara);
-        m_nSampMax = m_vv3BaseGRO.size();
+        // max readout length
+        mag.setTraj(func);
+        vv3 grad; mag.solve(&grad, NULL);
+        lenReadOut = grad.size();
+    }
+
+    virtual bool getGrad(v3* k0, vv3* grad, v3* k1, i64 iAcq)
+    {
+        bool ret = true;
+        f64 phi0 = iAcq*rotAng;
+        RosetteFunc func = RosetteFunc(om1, om2, tMax, phi0);
+        ret &= ScanPlan::solve(k0, grad, k1, NULL, func);
+        return ret;
     }
     
-    virtual ~Rosette()
-    {
-        delete m_ptfBaseTraj;
-    }
-
 protected:
-    TrajFunc* m_ptfBaseTraj;
+    f64 om1, om2, tMax;
+    f64 rotAng;
 };
 
-class Rosette_Trad: public MrTraj_2D
+class RosetteClassicPlan: public RosettePlan
 {
 public:
-    Rosette_Trad(const GeoPara& objGeoPara, const GradPara& objGradPara, i64 nStack, f64 om1, f64 om2, f64 tMax, f64 dTE):
-        MrTraj_2D(objGeoPara,objGradPara,0,0,0,0,v3(),vv3())
+    RosetteClassicPlan(i64 nPix, i64 lenRampFront=0, i64 lenRampBack=0, f64 om1=5e0*M_PI, f64 om2=3e0*M_PI, f64 tMax=1e0, f64 dTE=2e-3):
+        RosettePlan(nPix, lenRampFront, lenRampBack, om1, om2, tMax)
     {
-        m_ptfBaseTraj = new Rosette_TrajFunc(om1, om2, tMax);
-        ASSERT(m_ptfBaseTraj!=NULL);
-        m_nStack = nStack;
-        i64 nRot = calNRot(m_ptfBaseTraj, 0e0, (M_PI/2e0)/om1, m_objGeoPara.nPix);
-        m_nAcq = nRot*m_nStack;
-        m_rotang = calRotAng(nRot);
+        f64 nPetal = tMax / (M_PI/om1);
+        tAcq = dTE * nPetal;
+        lenReadOut = round(tAcq/Mag::dt);
+    }
 
-        // readout
-        f64 tAcq = dTE*om1/M_PI;
-        m_nSampMax = tAcq/m_objGradPara.dt;
-        m_vv3BaseGRO.reserve(m_nSampMax);
-        for(i64 i = 0; i < m_nSampMax; ++i)
+    virtual bool getGrad(v3* k0, vv3* grad, v3* k1, i64 iAcq)
+    {
+	bool ret = true;
+	f64 om1 = this->om1 * tMax/tAcq;
+	f64 om2 = this->om2 * tMax/tAcq;
+        f64 phi0 = iAcq*rotAng;
+
+	// derive gradient waveform
+        RosetteFunc func = RosetteFunc(om1, om2, tAcq, phi0);
+        grad->clear();
+	i64 n = round(tAcq/Mag::dt) + 1;
+        for (i64 i = 0; i < n; ++i)
         {
-            m_vv3BaseGRO.push_back(v3());
-            m_ptfBaseTraj->getDkDp(&*m_vv3BaseGRO.rbegin(), tMax*i/(f64)m_nSampMax); // derivative to p
-            *m_vv3BaseGRO.rbegin() *= tMax/tAcq; // derivative to t
+            f64 t = i * Mag::dt;
+            v3 g = func.getDkDp(t);
+            grad->push_back(g);
         }
 
-        // calculate M0 of PE
-        m_ptfBaseTraj->getK0(&m_v3BaseM0PE);
+	// extrapolate
+	ret &= ScanPlan::extp(grad, NULL, k0, k1, lenRampFront, lenRampBack, Mag::dt);
+	if (k0) *k0 = func.getK0() - *k0;
+	if (k1) *k1 = func.getK1() + *k1;
+
+	return ret;
     }
     
-    virtual ~Rosette_Trad()
-    {
-        delete m_ptfBaseTraj;
-    }
-
 protected:
-    TrajFunc* m_ptfBaseTraj;
+    f64 tAcq;
 };
+

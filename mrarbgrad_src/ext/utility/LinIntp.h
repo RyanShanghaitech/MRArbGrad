@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Intp.h"
+#include <exception>
 
 class LinIntp : public Intp
 {
@@ -16,31 +17,39 @@ public:
         fit(vf64X, vf64Y);
     }
 
-    void init(i64 sizCache)
+    bool init(i64 sizCache)
     {
-        m_sizCache = sizCache;
-        m_vf64Slope.reserve(sizCache-1);
+        if (sizCache<=0) return false;
+        
+        vSlope.reserve(sizCache-1);
+        xs.reserve(sizCache);
+        ys.reserve(sizCache);
 
-        m_vf64X.reserve(sizCache);
-        m_vf64Y.reserve(sizCache);
+        return true;
     }
 
-    virtual bool fit(const vf64& vf64X, const vf64& vf64Y)
+    virtual bool fit(const vf64& xs, const vf64& ys)
     {
-        ASSERT(vf64X.size() == vf64Y.size());
-        const i64 nSamp = vf64X.size();
+        ASSERT(xs.size() == ys.size());
+        const i64 nSamp = xs.size();
         ASSERT(nSamp >= 2);
 
-        m_idxCache = 0;
+        idxCache = 0;
 
-        m_vf64X = vf64X;
-        m_vf64Y = vf64Y;
-        m_vf64Slope.resize(nSamp-1);
-
+        this->xs = xs;
+        this->ys = ys;
+        vSlope.resize(nSamp-1);
+        vCumSum.resize(nSamp-1);
         for (i64 i=0; i < nSamp-1; ++i)
         {
-            const f64 dx = m_vf64X[i+1] - m_vf64X[i];
-            m_vf64Slope[i] = (m_vf64Y[i+1] - m_vf64Y[i]) / dx;
+            const f64 dx = xs[i+1] - xs[i];
+            vSlope[i] = (ys[i+1] - ys[i]) / dx;
+            if (i!=0)
+	    {
+		f64 inc = (ys[i]+ys[i-1]) * (xs[i]-xs[i-1]) / 2e0;
+		vCumSum[i] = vCumSum[i-1] + inc;
+	    }
+            else vCumSum[i] = 0e0;
         }
 
         return true;
@@ -48,24 +57,20 @@ public:
 
     virtual f64 eval(f64 x, i64 ord = 0) const
     {
-        ASSERT(m_vf64X.size() >= 2);
+        ASSERT(xs.size() >= 2);
 
-        const i64 idx = getIdx(x);
-        const f64 dx = x - m_vf64X[idx];
+        const i64 idx = Intp::floor(x);
+        const f64 dx = x - xs[idx];
 
         if (ord == 0)
-        {
-            return m_vf64Y[idx] + m_vf64Slope[idx] * dx;
-        }
-        if (ord == 1)
-        {
-            return m_vf64Slope[idx];
-        }
-
-        return 0e0;
+        { return ys[idx] + vSlope[idx] * dx; }
+        else if (ord == 1)
+        { return vSlope[idx]; }
+        else if (ord == -1)
+        { return vCumSum[idx] + (ys[idx]+eval(x,0))*dx/2; }
+        else throw std::runtime_error("ord");
     }
 
 private:
-    i64 m_sizCache;
-    vf64 m_vf64Slope;
+    vf64 vSlope, vCumSum;
 };

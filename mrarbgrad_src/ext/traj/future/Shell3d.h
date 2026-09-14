@@ -6,7 +6,7 @@
 class Shell3d_TrajFunc: public TrajFunc
 {
 public:
-    Shell3d_TrajFunc(f64 kRhoTht, f64 tht0, f64 phi0=0e0):
+    Shell3d_TrajFunc(f64 kRhoTht, f64 tht0, f64 phi0):
         TrajFunc(0,0)
     {
         m_kThtSqrtPhi = std::sqrt(2e0);
@@ -42,11 +42,11 @@ protected:
     f64 m_tht0, m_phi0;
 };
 
-class Shell3d: public MrTraj
+class Shell3d: public ScanPlan
 {
 public:
     Shell3d(const GeoPara& objGeoPara, const GradPara& objGradPara, f64 kRhoTht):
-        MrTraj(objGeoPara,objGradPara,0,0)
+        ScanPlan(objGeoPara,objGradPara,0,0)
     {
         m_nRot = calNRot(kRhoTht, m_objGeoPara.nPix);
         m_rotang = calRotAng(m_nRot);

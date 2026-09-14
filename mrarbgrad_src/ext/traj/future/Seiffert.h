@@ -107,11 +107,11 @@ protected:
     }
 };
 
-class Seiffert: public MrTraj
+class Seiffert: public ScanPlan
 {
 public:
     Seiffert(const GeoPara& objGeoPara, const GradPara& objGradPara, f64 dM, f64 dUMax):
-        MrTraj(objGeoPara,objGradPara,0,0)
+        ScanPlan(objGeoPara,objGradPara,0,0)
     // m = 0.07 is optimized for diaphony
     // Umax = 20 can achieve similar readout time as original paper
     {

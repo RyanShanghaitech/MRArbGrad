@@ -1,141 +1,81 @@
 #pragma once
 
 #include "TrajFunc.h"
-#include "MrTraj.h"
+#include "ScanPlan.h"
 
-class Cones_TrajFun: public TrajFunc
+class ConesFunc: public TrajFunc
 {
 public:
-    Cones_TrajFun(f64 kRhoPhi, f64 tht0):
-        TrajFunc(0,0)
+    ConesFunc(f64 den, f64 tht0, f64 phi0):
+        TrajFunc(0,0), den(den), tht0(tht0), phi0(phi0)
     {
-        m_kRhoPhi = kRhoPhi;
-        m_tht0 = tht0;
-        m_p0 = 0e0;
-        m_p1 = 0.5e0/kRhoPhi;
+	TrajFunc::p0 = 0.0;
+	TrajFunc::p1 = den*0.5;
     }
 
-    bool getK(v3* k, f64 p)
+    virtual bool getK(v3* k, f64 p) const
     {
         if (k==NULL) return false;
-        f64& kRhoPhi = m_kRhoPhi;
         f64& phi = p;
-        f64& tht0 = m_tht0;
-        
-        f64 rho = kRhoPhi*phi;
+        f64 rho = phi/den;
 
-        k->x = rho * std::sin(tht0) * std::cos(phi);
-        k->y = rho * std::sin(tht0) * std::sin(phi);
+        k->x = rho * std::sin(tht0) * std::cos(phi0 + phi);
+        k->y = rho * std::sin(tht0) * std::sin(phi0 + phi);
         k->z = rho * std::cos(tht0);
 
         return true;
     }
 
 protected:
-    f64 m_kRhoPhi;
-    f64 m_tht0;
+    f64 den, tht0, phi0;
 };
 
-class Cones: public MrTraj
+class ConesPlan: public ScanPlan
 {
 public:
-    Cones(const GeoPara& objGeoPara, const GradPara& objGradPara, f64 kRhoPhi):
-        MrTraj(objGeoPara,objGradPara,0,0)
+    ConesPlan(i64 nPix, i64 lenRampFront=0, i64 lenRampBack=0, f64 den=(4e0*M_PI)/0.5):
+        ScanPlan(nPix, 0, 0, lenRampFront, lenRampBack), den(den)
     {
-        const i64& nPix = m_objGeoPara.nPix;
+	// derive nAcqRef
+	i64 nLayer = (i64)std::ceil(nPix*M_PI/2e0);
+	vnRot = vi64(nLayer);
+	nAcqRef = 0;
+	for (i64 iLayer = 0; iLayer < nLayer; ++iLayer)
+	{
+	    f64 tht0 = M_PI * (iLayer+0.5)/nLayer;
+	    ConesFunc func = ConesFunc(den, tht0, 0e0);
+	    vnRot[iLayer] = ScanPlan::calNRot(func, func.getP0(), func.getP1(), nPix);
+	    nAcqRef += vnRot[iLayer];
+	}
 
-        // caluclate gradient
-        m_nSet = getNLayer_Cones(nPix);
-        m_vptfBaseTraj.resize(m_nSet);
-        m_vvv3BaseGRO.resize(m_nSet);
-        m_vv3BaseM0PE.resize(m_nSet);
-        
-        m_nSampMax = 0;
-        for (i64 i = 0; i < m_nSet; ++i)
-        {
-            f64 tht0 = getTht0_Cones(i, m_nSet);
-            m_vptfBaseTraj[i] = new Cones_TrajFun(kRhoPhi, tht0);
-            ASSERT(m_vptfBaseTraj[i]!=NULL);
-
-            calGrad(&m_vv3BaseM0PE[i], &m_vvv3BaseGRO[i], NULL, *m_vptfBaseTraj[i], m_objGradPara);
-            m_nSampMax = std::max(m_nSampMax, (i64)m_vvv3BaseGRO[i].size());
-        }
-        
-        // list of `ISet` and `IRot`
-        m_vi64NRot.resize(m_nSet);
-        m_nAcq = 0;
-        li64 li64SetIdx, li64RotIdx;
-        for (i64 i = 0; i < m_nSet; ++i)
-        {
-            m_vi64NRot[i] = calNRot
-            (
-                m_vptfBaseTraj[i], 
-                m_vptfBaseTraj[i]->getP0(), 
-                m_vptfBaseTraj[i]->getP1(),
-                nPix
-            );
-
-            for (i64 j = 0; j < m_vi64NRot[i]; ++j)
-            {
-                li64SetIdx.push_back(i);
-                li64RotIdx.push_back(j);
-            }
-
-            m_nAcq += m_vi64NRot[i];
-        }
-        m_vi64SetIdx = vi64(li64SetIdx.begin(), li64SetIdx.end());
-        m_vi64RotIdx = vi64(li64RotIdx.begin(), li64RotIdx.end());
-    }
-
-    virtual ~Cones()
-    {
-        for(i64 i = 0; i < (i64)m_vptfBaseTraj.size(); ++i)
-        {
-            delete m_vptfBaseTraj[i];
-        }
+	// derive lenReadOut
+	ConesFunc func = ConesFunc(den, M_PI/2e0, 0e0);
+	mag.setTraj(func);
+	vv3 grad; grad.reserve(mag.lenGradRsv);
+	mag.solve(&grad, NULL);
+	lenReadOut = grad.size();
     }
     
-    virtual bool getGrad(v3* pv3M0PE, vv3* pvv3GRO, i64 iAcq)
+    virtual bool getGrad(v3* k0, vv3* grad, v3* k1, i64 iAcq)
     {
-        bool ret = true;
-        iAcq %= m_nAcq;
-        i64 iSet = m_vi64SetIdx[iAcq];
-        i64 iRot = m_vi64RotIdx[iAcq];
-        f64 phiStep = calRotAng(m_vi64NRot[iSet]);
-
-        if (pv3M0PE)
-        {
-            *pv3M0PE = m_vv3BaseM0PE[iSet];
-            ret &= v3::rotate(pv3M0PE, 2, phiStep * iRot, *pv3M0PE);
-        }
-        if (pvv3GRO)
-        {
-            *pvv3GRO = m_vvv3BaseGRO[iSet];
-            ret &= v3::rotate(pvv3GRO, 2, phiStep * iRot, *pvv3GRO);
-        }
-
-        return ret;
+	bool ret = true;
+	iAcq %= nAcqRef;
+	i64 nAcqCum = 0;
+	i64 iLayer, nLayer = vnRot.size();
+	for (iLayer = 0; iLayer < nLayer; ++iLayer)
+	{
+	    if (nAcqCum+vnRot[iLayer] > iAcq) break;
+	    else nAcqCum += vnRot[iLayer];
+	}
+	i64 iRot = iAcq - nAcqCum;
+	f64 tht0 = M_PI * (iLayer+0.5)/nLayer;
+	f64 phi0 = 2*M_PI * iRot / vnRot[iLayer];
+	ConesFunc func = ConesFunc(den, tht0, phi0);
+	ret &= ScanPlan::solve(k0, grad, k1, NULL, func);
+	return ret;
     }
 
 protected:
-    f64 m_kRhoPhi;
-    i64 m_nSet;
-    vi64 m_vi64NRot;
-    vi64 m_vi64SetIdx;
-    vi64 m_vi64RotIdx;
-
-    vptf m_vptfBaseTraj;
-    vvv3 m_vvv3BaseGRO;
-    vv3 m_vv3BaseM0PE;
-
-    static i64 getNLayer_Cones(i64 nPix)
-    {
-        return (i64)std::ceil(nPix*M_PI/2e0);
-    }
-
-    static f64 getTht0_Cones(i64 iLayer, i64 nLayer)
-    {
-        f64 dThtInc = M_PI / (nLayer-1);
-        return iLayer*dThtInc;
-    }
+    f64 den;
+    vi64 vnRot;
 };

@@ -3,51 +3,37 @@ import numpy
 from os.path import exists
 from ctypes.util import find_library
 
-useMtg = exists("./mrarbgrad_src/ext/mtg/")
-
 _sources = \
 [
-    './mrarbgrad_src/ext/utility/global.cpp',
-    './mrarbgrad_src/ext/utility/v3.cpp',
-    './mrarbgrad_src/ext/mag/Mag.cpp',
-    './mrarbgrad_src/ext/main.cpp',
-    './mrarbgrad_src/ext/mtg/mtg_functions.cpp',
-    './mrarbgrad_src/ext/mtg/spline.cpp'
+    "./mrarbgrad_src/ext/traj/ScanPlan.cpp",
+    "./mrarbgrad_src/ext/mag/Mag.cpp",
+    "./mrarbgrad_src/ext/main.cpp",
+    "./mrarbgrad_src/ext/utility/v3.cpp"
 ]
-if not useMtg:
-    _sources.remove('./mrarbgrad_src/ext/mtg/mtg_functions.cpp')
-    _sources.remove('./mrarbgrad_src/ext/mtg/spline.cpp')
 
 modExt = Extension\
 (
     "mrarbgrad.ext", 
     sources = _sources,
     include_dirs = ["./mrarbgrad_src/ext/", numpy.get_include()],
-    define_macros = [("USE_MTG", None)] if useMtg else None,
     language = 'c++'
 )
 
 _packages = \
 [
     "mrarbgrad", 
-    "mrarbgrad.trajfunc", 
     "mrarbgrad.ext", 
     "mrarbgrad.ext.traj",
     "mrarbgrad.ext.mag", 
-    "mrarbgrad.ext.mtg",
     "mrarbgrad.ext.utility",
 ]
-if not useMtg:
-    _packages.remove("mrarbgrad.ext.mtg")
 
 _package_dir = \
 {
     "mrarbgrad":"./mrarbgrad_src/", 
-    "mrarbgrad.trajfunc":"./mrarbgrad_src/trajfunc/",
     "mrarbgrad.ext":"./mrarbgrad_src/ext/", 
     "mrarbgrad.ext.traj":"./mrarbgrad_src/ext/traj/",
     "mrarbgrad.ext.mag":"./mrarbgrad_src/ext/mag/", 
-    "mrarbgrad.ext.mtg":"./mrarbgrad_src/ext/mtg/",
     "mrarbgrad.ext.utility":"./mrarbgrad_src/ext/utility/"
 }
 

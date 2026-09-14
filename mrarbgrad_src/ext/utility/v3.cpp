@@ -1,9 +1,8 @@
 #include "v3.h"
-#include <array>
 #include <cstring> // test
 
 v3::v3() :x(0e0), y(0e0), z(0e0) {}
-v3::v3(f64 _) :x(_), y(_), z(_) {}
+v3::v3(f64 xyz) :x(xyz), y(xyz), z(xyz) {}
 v3::v3(f64 x, f64 y, f64 z) :x(x), y(y), z(z) {}
 v3::~v3() {}
 
@@ -187,91 +186,65 @@ f64 v3::operator[](i64 idx) const
     throw std::runtime_error("idx");
 }
 
-f64 v3::norm(const v3& v3In)
+f64 v3::norm(const v3& in)
 {
     return sqrt
     (
-        v3In.x*v3In.x +
-        v3In.y*v3In.y +
-        v3In.z*v3In.z
+        in.x*in.x +
+        in.y*in.y +
+        in.z*in.z
     );
 }
 
-v3 v3::cross(const v3& v3In0, const v3& v3In1)
+v3 v3::cross(const v3& in0, const v3& in1)
 {
     return v3
     (
-        v3In0.y*v3In1.z - v3In0.z*v3In1.y,
-        -v3In0.x*v3In1.z + v3In0.z*v3In1.x,
-        v3In0.x*v3In1.y - v3In0.y*v3In1.x
+        in0.y*in1.z - in0.z*in1.y,
+        -in0.x*in1.z + in0.z*in1.x,
+        in0.x*in1.y - in0.y*in1.x
     );
 }
 
-f64 v3::inner(const v3& v3In0, const v3& v3In1)
+f64 v3::inner(const v3& in0, const v3& in1)
 {
     return f64
     (
-        v3In0.x*v3In1.x +
-        v3In0.y*v3In1.y +
-        v3In0.z*v3In1.z
+        in0.x*in1.x +
+        in0.y*in1.y +
+        in0.z*in1.z
     );
 }
 
-v3 v3::pow(const v3& v3In, f64 exp)
+v3 v3::pow(const v3& in, f64 exp)
 {
     return v3
     (
-        std::pow(v3In.x, exp),
-        std::pow(v3In.y, exp),
-        std::pow(v3In.z, exp)
+        std::pow(in.x, exp),
+        std::pow(in.y, exp),
+        std::pow(in.z, exp)
     );
-}
-
-bool v3::genRotMat(std::array<v3,3>* pav3RotMat, int iAx, f64 ang)
-{
-    if (!pav3RotMat) return false;
-    switch (iAx)
-    {
-    case 0:
-        (*pav3RotMat)[0] = v3(1e0, 0e0, 0e0);
-        (*pav3RotMat)[1] = v3(0e0, std::cos(ang), -std::sin(ang));
-        (*pav3RotMat)[2] = v3(0e0, std::sin(ang), std::cos(ang));
-        break;
-    case 1:
-        (*pav3RotMat)[0] = v3(std::cos(ang), 0e0, std::sin(ang));
-        (*pav3RotMat)[1] = v3(0e0, 1e0, 0e0);
-        (*pav3RotMat)[2] = v3(-std::sin(ang), 0e0, std::cos(ang));
-        break;
-    case 2:
-        (*pav3RotMat)[0] = v3(std::cos(ang), -std::sin(ang), 0e0);
-        (*pav3RotMat)[1] = v3(std::sin(ang), std::cos(ang), 0e0);
-        (*pav3RotMat)[2] = v3(0e0, 0e0, 1e0);
-        break;
-    default:
-        return false;
-    }
-
-    return true;
 }
 
 bool v3::rotate
 (
-    v3* pv3Dst,
-    int iAx, f64 ang,
-    const v3& v3Src
+    v3* dst,
+    int ax, f64 ang,
+    const v3& src
 )
 {
-    if (!pv3Dst) return false;
+    if (!dst) return false;
     bool ret = true;
 
     std::array<v3,3> av3RotMat;
-    ret &= genRotMat(&av3RotMat, iAx, ang);
+    ret &= genRotMat(&av3RotMat, ax, ang);
+    if (!ret) return ret;
 
-    *pv3Dst = v3
+    *dst = v3
     (
-        v3::inner(av3RotMat[0], v3Src),
-        v3::inner(av3RotMat[1], v3Src),
-        v3::inner(av3RotMat[2], v3Src)
+        v3::inner(av3RotMat[0], src),
+        v3::inner(av3RotMat[1], src),
+        v3::inner(av3RotMat[2], src)
     );
 
     return ret;
@@ -279,28 +252,31 @@ bool v3::rotate
 
 bool v3::rotate
 (
-    vv3* pvv3Dst,
-    int iAx, f64 ang,
-    const vv3& vv3Src
+    vv3* dst,
+    int ax, f64 ang,
+    const vv3& src
 )
 {
-    if (!pvv3Dst) return false;
-    std::array<v3, 3> av3RotMat;
-    if (!genRotMat(&av3RotMat, iAx, ang)) return false;
+    if (!dst) return false;
+    bool ret = true;
 
-    if (pvv3Dst->size() != vv3Src.size()) {
-        pvv3Dst->resize(vv3Src.size());
+    std::array<v3, 3> av3RotMat;
+    ret &= genRotMat(&av3RotMat, ax, ang);
+    if (!ret) return ret;
+
+    if (dst->size() != src.size()) {
+        dst->resize(src.size());
     }
 
-    for (size_t i = 0; i < vv3Src.size(); ++i)
+    for (size_t i = 0; i < src.size(); ++i)
     {
-        f64 tx = v3::inner(av3RotMat[0], vv3Src[i]);
-        f64 ty = v3::inner(av3RotMat[1], vv3Src[i]);
-        f64 tz = v3::inner(av3RotMat[2], vv3Src[i]);
+        f64 tx = v3::inner(av3RotMat[0], src[i]);
+        f64 ty = v3::inner(av3RotMat[1], src[i]);
+        f64 tz = v3::inner(av3RotMat[2], src[i]);
 
-        (*pvv3Dst)[i].x = tx;
-        (*pvv3Dst)[i].y = ty;
-        (*pvv3Dst)[i].z = tz;
+        (*dst)[i].x = tx;
+        (*dst)[i].y = ty;
+        (*dst)[i].z = tz;
     }
 
     return true;
@@ -308,21 +284,22 @@ bool v3::rotate
 
 bool v3::rotate
 (
-    lv3* plv3Dst,
-    int iAx, f64 ang,
-    const lv3& lv3Src
+    lv3* dst,
+    int ax, f64 ang,
+    const lv3& src
 )
 {
-    if (!plv3Dst) return false;
+    if (!dst) return false;
     bool ret = true;
 
     std::array<v3,3> av3RotMat;
-    ret &= genRotMat(&av3RotMat, iAx, ang);
+    ret &= genRotMat(&av3RotMat, ax, ang);
+    if (!ret) return ret;
 
     // apply rotation matrix
     lv3 _lv3Dst; // for self-in self-out compatible
-    lv3::const_iterator ilv3CoordSrc = lv3Src.begin();
-    while (ilv3CoordSrc != lv3Src.end())
+    lv3::const_iterator ilv3CoordSrc = src.begin();
+    while (ilv3CoordSrc != src.end())
     {
         _lv3Dst.push_back
         (
@@ -336,115 +313,161 @@ bool v3::rotate
 
         ++ilv3CoordSrc;
     }
-    plv3Dst->swap(_lv3Dst);
+    dst->swap(_lv3Dst);
 
     return ret;
 }
 
-v3 v3::axisroll(const v3& v3In, i64 nShift)
+bool v3::linspace(vv3* dst, const v3& start, const v3& stop, i64 n, bool end)
 {
-    v3 v3Ot;
-    switch ((nShift%3+3)%3)
+    bool ret = true;
+    dst->resize(n);
+    v3 diff = stop - start;
+    f64 deno = end ? std::max(n-1,(i64)1) : n;
+    for (i64 i = 0; i < n; ++i)
+    { (*dst)[i] = start + diff * i/deno; }
+    return ret;
+}
+
+vv3 v3::linspace(const v3& start, const v3& stop, i64 n, bool end)
+{
+    vv3 ret(n);
+    v3::linspace(&ret, start, stop, n, end);
+    return ret;
+}
+
+v3 v3::axisroll(const v3& in, i64 shift)
+{
+    v3 out;
+    switch ((shift%3+3)%3)
     {
     case 1:
-        v3Ot.x = v3In.y;
-        v3Ot.y = v3In.z;
-        v3Ot.z = v3In.x;
+        out.x = in.y;
+        out.y = in.z;
+        out.z = in.x;
         break;
         
     case 2:
-        v3Ot.x = v3In.z;
-        v3Ot.y = v3In.x;
-        v3Ot.z = v3In.y;
+        out.x = in.z;
+        out.y = in.x;
+        out.z = in.y;
         break;
     
     default:
-        v3Ot = v3In;
+        out = in;
         break;
     }
-    return v3Ot;
+    return out;
 }
 
-bool v3::saveF64(FILE* pfHdr, FILE* pfBin, const vv3& vv3Data)
+bool v3::saveF64(FILE* hdr, FILE* bin, const vv3& data)
 {
     bool ret = true;
-    i64 lenData = vv3Data.size();
-    fprintf(pfHdr, "float64[%ld][3];\n", (long)lenData);
+    i64 lenData = data.size();
+    fprintf(hdr, "float64[%ld][3];\n", (long)lenData);
 
     f64* bufFile = (f64*)malloc(lenData*3*sizeof(f64));
     for(i64 i=0; i<(i64)lenData; ++i)
     {
         for(i64 j=0; j<3; ++j)
-        { bufFile[3*i+j] = (f64)vv3Data[i][j]; }
+        { bufFile[3*i+j] = (f64)data[i][j]; }
     }
-    ret &= (i64)fwrite(bufFile, sizeof(f64), lenData*3, pfBin)==lenData*3;
+    ret &= (i64)fwrite(bufFile, sizeof(f64), lenData*3, bin)==lenData*3;
     free(bufFile);
     return ret;
 }
 
-bool v3::loadF64(FILE* pfHdr, FILE* pfBin, vv3* pvv3Data)
+bool v3::loadF64(FILE* hdr, FILE* bin, vv3* data)
 {
     bool ret = true;
-    pvv3Data->clear();
+    data->clear();
     i64 lenData = 0;
     {
         long _;
-        int nRead = fscanf(pfHdr, "float64[%ld][3];\n", &_);
-        lenData = (i64)_;
+        int nRead = fscanf(hdr, "float64[%ld][3];\n", &_);
         if (nRead == EOF) return true; // EOF
         else if (nRead != 1) return false;
+        lenData = (i64)_;
     }
-    pvv3Data->resize(lenData);
+    data->resize(lenData);
 
     f64* bufFile = (f64*)malloc(lenData*3*sizeof(f64));
-    ret &= (i64)fread(bufFile, sizeof(f64), lenData*3, pfBin)==lenData*3;
+    ret &= (i64)fread(bufFile, sizeof(f64), lenData*3, bin)==lenData*3;
     for(i64 i=0; i<lenData; ++i)
     {
         for(i64 j=0; j<3; ++j)
-        { (*pvv3Data)[i][j] = (f64)bufFile[3*i+j]; }
+        { (*data)[i][j] = (f64)bufFile[3*i+j]; }
     }
     free(bufFile);
     return ret;
 }
 
-bool v3::saveF32(FILE* pfHdr, FILE* pfBin, const vv3& vv3Data)
+bool v3::saveF32(FILE* hdr, FILE* bin, const vv3& data)
 {
     bool ret = true;
-    i64 lenData = vv3Data.size();
-    fprintf(pfHdr, "float32[%ld][3];\n", (long)lenData);
+    i64 lenData = data.size();
+    fprintf(hdr, "float32[%ld][3];\n", (long)lenData);
 
     f32* bufFile = (f32*)malloc(lenData*3*sizeof(f32));
     for(i64 i=0; i<(i64)lenData; ++i)
     {
         for(i64 j=0; j<3; ++j)
-        { bufFile[3*i+j] = (f32)vv3Data[i][j]; }
+        { bufFile[3*i+j] = (f32)data[i][j]; }
     }
-    ret &= (i64)fwrite(bufFile, sizeof(f32), lenData*3, pfBin)==lenData*3;
+    ret &= (i64)fwrite(bufFile, sizeof(f32), lenData*3, bin)==lenData*3;
     free(bufFile);
     return ret;
 }
 
-bool v3::loadF32(FILE* pfHdr, FILE* pfBin, vv3* pvv3Data)
+bool v3::loadF32(FILE* hdr, FILE* bin, vv3* data)
 {
     bool ret = true;
-    pvv3Data->clear();
+    data->clear();
     i64 lenData = 0;
     {
         long _;
-        int nRead = fscanf(pfHdr, "float32[%ld][3];\n", &_);
-        lenData = (i64)_;
+        int nRead = fscanf(hdr, "float32[%ld][3];\n", &_);
         if (nRead == EOF) return true; // EOF
         else if (nRead != 1) return false;
+        lenData = (i64)_;
     }
-    pvv3Data->resize(lenData);
+    data->resize(lenData);
 
     f32* bufFile = (f32*)malloc(lenData*3*sizeof(f32));
-    ret &= (i64)fread(bufFile, sizeof(f32), lenData*3, pfBin)==lenData*3;
+    ret &= (i64)fread(bufFile, sizeof(f32), lenData*3, bin)==lenData*3;
     for(i64 i=0; i<lenData; ++i)
     {
         for(i64 j=0; j<3; ++j)
-        { (*pvv3Data)[i][j] = (f64)bufFile[3*i+j]; }
+        { (*data)[i][j] = (f64)bufFile[3*i+j]; }
     }
     free(bufFile);
     return ret;
 }
+
+bool v3::genRotMat(std::array<v3,3>* rotMag, int ax, f64 ang)
+{
+    if (!rotMag) return false;
+    switch (ax)
+    {
+    case 0:
+        (*rotMag)[0] = v3(1e0, 0e0, 0e0);
+        (*rotMag)[1] = v3(0e0, std::cos(ang), -std::sin(ang));
+        (*rotMag)[2] = v3(0e0, std::sin(ang), std::cos(ang));
+        break;
+    case 1:
+        (*rotMag)[0] = v3(std::cos(ang), 0e0, std::sin(ang));
+        (*rotMag)[1] = v3(0e0, 1e0, 0e0);
+        (*rotMag)[2] = v3(-std::sin(ang), 0e0, std::cos(ang));
+        break;
+    case 2:
+        (*rotMag)[0] = v3(std::cos(ang), -std::sin(ang), 0e0);
+        (*rotMag)[1] = v3(std::sin(ang), std::cos(ang), 0e0);
+        (*rotMag)[2] = v3(0e0, 0e0, 1e0);
+        break;
+    default:
+        return false;
+    }
+
+    return true;
+}
+
