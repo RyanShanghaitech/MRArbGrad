@@ -1,7 +1,7 @@
-# python -m build
 rm -r *.egg-info build dist
 pip uninstall mrarbgrad -y
-pip install .
+python -m build
+python -m pip install dist/*.whl
 rm -r *.egg-info build dist
 
 # Note: if you don't delete this local "egg-info", pip will think the mrarbgrad package is right here, not in the site-package folder, the consequence will be: when uninstalling, since the package location is not in the site-package, the package can not be uninstalled because the package location is misled by "egg-info" thus it can't find the file to uninstall.

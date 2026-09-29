@@ -24,9 +24,9 @@ def Rosette(t):
 
 ### Solve for the Gradient Waveform
 ```python
-grad = mag.solve(Rosette, p0=0, p1=1)
+grad = mag.solve(Rosette, pmin=0, pmax=1)
 ```
-`p0` and `p1` define the bounds of function argument `t`. `grad[:,0]`, `grad[:,1]`, and `grad[:,2]` are the x-, y-, and z-axis gradient waveforms, respectively.
+`pmin` and `pmax` define the bounds of function argument `t`. `grad[:,0]`, `grad[:,1]`, and `grad[:,2]` are the x-, y-, and z-axis gradient waveforms, respectively.
 
 *For more usages such as specifying the hardware constraints, use of trajectory library and other utilities, please refer to [Examples](https://github.com/RyanShanghaitech/MRArbGrad/tree/main/example).*
 

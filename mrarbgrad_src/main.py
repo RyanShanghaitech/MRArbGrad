@@ -6,14 +6,14 @@ import mrarbgrad.ext as ext
 from .utility import tm2hzpx
 
 @overload
-def solve(func:Callable, p0:float, p1:float) -> NDArray:
+def solve(func:Callable, pmin:float, pmax:float) -> NDArray:
     """
     Solve the gradient waveform for a trajectory function.
 
     Args:
         func (Callable): trajectory function
-        p0 (float): parameter lower bound
-        p1 (float): parameter higher bound
+        pmin (float): parameter lower bound
+        pmax (float): parameter higher bound
 
     Returns:
         NDArrray: gradient waveform
@@ -33,8 +33,8 @@ def solve(samp:NDArray) -> NDArray:
     """
     ...
 
-def solve(traj:Callable|NDArray, p0:float|None=None, p1:float|None=None) -> NDArray|None:
-    if callable(traj): return ext.solve_func(traj, float(p0), float(p1))
+def solve(traj:Callable|NDArray, pmin:float|None=None, pmax:float|None=None) -> NDArray|None:
+    if callable(traj): return ext.solve_func(traj, float(pmin), float(pmax))
     elif isinstance(traj, ndarray): return ext.solve_samp(traj)
     else: raise TypeError(f"type(traj): {type(traj)}")
 

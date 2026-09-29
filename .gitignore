@@ -6,9 +6,6 @@
 *.gif
 *.svg
 
-test*
-temp*
-
 *.egg-info/
 build
 dist
