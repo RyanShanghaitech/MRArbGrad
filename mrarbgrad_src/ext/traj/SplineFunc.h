@@ -3,6 +3,8 @@
 #include "TrajFunc.h"
 #include "../utility/SplineIntp.h"
 
+typedef std::vector<v3> vv3;
+
 class SplineFunc: public TrajFunc
 {
 public:

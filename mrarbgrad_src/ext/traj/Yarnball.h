@@ -49,7 +49,7 @@ public:
     YarnballPlan(i64 nPix, i64 lenRampFront=0, i64 lenRampBack=0, f64 den=2.0*M_PI/0.5):
         ScanPlan(nPix, 0, 0, lenRampFront, lenRampBack), den(den)
     {
-        i64 nRot = round(den*0.5/M_PI);
+        i64 nRot = std::ceil((nPix*M_PI) / (den*0.5));
         nAcqRef = nRot*nRot;
         rot = 2e0*M_PI / nRot;
 

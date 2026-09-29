@@ -10,7 +10,7 @@ f64 Mag::gLim = 30e-3 * 42.5756e6 * 1e-3; // grad. limit (Hz/px)
 f64 Mag::g0Norm = 0.0, Mag::g1Norm = 0.0; // start and stop grad. amp.
 bool Mag::enTrajRep = true; // trajectory reparameterization
 bool Mag::enGradRep = true; // gradient reparameterization
-i64 Mag::lenGradRsv = int(1e5), Mag::lenTrajRsv = int(1e4);
+i64 Mag::lenTrajRsv = int(1e4), Mag::lenGradRsv = int(1e5);
 
 Mag::Mag()
 {
@@ -74,11 +74,15 @@ bool Mag::sovQDE(f64* x0, f64* x1, f64 a, f64 b, f64 c)
 
 f64 Mag::curvature(f64 p)
 {
+#define EPS (1e-15)
     v3 dkdp; this->trajFuncPtr->getDkDp(&dkdp, p);
     v3 d2kdp2; this->trajFuncPtr->getD2kDp2(&d2kdp2, p);
     f64 nume = v3::norm(v3::cross(dkdp, d2kdp2));
     f64 deno = pow(v3::norm(dkdp), 3e0);
+    if (nume<EPS) nume = EPS;
+    if (deno<EPS) deno = EPS;
     return nume/deno;
+#undef EPS
 }
 
 #if 1

@@ -5,7 +5,7 @@ from numpy.linalg import norm
 import mrarbgrad as mag
 
 # parameters
-fov, nPix, nAx = 0.320, 320, 2
+fov, nPix = 0.320, 320
 dtGrad = 10e-6
 dtAdc = 2.5e-6
 mag.config(
@@ -24,7 +24,6 @@ mag.config(
 # pull a trajectory from library
 traj = mag.Rosette(5*pi, 3*pi, 1.0)
 arrGrad = traj.gradient()
-arrGrad = arrGrad[:,:nAx]
 arrK = mag.integrate(arrGrad, dtGrad, dtAdc)
 
 # visualize
@@ -40,11 +39,11 @@ title("Trajectory")
 savefig(__file__.replace(".py","_fig1.png"))
 
 figure(figsize=(6,3), dpi=300)
-for iAx in range(nAx):
+for iAx in range(arrGrad.shape[-1]):
     plot(arrGrad[:,iAx], ".-")
 ylabel("mT/m")
 grid(True)
 title("Gradient")
 savefig(__file__.replace(".py","_fig2.png"))
 
-show()
+# show()

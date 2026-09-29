@@ -1,34 +1,37 @@
-# Magnetic Resonance Arbitrary Gradient Toolbox (MRArbGrad, MAG)
+# Magnetic Resonance Arbitrary Gradient Toolbox (MRArbGrad)
 
-## Introduction
-This toolbox is a pip package with C++ backend. The pip package can be called via Python interface to generate **non-Cartesian** gradient waveforms for built-in and external trajectories. The C++ source code (in `mrarbgrad_src/ext/`) can be ported to other pulse sequence project like UIH's Adept project for gradient waveform calculation.
+Python library for solving gradient waveforms for arbitrary MRI trajectories. Trajectories can be specified as a Python function, or as a set of k-space points. A trajectory library is also provided. The underlying C/C++ code can be ported to compatible pulse sequence projects for fast gradient waveform design.
 
-## Install
-**Optionally**, to create a new conda environment (in case the dependencies in this package break your current environment), please run:
-```bash
-$ conda create -n magtest -y
-$ conda activate magtest
-$ conda install python==3.12 -y
-```
-
-This package is **NOT** restricted to use `Python 3.12`. Feel free to adjust at your convenience, just if the package works.
-
-To install this package from PyPI:
+## How to use
+### Install
 ```bash
 $ pip install mrarbgrad
 ```
-To install this package from a local repository:
-```bash
-$ bash install.bash
+
+### Import Libraries
+```python
+from numpy import *
+import mrarbgrad as mag
 ```
 
-You can also install via `pip install .` but remember to delete `*.egg-info` or pip will run into bug when uninstalling this package in current folder (see comments in `install.bash`).
+### Define Your Trajectory Function
+```python
+def Rosette(t):
+    rho = 0.5 * sin(5*pi*t)
+    phi = 3*pi*t
+    return rho*array([cos(phi), sin(phi)])
+```
 
-## Examples & Usages
-Examples for generating gradient waveforms for either built-in trajectory (trajectory library) or external trajectory (expressed by trajectory function or trajectory samples) can be found in the `example` folder.
+### Solve for the Gradient Waveform
+```python
+grad = mag.solve(Rosette, p0=0, p1=1)
+```
+`p0` and `p1` define the bounds of function argument `t`. `grad[:,0]`, `grad[:,1]`, and `grad[:,2]` are the x-, y-, and z-axis gradient waveforms, respectively.
 
-## Reference
-If this project helps you, please cite [our paper](https://ieeexplore.ieee.org/document/11352950):
+*For more usages such as specifying the hardware constraints, use of trajectory library and other utilities, please refer to [Examples](https://github.com/RyanShanghaitech/MRArbGrad/tree/main/example).*
 
-[1] Luo R, Huang H, Miao Q, Xu J, Hu P, Qi H. Real-Time Gradient Waveform Design for Arbitrary k-Space Trajectories. IEEE Transactions on Biomedical Engineering. 2026;1–12. 
+## Acknowledgements
+The algorithm in this library is proposed in:
+
+[1] Luo R, Huang H, Miao Q, Xu J, Hu P, Qi H. Real-Time Gradient Waveform Design for Arbitrary k-Space Trajectories. IEEE Transactions on Biomedical Engineering. 2026 Oct;73(10):3491-502. doi:10.1109/TBME.2026.3654117
 

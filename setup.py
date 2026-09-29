@@ -1,9 +1,7 @@
 from setuptools import setup, Extension
 import numpy
-from os.path import exists
-from ctypes.util import find_library
 
-_sources = \
+sources = \
 [
     "./mrarbgrad_src/ext/traj/ScanPlan.cpp",
     "./mrarbgrad_src/ext/mag/Mag.cpp",
@@ -14,35 +12,16 @@ _sources = \
 modExt = Extension\
 (
     "mrarbgrad.ext", 
-    sources = _sources,
+    sources = sources,
     include_dirs = ["./mrarbgrad_src/ext/", numpy.get_include()],
     language = 'c++'
 )
 
-_packages = \
-[
-    "mrarbgrad", 
-    "mrarbgrad.ext", 
-    "mrarbgrad.ext.traj",
-    "mrarbgrad.ext.mag", 
-    "mrarbgrad.ext.utility",
-]
-
-_package_dir = \
-{
-    "mrarbgrad":"./mrarbgrad_src/", 
-    "mrarbgrad.ext":"./mrarbgrad_src/ext/", 
-    "mrarbgrad.ext.traj":"./mrarbgrad_src/ext/traj/",
-    "mrarbgrad.ext.mag":"./mrarbgrad_src/ext/mag/", 
-    "mrarbgrad.ext.utility":"./mrarbgrad_src/ext/utility/"
-}
-
 setup\
 (
     name = 'mrarbgrad',
-    # install_requires = ["numpy", "matplotlib"], # pip will automatically upgrade numpy if it see this, which might corrupt the environment
     ext_modules = [modExt],
-    packages = _packages,
-    package_dir = _package_dir,
-    include_package_data = True
+    packages = ["mrarbgrad"],
+    package_dir = {"mrarbgrad":"./mrarbgrad_src/"},
+    include_package_data = False
 )

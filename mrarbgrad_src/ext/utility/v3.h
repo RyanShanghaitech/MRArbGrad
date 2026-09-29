@@ -8,7 +8,6 @@
 class v3;
 
 typedef std::vector<v3> vv3;
-typedef std::vector<vv3> vvv3;
 typedef std::list<v3> lv3;
 
 class v3

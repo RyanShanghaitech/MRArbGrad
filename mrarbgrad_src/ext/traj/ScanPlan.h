@@ -26,7 +26,7 @@ public:
     static bool permute(vi64* indices, i64 len);
 
 protected:
-    i64 nPix, nAcqRef, lenRampFront, lenReadOut, lenRampBack;
+    i64 nPix, nAcqRef, lenReadOut, lenRampFront, lenRampBack;
     Mag mag;
     
     bool solve(v3* pK0, vv3* pGrad, v3* pK1, vf64* pPara, const TrajFunc& traj);

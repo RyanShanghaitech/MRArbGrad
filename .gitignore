@@ -6,7 +6,6 @@
 *.gif
 *.svg
 
-dev*
 test*
 temp*
 

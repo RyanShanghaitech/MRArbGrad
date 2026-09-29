@@ -5,10 +5,9 @@ from numpy.linalg import norm
 import mrarbgrad as mag
 
 # parameters
-fov, nPix, nAx = 0.320, 320, 2
+fov, nPix = 0.320, 320
 dtGrad = 10e-6
 dtAdc = 2.5e-6
-nAcq = 1000
 mag.config(
     dt=10e-6,
     ovsp=4,
@@ -23,8 +22,7 @@ mag.config(
 )
 
 # pull a scan plan from library
-lstK0GradK1 = mag.scan("RosetteClassic", nPix, nAcq)
-print(f"nAcq: {len(lstK0GradK1)}")
+lstK0GradK1 = mag.scan("RosetteClassic", nPix, nAcq=1000)
 lstArrGrad, lstArrK = [], []
 for k0, arrGrad, k1 in lstK0GradK1:
     arrK = mag.integrate(arrGrad, dtGrad, dtAdc)
@@ -44,12 +42,14 @@ ylim(-0.5,0.5)
 axis("equal")
 grid(True)
 title("Trajectory")
+savefig(__file__.replace(".py", "_fig1.png"))
 
 figure(figsize=(6,3), dpi=300)
-for iAx in range(nAx):
+for iAx in range(arrGrad.shape[-1]):
     plot(arrGrad[:,iAx], ".-")
 ylabel("mT/m")
 grid(True)
 title("Gradient")
+savefig(__file__.replace(".py", "_fig2.png"))
 
-show()
+# show()

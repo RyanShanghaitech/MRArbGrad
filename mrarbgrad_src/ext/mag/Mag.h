@@ -18,7 +18,7 @@ public:
     static f64 dt; static i64 ovsp;
     static f64 sLim, gLim, g0Norm, g1Norm;
     static bool enTrajRep, enGradRep;
-    static i64 lenGradRsv, lenTrajRsv;
+    static i64 lenTrajRsv, lenGradRsv;
 
     Mag();
     bool setTraj(const TrajFunc& func);

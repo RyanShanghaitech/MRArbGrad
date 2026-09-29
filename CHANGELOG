@@ -1,3 +1,6 @@
+5.0.0 (Sep 29, 2026)
+Massively reorganize the library structure: use a lightweighted Python trajectory library instead of a C++ one, make the name of solver interface much more concise.
+
 4.4.1 (March 31, 2026)
 Expose interfaces of the functions in 4.4.0.
 

@@ -53,7 +53,7 @@ protected:
         if (eSearchMode == EBinary)
         {
             i64 low = 0;
-            i64 high = nSamp - 2;
+            i64 high = nSamp - 1;
             while (high - low > 1)
             {
                 i64 mid = (low + high) / 2;

@@ -5,7 +5,7 @@ from numpy.linalg import norm
 import mrarbgrad as mag
 
 # parameters
-fov, nPix, nAx = 0.320, 320, 2
+fov, nPix = 0.320, 320
 dtGrad = 10e-6
 dtAdc = 2.5e-6
 mag.config(
@@ -28,13 +28,11 @@ def Rosette(t:float) -> NDArray:
     rho = 0.5 * sin(om1*t)
     phi = om2*t + phi0
     return array([rho*cos(phi), rho*sin(phi)], dtype=float64)
-
 arrGrad = mag.solve(Rosette, tMin, tMax)
-arrGrad = arrGrad[:,:nAx]
 arrK = mag.integrate(arrGrad, dtGrad, dtAdc)
 
 # visualize
-arrGrad:NDArray = mag.hzpx2tm(arrGrad, fov, nPix)*1e3
+arrGrad:NDArray = mag.hzpx2tm(arrGrad, fov/nPix)*1e3
 
 figure(figsize=(3,3), dpi=300)
 plot(arrK[:,0], arrK[:,1], ".-")
@@ -43,12 +41,14 @@ ylim(-0.5,0.5)
 axis("equal")
 grid(True)
 title("Trajectory")
+savefig(__file__.replace(".py", "_fig1.png"))
 
 figure(figsize=(6,3), dpi=300)
-for iAx in range(nAx):
+for iAx in range(arrGrad.shape[-1]):
     plot(arrGrad[:,iAx], ".-")
 ylabel("mT/m")
 grid(True)
 title("Gradient")
+savefig(__file__.replace(".py", "_fig2.png"))
 
-show()
+# show()

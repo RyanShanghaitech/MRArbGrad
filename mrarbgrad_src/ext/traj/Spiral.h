@@ -8,7 +8,10 @@
 class VDSpiralFunc: public TrajFunc
 {
 public:
-    VDSpiralFunc(vf64 vRho, vf64 vDenProf, f64 phi0):
+    LinIntp intp;
+    f64 phi0;
+
+    VDSpiralFunc(const vf64& vRho, const vf64& vDen, f64 phi0):
 	TrajFunc(0,0.5), phi0(phi0)
     {
 	/**
@@ -17,7 +20,7 @@ public:
 	 */
 	ASSERT(vRho.front()==0.0);
 	ASSERT(vRho.back()==0.5);
-	intp = LinIntp(vRho, vDenProf);
+	intp = LinIntp(vRho, vDen);
     }
 
     virtual bool getK(v3* k, f64 p) const
@@ -29,128 +32,110 @@ public:
         k->z = 0e0;
 	return true;
     }
-
-protected:
-    LinIntp intp;
-    f64 phi0;
 };
 
 class VDSpiralPlan: public ScanPlan
 {
 private:
-    static vf64 vRho_default()
+    static vf64 vRho_Default()
     {
-        vf64 r(2);
-        r[0]=0.0;
-        r[1]=0.5;
+        vf64 r(2); r[0]=0.0; r[1]=0.5;
         return r;
     }
 
-    static vf64 vDenProf_default()
+    static vf64 vDen_Default()
     {
-        vf64 r(2);
-        r[0]=4e0*M_PI/0.5;
-        r[1]=4e0*M_PI/0.5;
-        return r;
+        vf64 d(2);
+        d[0]=4.0*M_PI/0.5;
+        d[1]=4.0*M_PI/0.5;
+        return d;
     }
 
 public:
-    VDSpiralPlan(i64 nPix, i64 lenRampFront=0, i64 lenRampBack=0, const vf64& vRho=vRho_default(), const vf64& vDenProf=vDenProf_default()):
-        ScanPlan(nPix, 0, 0, lenRampFront, lenRampBack), vRho(vRho), vDenProf(vDenProf)
+    VDSpiralPlan(i64 nPix, const vf64& vRho=vRho_Default(), const vf64& vDen=vDen_Default(), i64 lenRampFront=0, i64 lenRampBack=0):
+        ScanPlan(nPix, i64(), i64(), lenRampFront, lenRampBack), vRho(vRho), vDen(vDen), func(vRho, vDen, 0.0)
     {
-	// rotation angle vector
-	f64 denMin = *std::min_element(vDenProf.begin(), vDenProf.end());
+	// rotation angle
+	f64 denMin = *std::min_element(vDen.begin(), vDen.end());
 	i64 nRot = round((nPix*M_PI) / (denMin*0.5));
-        nAcqRef = nRot;
+        ScanPlan::nAcqRef = nRot;
 	rotAng = 2e0*M_PI / (f64)nRot;
 
 	// max readout length
-	VDSpiralFunc func = VDSpiralFunc(vRho, vDenProf, 0e0);
 	mag.setTraj(func);
 	vv3 grad; mag.solve(&grad, NULL);
-	lenReadOut = grad.size();
+        ScanPlan::lenReadOut = grad.size();
     }
 
     virtual bool getGrad(v3* k0, vv3* grad, v3* k1, i64 iAcq)
     {
 	bool ret = true;
-	f64 phi0 = iAcq*rotAng;
-	VDSpiralFunc func = VDSpiralFunc(vRho, vDenProf, phi0);
-	ret = ScanPlan::solve(k0, grad, k1, NULL, func);
-	return ret;
-    }
-    
-protected:
-    vf64 vRho, vDenProf;
-    f64 rotAng;
-};
-
-class SpiralPlan: public ScanPlan
-{
-public:
-    SpiralPlan(i64 nPix, i64 lenRampFront=0, i64 lenRampBack=0, f64 den=4e0*M_PI/0.5):
-        ScanPlan(nPix, 0, 0, lenRampFront, lenRampBack)
-    {
-	// rotation angle vector
-	i64 nRot = round((nPix*M_PI) / (den*0.5));
-        nAcqRef = nRot;
-	rotAng = 2e0*M_PI / (f64)nRot;
-
-	// max readout length
-        vRho.resize(2); vRho[0] = 0; vRho[1] = 0.5;
-        vDenProf.resize(2); vDenProf[0] = den; vDenProf[1] = den;
-	VDSpiralFunc func = VDSpiralFunc(vRho, vDenProf, 0e0);
-	mag.setTraj(func);
-	vv3 grad; mag.solve(&grad, NULL);
-	lenReadOut = grad.size();
-    }
-
-    virtual bool getGrad(v3* k0, vv3* grad, v3* k1, i64 iAcq)
-    {
-	bool ret = true;
-	f64 phi0 = iAcq*rotAng;
-	VDSpiralFunc func = VDSpiralFunc(vRho, vDenProf, phi0);
+	func.phi0 = iAcq*rotAng;
 	ret &= ScanPlan::solve(k0, grad, k1, NULL, func);
 	return ret;
     }
     
 protected:
-    vf64 vRho, vDenProf;
+    vf64 vRho, vDen;
+    VDSpiralFunc func;
     f64 rotAng;
 };
 
-class LVDSpiralPlan: public ScanPlan // linear variable density spiral
+class SpiralPlan: public VDSpiralPlan
 {
+private:
+    static vf64 getVRho()
+    {
+        vf64 r(2); r[0]=0.0, r[1]=0.5;
+        return r;
+    }
+
+    static vf64 getVDen(f64 den)
+    {
+        vf64 d(2); d[0]=den, d[1]=den;
+        return d;
+    }
+
 public:
-    LVDSpiralPlan(i64 nPix, i64 lenRampFront=0, i64 lenRampBack=0, f64 denIn=256.0*M_PI/0.5, f64 denOt=2.0*M_PI/0.5):
-        ScanPlan(nPix, 0, 0, lenRampFront, lenRampBack)
-    {
-	// rotation angle vector
-        f64 denMin = std::min(denIn, denOt);
-	i64 nRot = round((nPix*M_PI) / (denMin*0.5));
-        nAcqRef = nRot;
-	rotAng = 2e0*M_PI / (f64)nRot;
+    SpiralPlan(i64 nPix, f64 den=4e0*M_PI/0.5, i64 lenRampFront=0, i64 lenRampBack=0):
+        VDSpiralPlan(nPix, getVRho(), getVDen(den), lenRampFront, lenRampBack)
+    {}
+};
 
-	// max readout length
-        vRho.resize(2); vRho[0] = 0; vRho[1] = 0.5;
-        vDenProf.resize(2); vDenProf[0] = denIn; vDenProf[1] = denOt;
-	VDSpiralFunc func = VDSpiralFunc(vRho, vDenProf, 0e0);
-	mag.setTraj(func);
-	vv3 grad; mag.solve(&grad, NULL);
-	lenReadOut = grad.size();
+class DDSpiralPlan: public VDSpiralPlan // dual density spiral
+{
+private:
+    static vf64 getVRho(f64 den0, f64 den1, f64 rho0, f64 rho1, i64 nSamp)
+    {
+        vf64 vRho; vRho.reserve(nSamp+2);
+        if (rho0!=0.0) vRho.push_back(0.0);
+        for (i64 i=0; i<nSamp; ++i)
+        {
+            f64 k = (f64)i/(f64)(nSamp-1);
+            vRho.push_back(rho0 + (rho1-rho0) * k);
+        }
+        if (rho1!=0.5) vRho.push_back(0.5);
+
+        return vRho;
     }
 
-    virtual bool getGrad(v3* k0, vv3* grad, v3* k1, i64 iAcq)
+    static vf64 getVDen(f64 den0, f64 den1, f64 rho0, f64 rho1, i64 nSamp)
     {
-	bool ret = true;
-	f64 phi0 = iAcq*rotAng;
-	VDSpiralFunc func = VDSpiralFunc(vRho, vDenProf, phi0);
-	ret &= ScanPlan::solve(k0, grad, k1, NULL, func);
-	return ret;
+        vf64 vDen; vDen.reserve(nSamp+2);
+        if (rho0!=0.0) vDen.push_back(den0);
+        for (i64 i=0; i<nSamp; ++i)
+        {
+            f64 k = (f64)i/(f64)(nSamp-1);
+            vDen.push_back(1/(1/den0 + (1/den1-1/den0) * k));
+        }
+        if (rho1!=0.5) vDen.push_back(den1);
+
+        return vDen;
     }
-    
-protected:
-    vf64 vRho, vDenProf;
-    f64 rotAng;
+
+public:
+    DDSpiralPlan(i64 nPix, f64 den0=32.0*M_PI/0.5, f64 den1=2.0*M_PI/0.5, f64 rho0=1/16.0, f64 rho1=0.5, i64 lenRampFront=0, i64 lenRampBack=0):
+        VDSpiralPlan(nPix, getVRho(den0, den1, rho0, rho1, nPix), getVDen(den0, den1, rho0, rho1, nPix), lenRampFront, lenRampBack)
+    {}
 };
 

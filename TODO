@@ -1,17 +1,1 @@
-- check dependencies compatibility.
-- save the figure instead of plot it to improve compatibility.
-- use explicit unit conversation function name instead of a unified one. `dir` is especially confusing here. Maybe use `cvtTm2HzPx()` and `cvtHzPx2Tm()` for naming.
-- rename:
-  getGoldang -> getGoldAng
-  getGoldrat -> getGoldRat
-  calGrad4ExtFunc -> solve (because this is the most commonly used function in practice)
-  calGrad4ExtSamp -> solve (can be done by function overload)
-  getG_xxx -> getGrad_xxx (by convention, `grad` and `slew` are used)
-- for python solver, return only the gradeint waveform by default. Trajectory start point should be easily inferred from trajectory function itself.
-- any function that returns more than one variable needs attention.
-- remove support to mtg and merge private repostiroy with public one, as we do not obtain copyright, and to convenience maintainance.
-- pack trajfunc module into classes, users are suggested to use trajfunc instead of built-in trajectories, the later one is for inspecting cpp gradient waveforms from python interface.
-- use a static variable to control oversampling ratio and make it the default interface, it does not need to be thread-safe, nobody want to change it frequently.
-- move variable definitions to cpp files, from h files.
-- modify README, inform user this package is for two usage: the cpp code can be used for pulse sequence development, the python code can be used for simulation, or evaluate the results from cpp layer. Also, ask user feel free to report issues about compatibility, sometimes the maintainers are unable to test compatibility to newest denpendencies in time.
-- pay attention to documentation, make sure it is compatible to at least the simpliest style; also, in `solve()` which takes in external samples, specifiy that if the input trajectory is too long that internal resampling number is insufficient and causes trajectory distortion, provide the samples explicitly to avoid this.
+- Cubic spline function has a zero 2nd-order derivative at the endpoint. Solver may requires a non-zero 1st and 2nd order derivative to calculate the curvature. Change the endpoint derivative to another non-zero value.

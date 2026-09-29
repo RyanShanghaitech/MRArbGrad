@@ -33,15 +33,12 @@ def solve(samp:NDArray) -> NDArray:
     """
     ...
 
-def solve(*args, **kwargs) -> NDArray|None:
-    if isinstance(args[0], ndarray):
-        return ext.solve_samp(args[0])
-    elif callable(args[0]):
-        return ext.solve_func(args[0], float(args[1]), float(args[2]))
-    else:
-        raise TypeError(f"type(args[0]): {type(args[0])}")
+def solve(traj:Callable|NDArray, p0:float|None=None, p1:float|None=None) -> NDArray|None:
+    if callable(traj): return ext.solve_func(traj, float(p0), float(p1))
+    elif isinstance(traj, ndarray): return ext.solve_samp(traj)
+    else: raise TypeError(f"type(traj): {type(traj)}")
 
-def scan(traj:str, nPix:int, nAcq:int) -> List[Tuple[float, NDArray, float]]:
+def scan(traj:Literal["Spiral", "DDSpiral", "Rosette", "RosetteClassic", "Yarnball", "Cones"], nPix:int, nAcq:int) -> List[Tuple[NDArray, NDArray, NDArray]]:
     """
     run built-in scan plan.
 
@@ -51,11 +48,11 @@ def scan(traj:str, nPix:int, nAcq:int) -> List[Tuple[float, NDArray, float]]:
         nAcq (int): number of acquisition
 
     Returns:
-        List[Tuple[float, NDArray, float]]: list of (k0, grad, k1) tuple; k0: phase encoding moment; grad: readout gradient waveform; k1: final moment.
+        List[Tuple[NDArray, NDArray, NDArray]]: list of (k0, grad, k1) tuple; k0: phase encoding moment; grad: readout gradient waveform; k1: final moment.
     """
     return ext.scan(str(traj), int(nPix), int(nAcq))
 
-def config(dt:float=10e-6, ovsp:int=4, sLim:float=tm2hzpx(50,1e-3), gLim:float=tm2hzpx(30e-3,1e-3), g0Norm:float=0.0, g1Norm:float=0.0, enTrajRep:bool=True, enGradRep:bool=True, lenGradRsv:int=int(1e5), lenTrajRsv:int=int(1e4)):
+def config(dt:float=10e-6, ovsp:int=4, sLim:float=tm2hzpx(50,1e-3), gLim:float=tm2hzpx(30e-3,1e-3), g0Norm:float=0.0, g1Norm:float=0.0, enTrajRep:bool=True, enGradRep:bool=True, lenTrajRsv:int=int(1e4), lenGradRsv:int=int(1e5)):
     """
     set solver configurations.
 
@@ -68,28 +65,25 @@ def config(dt:float=10e-6, ovsp:int=4, sLim:float=tm2hzpx(50,1e-3), gLim:float=t
         g1Norm (float): desired final gradient amplitude
         enTrajRep (bool): enable trajectory reparameterization
         enGradRep (bool): enable gradient reparameterization
-        lenGradRsv (int): reserved buffer size for gradient computation
         lenTrajRsv (int): reserved buffer size for trajectory reparameterization
+        lenGradRsv (int): reserved buffer size for gradient computation
     """
-    ext.config(float(dt), int(ovsp), float(sLim), float(gLim), float(g0Norm), float(g1Norm), bool(enTrajRep), bool(enGradRep), int(lenGradRsv), int(lenTrajRsv))
+    ext.config(float(dt), int(ovsp), float(sLim), float(gLim), float(g0Norm), float(g1Norm), bool(enTrajRep), bool(enGradRep), int(lenTrajRsv), int(lenGradRsv))
 
-def saveF64(hdr:str, bin:str, arr:NDArray) -> bool:
+def saveF64(hdr:str, bin:str, arrs:List[NDArray]):
     """
-    save vector file (float64)
+    save as a vector file (float64)
 
     Args:
         hdr (str): header (hdr) file path
         bin (str): bin file path
-        arr (NDarray): array to be saved
-
-    Returns:
-        bool: True for success
+        arrs (List[NDarray]): arrays to be saved
     """
-    return ext.saveF64(str(hdr), str(bin), arr)
+    ext.saveF64(str(hdr), str(bin), arrs)
 
-def loadF64(hdr:str, bin:str) -> list[NDArray]|None:
+def loadF64(hdr:str, bin:str) -> list[NDArray]:
     """
-    load vector file (float64)
+    load a vector file (float64)
 
     Args:
         hdr (str): header (hdr) file path
@@ -100,23 +94,20 @@ def loadF64(hdr:str, bin:str) -> list[NDArray]|None:
     """
     return ext.loadF64(str(hdr), str(bin))
 
-def saveF32(hdr:str, bin:str, arr:NDArray) -> bool:
+def saveF32(hdr:str, bin:str, arrs:List[NDArray]):
     """
-    save vector file (float32)
+    save as a vector file (float32)
 
     Args:
         hdr (str): header (hdr) file path
         bin (str): bin file path
-        arr (NDarray): array to be saved
-
-    Returns:
-        bool: True for success
+        arrs (List[NDArray]): arrays to be saved
     """
-    return ext.saveF32(str(hdr), str(bin), arr)
+    ext.saveF32(str(hdr), str(bin), arrs)
 
-def loadF32(hdr:str, bin:str) -> list[NDArray]|None:
+def loadF32(hdr:str, bin:str) -> list[NDArray]:
     """
-    load vector file (float32)
+    load a vector file (float32)
 
     Args:
         hdr (str): header (hdr) file path

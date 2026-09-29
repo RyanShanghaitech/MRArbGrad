@@ -12,6 +12,7 @@
 #include "traj/Cones.h"
 
 typedef std::list<vv3> lvv3;
+typedef std::vector<vv3> vvv3;
 
 PyObject* PyArray_FromVv3(const vv3& src)
 {
@@ -29,26 +30,6 @@ PyObject* PyArray_FromVv3(const vv3& src)
         *(f64*)PyArray_GETPTR2((PyArrayObject*)ndarray, i, 0) = src[i].x;
         *(f64*)PyArray_GETPTR2((PyArrayObject*)ndarray, i, 1) = src[i].y;
         *(f64*)PyArray_GETPTR2((PyArrayObject*)ndarray, i, 2) = src[i].z;
-    }
-
-    return ndarray;
-}
-
-PyObject* PyArray_FromVf64(const vf64& src)
-{
-    int dim0 = src.size();
-
-    // allocate numpy array
-    PyObject* ndarray;
-    {
-        npy_intp dims[] = {dim0};
-        ndarray = PyArray_ZEROS(1, dims, NPY_FLOAT64, 0);
-    }
-
-    // fill the data in
-    for (i64 i = 0; i < (int)src.size(); ++i)
-    {
-        *(f64*)PyArray_GETPTR1((PyArrayObject*)ndarray, i) = src[i];
     }
 
     return ndarray;
@@ -83,45 +64,22 @@ PyObject* PyArray_FromV3(const v3& src)
     return ndarray;
 }
 
-PyObject* PyList_FromVv3(const vv3& src)
-{
-    PyObject* pyList = PyList_New(0);
-    for (i64 i = 0; i < (int)src.size(); ++i)
-    {
-        PyObject* ndarray = PyArray_FromV3(src[i]);
-        PyList_Append(pyList, ndarray);
-        Py_DECREF(ndarray);
-    }
-    return pyList;
-}
-
 bool PyArray_AsVv3(PyObject* src, vv3* dst)
 {
     PyArrayObject* ndarray = (PyArrayObject*)PyArray_FROM_OTF(src, NPY_FLOAT64, NPY_ARRAY_C_CONTIGUOUS);
-    i64 n = PyArray_DIM(ndarray, 0);
-    dst->resize(n);
+    i64 nSamp = PyArray_DIM(ndarray, 0);
+    i64 nAx = PyArray_DIM(ndarray, 1);
+    dst->resize(nSamp);
 
-    for (i64 i = 0; i < n; ++i)
+    for (i64 i = 0; i < nSamp; ++i)
     {
-        f64* pdThis = (f64*)PyArray_GETPTR2(ndarray, i, 0);
-        dst->at(i).x = pdThis[0];
-        dst->at(i).y = pdThis[1];
-        dst->at(i).z = pdThis[2];
+        f64* samp = (f64*)PyArray_GETPTR2(ndarray, i, 0);
+        if (nAx>=1) dst->at(i).x = samp[0];
+        if (nAx>=2) dst->at(i).y = samp[1];
+        if (nAx>=3) dst->at(i).z = samp[2];
     }
 
-    Py_DECREF(ndarray); // what if decref another?
-    return true;
-}
-
-bool PyArray_AsVf64(PyObject* src, vf64* dst)
-{
-    i64 n = PyArray_DIM((PyArrayObject*)src, 0);
-    dst->resize(n);
-
-    for (i64 i = 0; i < n; ++i)
-    {
-        dst->at(i) = *(f64*)PyArray_GETPTR1((PyArrayObject*)src, i);
-    }
+    Py_DECREF(ndarray);
     return true;
 }
 
@@ -199,7 +157,7 @@ PyObject* scan(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 
     ScanPlan* plan = NULL;
     if (strcmp(strTraj, "Spiral")==0) plan = new SpiralPlan(nPix);
-    else if (strcmp(strTraj, "LVDSpiral")==0) plan = new LVDSpiralPlan(nPix);
+    else if (strcmp(strTraj, "DDSpiral")==0) plan = new DDSpiralPlan(nPix);
     else if (strcmp(strTraj, "Rosette")==0) plan = new RosettePlan(nPix);
     else if (strcmp(strTraj, "RosetteClassic")==0) plan = new RosetteClassicPlan(nPix);
     else if (strcmp(strTraj, "Yarnball")==0) plan = new YarnballPlan(nPix);
@@ -241,8 +199,8 @@ PyObject* config(PyObject* self, PyObject* const* args, Py_ssize_t narg)
     Mag::g1Norm = PyFloat_AsDouble(args[5]);
     Mag::enTrajRep = args[6]==Py_True;
     Mag::enGradRep = args[7]==Py_True;
-    Mag::lenGradRsv = PyLong_AsLongLong(args[8]);
-    Mag::lenTrajRsv = PyLong_AsLongLong(args[9]);
+    Mag::lenTrajRsv = PyLong_AsLongLong(args[8]);
+    Mag::lenGradRsv = PyLong_AsLongLong(args[9]);
     Py_INCREF(Py_None);
     return Py_None;
 }
@@ -306,7 +264,8 @@ PyObject* loadF64(PyObject* self, PyObject* const* args, Py_ssize_t narg)
     while (1)
     {
         v3::loadF64(fHdr, fBin, &vv3Data);
-        lvv3Data.push_back(vv3Data);
+        if (vv3Data.empty()) break; // EOF reached
+        else lvv3Data.push_back(vv3Data);
     }
 
     fclose(fHdr); fclose(fBin);
@@ -337,7 +296,6 @@ PyObject* saveF32(PyObject* self, PyObject* const* args, Py_ssize_t narg)
 
     vv3 vv3Data;
     i64 n = PyList_GET_SIZE(args[2]);
-    bool ret = true;
     for (i64 i=0; i<n; ++i)
     {
         PyArray_AsVv3(PyList_GET_ITEM(args[2], i), &vv3Data);
@@ -375,7 +333,8 @@ PyObject* loadF32(PyObject* self, PyObject* const* args, Py_ssize_t narg)
     while (1)
     {
         v3::loadF32(fHdr, fBin, &vv3Data);
-        lvv3Data.push_back(vv3Data);
+        if (vv3Data.empty()) break; // EOF reached
+        else lvv3Data.push_back(vv3Data);
     }
 
     fclose(fHdr); fclose(fBin);

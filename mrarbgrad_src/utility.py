@@ -13,7 +13,7 @@ def getGoldAng()->float: return goldang
 
 def tm2hzpx(x:NDArray|float, res:float, gamma:float=42.5756e6) -> NDArray|float:
     """
-    unit conversion: Tesla/meter to Herz/pixel
+    unit conversion: Tesla/meter to Hertz/pixel
 
     Args:
         x (NDArray|float): to be converted
@@ -62,7 +62,7 @@ def getK_Cartesian(nPix:int, nAx:int) -> List[NDArray]:
     return lstArrK
 
 
-def getK_Radial(nPix:int, nAx:int, nSpoke:int, enGoldAng:bool) -> List:
+def getK_Radial(nPix:int, nAx:int, nSpoke:int, enGoldAng:bool) -> List[NDArray]:
     """
     Generates a Radial sampling pattern.
     
@@ -73,7 +73,7 @@ def getK_Radial(nPix:int, nAx:int, nSpoke:int, enGoldAng:bool) -> List:
         enGoldAng (bool): If True, uses the golden angle for spoke spacing.
         
     Returns:
-        List: A list of numpy arrays, each of shape (nPix, nAx), representing radial spokes.
+        List[NDArray]: A list of numpy arrays, each of shape (nPix, nAx), representing radial spokes.
     """
     if nAx!=2: raise NotImplementedError("nAx!=2")
     lstArrK = []
@@ -89,61 +89,55 @@ def getK_Radial(nPix:int, nAx:int, nSpoke:int, enGoldAng:bool) -> List:
         
     return lstArrK
 
-def clip(lstArrGrad:list[NDArray]|NDArray, dt:float, sLim:float, gLim:float) -> list[NDArray]|NDArray:
+def clip(arrGrad:NDArray, dt:float, sLim:float, gLim:float) -> NDArray:
     """
-    Clip the slewrate and gradient amlitude of a list of gradient waveforms
+    Clip the slewrate and gradient amlitude of a gradient waveform.
 
     Args:
-        lstArrGrad: list of gradient waveforms
-        sLim: slewrate amplitude limit
-        gLim: gradient amplitude limit
+        arrGrad (NDArray): gradient waveform array
+        dt (float): time resolution
+        sLim (float): slewrate amplitude limit
+        gLim (float): gradient amplitude limit
 
     Returns:
-        Clipped gradient waveforms
+        NDArray: Clipped gradient waveforms
     """
-    if isinstance(lstArrGrad, ndarray): _lstArrGrad = [lstArrGrad.copy()]
-    else: _lstArrGrad = lstArrGrad.copy()
-    nPE = len(_lstArrGrad)
-    for iPE in range(nPE):
-        # slew-rate clipping
-        arrGrad = _lstArrGrad[iPE]
-        arrSlew = diff(arrGrad, 1, 0)/dt
-        arrSlewNorm = norm(arrSlew, axis=-1)
-        arrSlewNorm[where(arrSlewNorm==0)] += 1e-6
-        arrSlewUnit = arrSlew/arrSlewNorm[:,newaxis]
-        np.clip(arrSlewNorm, None, sLim, out=arrSlewNorm)
-        arrSlew = arrSlewUnit*arrSlewNorm[:,newaxis]
-        # gradient clipping
-        arrGrad[:,:] = arrGrad[0,:]
-        arrGrad[1:,:] += cumsum(arrSlew*dt, axis=0)
-        arrGradNorm = norm(arrGrad, axis=-1)
-        arrGradNorm[where(arrGradNorm==0)] += 1e-6
-        arrGradUnit = arrGrad/arrGradNorm[:,newaxis]
-        np.clip(arrGradNorm, None, gLim, out=arrGradNorm)
-        arrGrad = arrGradUnit*arrGradNorm[:,newaxis]
-        # 
-        _lstArrGrad[iPE] = arrGrad
-        
-    if isinstance(lstArrGrad, ndarray):
-        return _lstArrGrad[0]
-    else:
-        return _lstArrGrad
+    # slew-rate clipping
+    arrSlew = diff(arrGrad, 1, 0)/dt
+    arrSlewNorm = norm(arrSlew, axis=-1)
+    arrSlewNorm[where(arrSlewNorm==0)] += 1e-6
+    arrSlewUnit = arrSlew/arrSlewNorm[:,newaxis]
+    np.clip(arrSlewNorm, None, sLim, out=arrSlewNorm)
+    arrSlew = arrSlewUnit*arrSlewNorm[:,newaxis]
+    # gradient clipping
+    arrGrad = arrGrad.copy()
+    arrGrad[:,:] = arrGrad[0,:]
+    arrGrad[1:,:] += cumsum(arrSlew*dt, axis=0)
+    arrGradNorm = norm(arrGrad, axis=-1)
+    arrGradNorm[where(arrGradNorm==0)] += 1e-6
+    arrGradUnit = arrGrad/arrGradNorm[:,newaxis]
+    np.clip(arrGradNorm, None, gLim, out=arrGradNorm)
+    arrGrad = arrGradUnit*arrGradNorm[:,newaxis]
+    
+    return arrGrad
 
 def integrate(arrGrad:NDArray, dtGrad:int|float, dtAdc:int|float, nShift:int|float=1.0) -> NDArray:
     """
-    # description:
     integrate the gradient waveform to the trajectory
 
-    # parameter
-    `arrGrad`: array of gradient waveform
-    `dtGrad`, `dtAdc`: temporal resolution of gradient system and ADC
+    Args:
+        arrGrad (NDArray): array of gradient waveform
+        dtGrad (int|float): temporal resolution of the gradient
+        dtAdc (int|float): temporal resolution of the ADC
+        nShift (int|float): at what position does ADC signal to be evaluated
 
-    # return:
-    interpolated trajectory
+    Returns:
+        interpolated trajectory
     """
     dtShift = nShift*dtAdc
     nGrad, nAx = arrGrad.shape
-    nAdc = int(dtGrad/dtAdc)*(nGrad-1)
+    nAdc = (dtGrad/dtAdc)*(nGrad-1)
+    nAdc = int(nAdc)
     arrGrad_Resamp = zeros([nAdc,nAx], dtype=float64)
     for iDim in range(nAx):
         arrGrad_Resamp[:,iDim] = interp(dtAdc*arange(nAdc)+dtShift, dtGrad*arange(nGrad), arrGrad[:,iDim])
@@ -153,17 +147,16 @@ def integrate(arrGrad:NDArray, dtGrad:int|float, dtAdc:int|float, nShift:int|flo
     arrK = cumsum(arrDk,axis=0)
     return arrK
 
-def delay(arrGrad:NDArray, tau:int|float) -> NDArray:
+def delay(arrGrad:NDArray, tau:float) -> NDArray:
     """
-    # description:
     delay the input gradient waveform by time constant tau
 
-    # parameter
-    `arrGrad`: array of single gradient waveform
-    `tau`: time constant in RL circuit transfer function
+    Args:
+        arrGrad (NDArray): array of single gradient waveform
+        tau (float): time constant in RL transfer function over gradeint raster time
 
-    # return:
-    delayed gradient waveform
+    Returns:
+        NDArray: delayed gradient waveform
     """
     assert arrGrad.ndim == 2, "only single gradient waveform is supported."
     if tau == 0: return arrGrad.copy() # avoid divided-by-0 later
@@ -187,14 +180,25 @@ def delay(arrGrad:NDArray, tau:int|float) -> NDArray:
     if abs(arrImpResRL.sum() - 1) > 1e-2: raise ValueError(f"arrImpResRL.sum() = {arrImpResRL.sum():.2f} (supposed to be 1) (tau too small or too large)")
     
     # perform convolution between input waveform and impulse response
-    arrGrad_ov = fft.ifft(fft.fft(arrGrad_ov,axis=0)*fft.fft(arrImpResRL)[:,newaxis], axis=0).real
+    arrGrad_ov = fft.ifft(fft.fft(arrGrad_ov,axis=0) * fft.fft(arrImpResRL)[:,newaxis], axis=0).real
     
-    # de-oversample
+    # deoversample
     arrGrad = arrGrad_ov[:nPt:ov,:]
 
     return arrGrad
 
 def rotate(arr:NDArray, ang:float64, axis:int64) -> NDArray:
+    r"""
+    Apply rotation matrix to an (N,3) array.
+
+    Args:
+        arr (NDArray): array to be rotated, shape: (N,3)
+        ang (NDArray): rotation angle in radian
+        axis (NDArray): along which axis to rotate
+
+    Returns:
+        NDArray: rotated `arr`
+    """
     if axis==0: # x
         matRot = array([
             [1, 0, 0],

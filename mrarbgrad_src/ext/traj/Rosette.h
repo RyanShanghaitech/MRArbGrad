@@ -57,7 +57,7 @@ protected:
 class RosettePlan: public ScanPlan
 {
 public:
-    RosettePlan(i64 nPix, i64 lenRampFront=0, i64 lenRampBack=0, f64 om1=5e0*M_PI, f64 om2=3e0*M_PI, f64 tMax=1e0):
+    RosettePlan(i64 nPix, f64 om1=5e0*M_PI, f64 om2=3e0*M_PI, f64 tMax=1e0, i64 lenRampFront=0, i64 lenRampBack=0):
         ScanPlan(nPix, 0, 0, lenRampFront, lenRampBack), om1(om1), om2(om2), tMax(tMax)
     {
         // derive nAcqRef, rot
@@ -89,8 +89,8 @@ protected:
 class RosetteClassicPlan: public RosettePlan
 {
 public:
-    RosetteClassicPlan(i64 nPix, i64 lenRampFront=0, i64 lenRampBack=0, f64 om1=5e0*M_PI, f64 om2=3e0*M_PI, f64 tMax=1e0, f64 dTE=2e-3):
-        RosettePlan(nPix, lenRampFront, lenRampBack, om1, om2, tMax)
+    RosetteClassicPlan(i64 nPix, f64 om1=5e0*M_PI, f64 om2=3e0*M_PI, f64 tMax=1e0, f64 dTE=2e-3, i64 lenRampFront=0, i64 lenRampBack=0):
+        RosettePlan(nPix, om1, om2, tMax, lenRampFront, lenRampBack)
     {
         f64 nPetal = tMax / (M_PI/om1);
         tAcq = dTE * nPetal;
