@@ -1,3 +1,6 @@
+5.1.0 (Sep 30, 2026)
+When `nAcq=None` in `scan()`, use reference acquisition number.
+
 5.0.0 (Sep 29, 2026)
 Massively reorganize the library structure: use a lightweighted Python trajectory library instead of a C++ one, make the name of solver interface much more concise.
 

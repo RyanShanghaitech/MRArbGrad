@@ -1,6 +1,6 @@
 # Magnetic Resonance Arbitrary Gradient Toolbox (MRArbGrad)
 
-Python library for solving gradient waveforms for arbitrary MRI trajectories. Trajectories can be specified as a Python function, or as a set of k-space points. A trajectory library is also provided. The underlying C/C++ code can be ported to compatible pulse sequence projects for fast gradient waveform design.
+Python library for designing the gradient waveforms for arbitrary MRI trajectories. Trajectories can be specified as a Python function, or as a set of k-space points. A trajectory library is also provided. The underlying C/C++ code can be ported to compatible pulse sequence projects for fast gradient waveform design.
 
 ## How to use
 ### Install
@@ -26,9 +26,9 @@ def Rosette(t):
 ```python
 grad = mag.solve(Rosette, pmin=0, pmax=1)
 ```
-`pmin` and `pmax` define the bounds of function argument `t`. `grad[:,0]`, `grad[:,1]`, and `grad[:,2]` are the x-, y-, and z-axis gradient waveforms, respectively.
+`pmin` and `pmax` define the bounds of the function parameter `t`. `grad[:,0]`, `grad[:,1]`, and `grad[:,2]` are the x-, y-, and z-axis gradient waveforms, respectively.
 
-*For more usages such as specifying the hardware constraints, use of trajectory library and other utilities, please refer to [Examples](https://github.com/RyanShanghaitech/MRArbGrad/tree/main/example).*
+*For more usages such as specifying the hardware constraints, use of the trajectory library and other utilities, please refer to the [Examples](https://github.com/RyanShanghaitech/MRArbGrad/tree/main/example).*
 
 ## Acknowledgements
 The algorithm in this library is proposed in:

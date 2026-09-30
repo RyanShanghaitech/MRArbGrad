@@ -164,6 +164,7 @@ PyObject* scan(PyObject* self, PyObject* const* args, Py_ssize_t narg)
     else if (strcmp(strTraj, "Cones")==0) plan = new ConesPlan(nPix);
     else { PyErr_Format(PyExc_ValueError, "unsupported trajectory name"); return NULL; }
 
+    if (nAcq<0) nAcq = plan->getNAcqRef();
     PyObject* pyList = PyList_New(0);
     for (i64 iAcq=0; iAcq<nAcq; ++iAcq)
     {

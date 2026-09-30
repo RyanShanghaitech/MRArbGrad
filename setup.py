@@ -1,7 +1,7 @@
 from setuptools import setup, Extension
 import numpy
 
-sources = \
+src = \
 [
     "./mrarbgrad_src/ext/traj/ScanPlan.cpp",
     "./mrarbgrad_src/ext/mag/Mag.cpp",
@@ -9,10 +9,10 @@ sources = \
     "./mrarbgrad_src/ext/utility/v3.cpp"
 ]
 
-modExt = Extension\
+ext = Extension\
 (
     "mrarbgrad.ext", 
-    sources = sources,
+    sources = src,
     include_dirs = ["./mrarbgrad_src/ext/", numpy.get_include()],
     language = 'c++'
 )
@@ -20,7 +20,7 @@ modExt = Extension\
 setup\
 (
     name = 'mrarbgrad',
-    ext_modules = [modExt],
+    ext_modules = [ext],
     packages = ["mrarbgrad"],
     package_dir = {"mrarbgrad":"./mrarbgrad_src/"},
     include_package_data = False

@@ -38,18 +38,20 @@ def solve(traj:Callable|NDArray, pmin:float|None=None, pmax:float|None=None) -> 
     elif isinstance(traj, ndarray): return ext.solve_samp(traj)
     else: raise TypeError(f"type(traj): {type(traj)}")
 
-def scan(traj:Literal["Spiral", "DDSpiral", "Rosette", "RosetteClassic", "Yarnball", "Cones"], nPix:int, nAcq:int) -> List[Tuple[NDArray, NDArray, NDArray]]:
+def scan(traj:Literal["Spiral", "DDSpiral", "Rosette", "RosetteClassic", "Yarnball", "Cones"], nPix:int, nAcq:int|None=None) -> List[Tuple[NDArray, NDArray, NDArray]]:
     """
     run built-in scan plan.
 
     Args:
         traj (str): plan name
         nPix (int): number of pixels per dimension
-        nAcq (int): number of acquisition
+        nAcq (int|None): number of acquisition, `None` for reference acquisition number
 
     Returns:
         List[Tuple[NDArray, NDArray, NDArray]]: list of (k0, grad, k1) tuple; k0: phase encoding moment; grad: readout gradient waveform; k1: final moment.
     """
+    if nAcq<0: raise ValueError("nAcq<0")
+    if nAcq is None: nAcq = -1
     return ext.scan(str(traj), int(nPix), int(nAcq))
 
 def config(dt:float=10e-6, ovsp:int=4, sLim:float=tm2hzpx(50,1e-3), gLim:float=tm2hzpx(30e-3,1e-3), g0Norm:float=0.0, g1Norm:float=0.0, enTrajRep:bool=True, enGradRep:bool=True, lenTrajRsv:int=int(1e4), lenGradRsv:int=int(1e5)):
