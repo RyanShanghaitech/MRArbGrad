@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "MRArbGrad"
-version = "5.1.4"
+version = "5.1.5"
 dependencies = ["numpy"]
 requires-python = ">=3.10"
 
@@ -17,5 +17,5 @@ license-files = ["LICENSE"]
 readme = "README.md"
 
 [project.urls]
-Repository = "https://github.com/RyanShanghaitech/MRArbGrad"
-Examples = "https://github.com/RyanShanghaitech/MRArbGrad/tree/main/example"
+Repository = "https://github.com/rui-luo1002/MRArbGrad"
+Examples = "https://github.com/rui-luo1002/MRArbGrad/tree/main/example"

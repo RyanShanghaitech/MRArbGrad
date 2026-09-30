@@ -29,7 +29,7 @@ grad = mag.solve(Rosette, pmin=0, pmax=1)
 ```
 `pmin` and `pmax` define the bounds of the function parameter `t`. `grad[:,0]`, `grad[:,1]`, and `grad[:,2]` are the x-, y-, and z-axis gradient waveforms, respectively.
 
-*For more usages such as specifying the hardware constraints, use of the trajectory library and other utilities, please refer to the [Examples](https://github.com/RyanShanghaitech/MRArbGrad/tree/main/example).*
+*For more usages such as specifying the hardware constraints, use of the trajectory library and other utilities, please refer to the [Examples](https://github.com/rui-luo1002/MRArbGrad/tree/main/example).*
 
 ## Acknowledgements
 The algorithm in this library is proposed in:
