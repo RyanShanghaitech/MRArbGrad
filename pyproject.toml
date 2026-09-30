@@ -4,11 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "MRArbGrad"
-version = "5.1.3"
+version = "5.1.4"
 dependencies = ["numpy"]
 requires-python = ">=3.10"
 
-description = "Non-Cartesian MRI Gradient Waveform Toolbox (MRArbGrad)"
+description = "Python library for designing the gradient waveforms for arbitrary MRI trajectories."
 keywords = ["mri", "pulse-sequence", "gradient-waveform", "trajectory", "non-Cartesian", "real-time"]
 authors = [{name = "Rui Luo", email = "Rui.1002@proton.me"}]
 
