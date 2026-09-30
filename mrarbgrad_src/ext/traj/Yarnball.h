@@ -10,7 +10,7 @@ public:
         TrajFunc(0,0), tht0(tht0), phi0(phi0)
     {
         /**
-         * den: density, phi/rho
+         * den: density, tht/rho
          */
         phiDivSqrtTht = std::sqrt(2e0);
         rhoDivSqrtTht = std::sqrt(2e0)/den;
@@ -49,7 +49,7 @@ public:
     YarnballPlan(i64 nPix, i64 lenRampFront=0, i64 lenRampBack=0, f64 den=2.0*M_PI/0.5):
         ScanPlan(nPix, 0, 0, lenRampFront, lenRampBack), den(den)
     {
-        i64 nRot = std::ceil((nPix*M_PI) / (den*0.5));
+        nRot = std::ceil((nPix*M_PI) / (den*0.5));
         nAcqRef = nRot*nRot;
         rot = 2e0*M_PI / nRot;
 

@@ -50,8 +50,8 @@ def scan(traj:Literal["Spiral", "DDSpiral", "Rosette", "RosetteClassic", "Yarnba
     Returns:
         List[Tuple[NDArray, NDArray, NDArray]]: list of (k0, grad, k1) tuple; k0: phase encoding moment; grad: readout gradient waveform; k1: final moment.
     """
-    if nAcq<0: raise ValueError("nAcq<0")
     if nAcq is None: nAcq = -1
+    elif nAcq<0: raise ValueError("nAcq<0")
     return ext.scan(str(traj), int(nPix), int(nAcq))
 
 def config(dt:float=10e-6, ovsp:int=4, sLim:float=tm2hzpx(50,1e-3), gLim:float=tm2hzpx(30e-3,1e-3), g0Norm:float=0.0, g1Norm:float=0.0, enTrajRep:bool=True, enGradRep:bool=True, lenTrajRsv:int=int(1e4), lenGradRsv:int=int(1e5)):

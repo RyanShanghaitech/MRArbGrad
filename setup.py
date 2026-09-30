@@ -14,7 +14,7 @@ ext = Extension\
     "mrarbgrad.ext", 
     sources = src,
     include_dirs = ["./mrarbgrad_src/ext/", numpy.get_include()],
-    language = 'c++'
+    language = 'c++',
 )
 
 setup\
