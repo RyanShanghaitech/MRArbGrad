@@ -1,3 +1,6 @@
+5.1.2 (Sep 30, 2026)
+polish README.md
+
 5.1.1 (Sep 30 2026)
 Fix bug in which built-in Yarnball trajectory causes a floating point exception due to variable shadowing. Fix bug in which if `nAcq=None` of `scan()` is not handled well. 
 

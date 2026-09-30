@@ -1,6 +1,7 @@
-# Magnetic Resonance Arbitrary Gradient Toolbox (MRArbGrad)
+# Non-Cartesian MRI Gradient Waveform Toolbox (MRArbGrad)
+Python library for designing the gradient waveforms for arbitrary MRI trajectories.
 
-Python library for designing the gradient waveforms for arbitrary MRI trajectories. Trajectories can be specified as a Python function, or as a set of k-space points. A trajectory library is also provided. The underlying C/C++ code can be ported to compatible pulse sequence projects for fast gradient waveform design.
+The trajectories can be specified as a Python function, or as a set of k-space points. A trajectory library is also provided. The underlying C/C++ code can be ported to compatible pulse sequence projects for fast gradient waveform design.
 
 ## How to use
 ### Install
@@ -33,5 +34,5 @@ grad = mag.solve(Rosette, pmin=0, pmax=1)
 ## Acknowledgements
 The algorithm in this library is proposed in:
 
-[1] Luo R, Huang H, Miao Q, Xu J, Hu P, Qi H. Real-Time Gradient Waveform Design for Arbitrary k-Space Trajectories. IEEE Transactions on Biomedical Engineering. 2026 Oct;73(10):3491-502. doi:10.1109/TBME.2026.3654117
+> [1] Luo R, Huang H, Miao Q, Xu J, Hu P, Qi H. Real-Time Gradient Waveform Design for Arbitrary k-Space Trajectories. IEEE Transactions on Biomedical Engineering. 2026 Oct;73(10):3491-502. doi:10.1109/TBME.2026.3654117
 
